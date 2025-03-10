@@ -1,0 +1,34 @@
+CHICKEN-FARM-MANAGEMENT-SYSTEM-II/
+├── frontend/
+│   ├── node_modules/
+│   ├── public/
+│   ├── src/
+│   │   ├── assets/
+│   │   │    ├── aboutUs.svg
+│   │   │    ├── assets.js
+│   │   │    ├── faviconBlackFilled.png
+│   │   │    ├── faviconWhiteFilled.png
+│   │   │    └── poultryFarmWithChickens.jpg
+│   │   │
+│   │   ├── components/
+│   │   │   ├── About.jsx
+│   │   │   ├── ContactUs.jsx
+│   │   │   ├── Footer.jsx
+│   │   │   ├── Header.jsx
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── ScreenSizeIndicator.jsx
+│   │   │   └── Services.jsx
+│   │   │
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   └── main.jsx
+│   │
+│   ├── .gitignore
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.js
+│   ├── README.md
+│   ├── tailwind.config.js
+│   └── vite.config.js
