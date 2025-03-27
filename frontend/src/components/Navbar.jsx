@@ -1,10 +1,12 @@
 import React from 'react'
 import { assets } from '../assets/assets'
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const Navbar = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const navigate = useNavigate()
 
   // Prevent scrolling when mobile menu is open
   useEffect(() => {
@@ -45,7 +47,7 @@ const Navbar = () => {
           <a href="#Services" className='cursor-pointer hover:text-gray-400 transition duration-200'>Services</a>
           <a href="#Contactus" className='cursor-pointer hover:text-gray-400 transition duration-200'>Contact Us</a>
         </ul>
-        <button className='hidden md:block bg-white px-8 py-2 rounded-full hover:bg-amber-400 transition duration-300'>Sign in</button>
+        <button onClick={() => navigate('/signin')} className='hidden md:block bg-white px-8 py-2 rounded-full hover:bg-amber-400 transition duration-300'>Sign in</button>
         <img onClick={() => setShowMobileMenu(true)} src='https://img.icons8.com/?size=100&id=aflTW0mA9OBv&format=png&color=FFFFFF' className='md:hidden w-7 hover:bg-neutral-500 hover:bg-opacity-30 rounded-md cursor-pointer' alt="menu-icon"></img>
       </div>
 
