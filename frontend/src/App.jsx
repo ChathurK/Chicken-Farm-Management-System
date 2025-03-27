@@ -5,6 +5,7 @@ import About from './components/About';
 import Services from './components/Services';
 import ContactUs from './components/ContactUs';
 import Footer from './components/Footer';
+import ScreenSizeIndicator from './components/ScreenSizeIndicator';
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
       <Services />
       <ContactUs />
       <Footer />
+      <ScreenSizeIndicator />
     </div>
   );
 }
