@@ -8,6 +8,8 @@ CHICKEN-FARM-MANAGEMENT-SYSTEM-II/
 │   │   │    ├── assets.js
 │   │   │    ├── faviconBlackFilled.png
 │   │   │    ├── faviconWhiteFilled.png
+│   │   │    ├── landingPageBg.jpg
+│   │   │    ├── signInPageBg.jpg
 │   │   │    └── poultryFarmWithChickens.jpg
 │   │   │
 │   │   ├── components/
@@ -17,7 +19,9 @@ CHICKEN-FARM-MANAGEMENT-SYSTEM-II/
 │   │   │   ├── Header.jsx
 │   │   │   ├── Navbar.jsx
 │   │   │   ├── ScreenSizeIndicator.jsx
-│   │   │   └── Services.jsx
+│   │   │   ├── Services.jsx
+│   │   │   ├── SignIn.jsx
+│   │   │   └── SignUp.jsx
 │   │   │
 │   │   ├── App.jsx
 │   │   ├── index.css
