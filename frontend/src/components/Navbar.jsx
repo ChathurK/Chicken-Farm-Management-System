@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 
 const Navbar = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [isScrolled, setIsScrolled] = useState(false)
+  // const [isScrolled, setIsScrolled] = useState(false)
   const navigate = useNavigate()
 
   // Prevent scrolling when mobile menu is open
@@ -20,7 +20,7 @@ const Navbar = () => {
     }
   }, [showMobileMenu])
 
-  // Change navbar background color on scroll
+/*   // Change navbar background color on scroll
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 50) {
@@ -35,10 +35,11 @@ const Navbar = () => {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
+  }, []); */
 
   return (
-    <div className={`fixed top-0 left-0 w-full z-10 ${isScrolled ? 'bg-gradient-to-t from-transparent to-amber-400' : 'bg-transparent'}`}>
+    // <div className={`fixed top-0 left-0 w-full z-10 ${isScrolled ? 'bg-gradient-to-t from-transparent to-amber-400' : 'bg-transparent'}`}>
+    <div className='fixed top-0 left-0 w-full z-10 bg-gradient-to-t from-transparent to-amber-400'>
       <div className='container min-w-full mx-auto flex justify-between items-center py-4 px-6 md:px-20 lg:px-32'>
         <img src={assets.faviconWhiteFilled} alt='logo' className='h-10 w-10' />
         <ul className='hidden md:flex gap-7 text-white'>
