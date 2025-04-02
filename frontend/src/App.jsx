@@ -19,8 +19,7 @@ const LandingPage = () => {
       <Services />
       <ContactUs />
       <Footer />
-      <ScreenSizeIndicator />
-    </div>   
+    </div>
   );
 }
 
@@ -33,6 +32,7 @@ const App = () => {
         <Route path="/signin" element={<SignIn />} />
         <Route path='/signup' element={<SignUp />} />
       </Routes>
+      <ScreenSizeIndicator />
     </Router>
   );
 }
