@@ -17,15 +17,25 @@ CHICKEN-FARM-MANAGEMENT-SYSTEM-II/
 │   │   │   ├── ContactUs.jsx
 │   │   │   ├── Footer.jsx
 │   │   │   ├── Header.jsx
+│   │   │   ├── LandingPage.jsx
 │   │   │   ├── Navbar.jsx
-│   │   │   ├── ScreenSizeIndicator.jsx
+│   │   │   ├── NotFound.jsx
+│   │   │   ├── ScreenSizeIndicator.jsx {*Not tracking*}
 │   │   │   ├── Services.jsx
 │   │   │   ├── SignIn.jsx
-│   │   │   └── SignUp.jsx
+│   │   │   ├── SignUp.jsx
+│   │   │   └── admin/
+│   │   │       ├── AdminSidebarContent.jsx
+│   │   │       ├── Dashboard.jsx
+│   │   │       ├── DashboardLayout.jsx
+│   │   │       ├── Sidebar.jsx
+│   │   │       ├── SidebarItem.jsx
+│   │   │       └── Topbar.jsx
 │   │   │
 │   │   ├── App.jsx
 │   │   ├── index.css
-│   │   └── main.jsx
+│   │   ├── main.jsx
+│   │   └── routes.jsx
 │   │
 │   ├── .gitignore
 │   ├── eslint.config.js
