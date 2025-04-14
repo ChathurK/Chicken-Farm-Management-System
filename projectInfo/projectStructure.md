@@ -1,17 +1,20 @@
+# CHICKEN-FARM-MANAGEMENT-SYSTEM-II Project Structure
+
+```
 CHICKEN-FARM-MANAGEMENT-SYSTEM-II/
+│
 ├── frontend/
 │   ├── node_modules/
 │   ├── public/
 │   ├── src/
 │   │   ├── assets/
-│   │   │    ├── aboutUs.svg
-│   │   │    ├── assets.js
-│   │   │    ├── faviconBlackFilled.png
-│   │   │    ├── faviconWhiteFilled.png
-│   │   │    ├── landingPageBg.jpg
-│   │   │    ├── signInPageBg.jpg
-│   │   │    └── poultryFarmWithChickens.jpg
-│   │   │
+│   │   │   ├── aboutUs.svg
+│   │   │   ├── assets.js
+│   │   │   ├── faviconBlackFilled.png
+│   │   │   ├── faviconWhiteFilled.png
+│   │   │   ├── landingPageBg.jpg
+│   │   │   ├── signInPageBg.jpg
+│   │   │   └── poultryFarmWithChickens.jpg
 │   │   ├── components/
 │   │   │   ├── About.jsx
 │   │   │   ├── ContactUs.jsx
@@ -20,7 +23,7 @@ CHICKEN-FARM-MANAGEMENT-SYSTEM-II/
 │   │   │   ├── LandingPage.jsx
 │   │   │   ├── Navbar.jsx
 │   │   │   ├── NotFound.jsx
-│   │   │   ├── ScreenSizeIndicator.jsx {*Not tracking*}
+│   │   │   ├── ScreenSizeIndicator.jsx (*Not tracking*)
 │   │   │   ├── Services.jsx
 │   │   │   ├── SignIn.jsx
 │   │   │   ├── SignUp.jsx
@@ -31,18 +34,25 @@ CHICKEN-FARM-MANAGEMENT-SYSTEM-II/
 │   │   │       ├── Sidebar.jsx
 │   │   │       ├── SidebarItem.jsx
 │   │   │       └── Topbar.jsx
-│   │   │
 │   │   ├── App.jsx
 │   │   ├── index.css
 │   │   ├── main.jsx
 │   │   └── routes.jsx
-│   │
 │   ├── .gitignore
 │   ├── eslint.config.js
 │   ├── index.html
 │   ├── package-lock.json
 │   ├── package.json
 │   ├── postcss.config.js
-│   ├── README.md
 │   ├── tailwind.config.js
 │   └── vite.config.js
+│
+├── projectInfo/
+│   ├── colors.txt
+│   ├── database.sql
+│   ├── poultryFarmRequirementCatalogue.md
+│   ├── projectInfo.md
+│   └── projectStructure.md
+│
+└── .gitignore
+```
