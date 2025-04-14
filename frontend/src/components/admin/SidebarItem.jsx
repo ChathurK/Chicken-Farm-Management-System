@@ -10,7 +10,7 @@ export function SidebarItem({ icon, text, alert, to }) {
 
     return (
         <li className={`relative flex items-center py-2 px-3 my-1 font-medium rounded-md cursor-pointer transition-colors group
-            ${active ? "bg-gradient-to-tr from-blue-200 to-blue-100 text-blue-800" : "hover:bg-blue-50 text-gray-800"}`}>
+            ${active ? "bg-gradient-to-tr from-blue-200 to-blue-400 text-blue-800" : "hover:bg-amber-600 text-gray-800 transition-colors duration-300"}`}>
             <Link to={to} className='flex justify-center items-center w-full'>
                 {icon}
                 <span className={`overflow-hidden transition-all ${expanded ? "w-52 ml-3" : "w-0"}`}>{text}</span>
@@ -35,7 +35,7 @@ export function SubMenu({ icon, text, children }) {
                 tabIndex={0}
                 onKeyDown={(e) => e.key === 'Enter' && setOpen(!open)}
                 className={`flex justify-center items-center py-2 px-3 font-medium rounded-md cursor-pointer 
-                transition-colors hover:bg-blue-50 text-gray-800`}>
+                transition-colors duration-300 hover:bg-amber-600 text-gray-800`}>
                 {icon}
                 <span className={`overflow-hidden transition-all ${expanded ? "w-40 ml-3" : "w-0 text-nowrap"}`}>
                     {text}

@@ -1,25 +1,6 @@
-import {
-  DotsThreeVertical,
-  CaretDoubleLeft,
-  CaretDoubleRight,
-  House,
-  ArchiveBox,
-  FileText,
-  UsersThree,
-  SignOut,
-  Calendar,
-  ShoppingCart,
-  CurrencyCircleDollar,
-  Bird,
-  Storefront,
-  UserPlus,
-  Egg,
-  Leaf,
-  FirstAidKit,
-  Package
-} from '@phosphor-icons/react'
+import { CaretDoubleLeft, CaretDoubleRight, DotsThreeVertical } from '@phosphor-icons/react'
 import { assets } from '../../assets/assets'
-import { useContext, createContext, useState } from 'react'
+import { createContext, useState } from 'react'
 
 export const SidebarContext = createContext()
 // const SidebarContext = createContext()
@@ -29,14 +10,16 @@ export default function Sidebar({ children }) {
 
   return (
     <aside className={`h-screen ${expanded ? 'w-64' : 'w-20'} transition-all duration-300`}>
-      <nav className="h-full flex flex-col bg-slate-200 border-r shadow-sm">
+      <nav className="h-full flex flex-col bg-slate-200 border-r border-gray-400 shadow-sm">
         {/* Sidebar Header */}
         <div className={`p-4 pb-2 flex items-center ${expanded ? 'justify-between' : 'justify-center'}`}>
           <img src={assets.faviconBlackFilled} className={`overflow-hidden transition-all ${expanded ? 'w-8 p-1' : 'w-0'}`} alt="Logo" />
           <div className={`flex justify-center items-center overflow-hidden transition-all text-nowrap ${expanded ? 'w-fit' : 'w-0'}`}>
             <h1 className={`text-2xl font-bold text-black transition-all mx-3 ${expanded ? 'w-fit' : 'w-0'}`}>KTM AGRI</h1>
           </div>
-          <button onClick={() => setExpanded((curr) => !curr)} className="p-1.5 rounded-lg bg-gray-50 hover:bg-gray-100" >
+          <button 
+            onClick={() => setExpanded((curr) => !curr)} 
+            className="p-1.5 rounded-lg bg-gray-50 hover:bg-amber-600 transition-all duration-300" >
             {expanded ? <CaretDoubleLeft weight='duotone' size={20} /> : <CaretDoubleRight weight='duotone' size={20} />}
           </button>
         </div>
