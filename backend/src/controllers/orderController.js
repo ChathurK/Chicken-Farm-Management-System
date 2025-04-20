@@ -1,6 +1,6 @@
 const Order = require('../models/Order');
 const Buyer = require('../models/Buyer');
-const Inventory = require('../models/Inventory');
+const Livestock = require('../models/Livestock');
 const { validationResult } = require('express-validator');
 
 // @desc    Get all orders
@@ -137,6 +137,9 @@ exports.updateOrder = async (req, res) => {
     res.json(order);
   } catch (err) {
     console.error(err.message);
+    if (err.message === 'Deadline date must be later than order date') {
+      return res.status(400).json({ msg: err.message });
+    }
     res.status(500).send('Server Error');
   }
 };
@@ -187,30 +190,30 @@ exports.addOrderItem = async (req, res) => {
       return res.status(404).json({ msg: 'Order not found' });
     }
 
-    const { inventory_id, quantity, unit_price } = req.body;
+    const { livestock_id, quantity, unit_price } = req.body;
 
-    // Check if inventory item exists
-    const inventory = await Inventory.findById(inventory_id);
-    if (!inventory) {
-      return res.status(404).json({ msg: 'Inventory item not found' });
+    // Check if livestock item exists
+    const livestock = await Livestock.findById(livestock_id);
+    if (!livestock) {
+      return res.status(404).json({ msg: 'Livestock item not found' });
     }
 
     // Check if enough quantity is available
-    if (inventory.quantity < quantity) {
+    if (livestock.total_quantity < quantity) {
       return res.status(400).json({ msg: 'Not enough quantity in stock' });
     }
 
     // Add order item
     const orderItem = await Order.addOrderItem({
       order_id: req.params.id,
-      inventory_id,
+      livestock_id,
+      product_type: livestock.type,  // Using the type from livestock
       quantity,
       unit_price,
-      total_price: quantity * unit_price
     });
 
-    // Update inventory quantity
-    await Inventory.updateQuantity(inventory_id, inventory.quantity - quantity);
+    // Update livestock quantity
+    await Livestock.updateQuantity(livestock_id, livestock.total_quantity - quantity);
 
     res.status(201).json(orderItem);
   } catch (err) {
@@ -233,17 +236,39 @@ exports.updateOrderItem = async (req, res) => {
     const { quantity, unit_price } = req.body;
     const { orderId, itemId } = req.params;
 
-    // TODO: Add logic to check current quantity vs. new quantity
-    // and update inventory accordingly
+    // Get current order item
+    const currentItem = await Order.getOrderItemById(itemId);
+    if (!currentItem) {
+      return res.status(404).json({ msg: 'Order item not found' });
+    }
+
+    // Get livestock information
+    const livestock = await Livestock.findById(currentItem.livestock_id);
+    if (!livestock) {
+      return res.status(404).json({ msg: 'Livestock item not found' });
+    }
+
+    // Calculate the difference in quantity
+    const quantityDifference = quantity - currentItem.quantity;
+
+    // Check if enough quantity is available for increase
+    if (quantityDifference > 0 && livestock.total_quantity < quantityDifference) {
+      return res.status(400).json({ msg: 'Not enough quantity in stock for this update' });
+    }
 
     // Update order item
-    const orderItem = await Order.updateOrderItem(itemId, {
+    const updatedItem = await Order.updateOrderItem(itemId, {
       quantity,
-      unit_price,
-      total_price: quantity * unit_price
+      unit_price
     });
 
-    res.json(orderItem);
+    // Update livestock quantity
+    await Livestock.updateQuantity(
+      currentItem.livestock_id,
+      livestock.total_quantity - quantityDifference
+    );
+
+    res.json(updatedItem);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -255,7 +280,21 @@ exports.updateOrderItem = async (req, res) => {
 // @access  Private
 exports.removeOrderItem = async (req, res) => {
   try {
-    // TODO: Add logic to restore inventory quantity
+    // Get the item to be removed
+    const item = await Order.getOrderItemById(req.params.itemId);
+    
+    if (!item) {
+      return res.status(404).json({ msg: 'Order item not found' });
+    }
+    
+    // Restore the livestock quantity
+    const livestock = await Livestock.findById(item.livestock_id);
+    if (livestock) {
+      await Livestock.updateQuantity(
+        item.livestock_id,
+        livestock.total_quantity + item.quantity
+      );
+    }
 
     // Remove order item
     await Order.removeOrderItem(req.params.itemId);
@@ -272,17 +311,8 @@ exports.removeOrderItem = async (req, res) => {
 // @access  Private/Admin
 exports.deleteOrder = async (req, res) => {
   try {
-    // Check if order exists
-    let order = await Order.findById(req.params.id);
-    if (!order) {
-      return res.status(404).json({ msg: 'Order not found' });
-    }
-
-    // TODO: Add logic to restore inventory quantities for all items
-
-    // Delete order (this will also delete order items due to cascade delete)
+    // Order.delete now handles restoring livestock quantities internally
     await Order.delete(req.params.id);
-
     res.json({ msg: 'Order removed' });
   } catch (err) {
     console.error(err.message);
