@@ -3,10 +3,10 @@ const db = require('../config/database');
 class Seller {
     // Create a new seller
     static async create(sellerData) {
-        const { name, contact_number, email, address } = sellerData;
+        const { full_name, contact_number, email, address } = sellerData;
         
-        const query = 'INSERT INTO Sellers (name, contact_number, email, address) VALUES (?, ?, ?, ?)';
-        const [result] = await db.execute(query, [name, contact_number, email, address]);
+        const query = 'INSERT INTO Sellers (full_name, contact_number, email, address) VALUES (?, ?, ?, ?)';
+        const [result] = await db.execute(query, [full_name, contact_number, email, address]);
         
         return { seller_id: result.insertId, ...sellerData };
     }
@@ -27,17 +27,17 @@ class Seller {
     
     // Get all sellers
     static async findAll() {
-        const query = 'SELECT * FROM Sellers ORDER BY name ASC';
+        const query = 'SELECT * FROM Sellers ORDER BY full_name ASC';
         const [rows] = await db.execute(query);
         return rows;
     }
     
     // Update seller
     static async update(id, sellerData) {
-        const { name, contact_number, email, address } = sellerData;
+        const { full_name, contact_number, email, address } = sellerData;
         
-        const query = 'UPDATE Sellers SET name = ?, contact_number = ?, email = ?, address = ? WHERE seller_id = ?';
-        await db.execute(query, [name, contact_number, email, address, id]);
+        const query = 'UPDATE Sellers SET full_name = ?, contact_number = ?, email = ?, address = ? WHERE seller_id = ?';
+        await db.execute(query, [full_name, contact_number, email, address, id]);
         
         return { seller_id: id, ...sellerData };
     }

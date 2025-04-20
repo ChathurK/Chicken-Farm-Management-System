@@ -17,16 +17,15 @@ CREATE TABLE Users (
 -- Inventory table
 CREATE TABLE Inventory (
     inventory_id INT AUTO_INCREMENT PRIMARY KEY,
-    category ENUM('Eggs', 'Chicks', 'Chickens', 'Feed', 'Medication', 'Supplies') NOT NULL,
+    category ENUM('Feed', 'Medication', 'Supplies', 'Other') NOT NULL,
     item_name VARCHAR(100) NOT NULL,
-    batch_number VARCHAR(50) NOT NULL,
     quantity DECIMAL(10, 2) NOT NULL,
     unit VARCHAR(20) NOT NULL,
     purchase_date DATE,
     expiration_date DATE,
     cost_per_unit DECIMAL(10, 2) DEFAULT 0.00,
-    total_cost DECIMAL(12, 2) DEFAULT 0.00,
-    status ENUM('Available', 'Expired', 'Damaged') DEFAULT 'Available',
+    total_cost DECIMAL(12, 2) GENERATED ALWAYS AS (quantity * cost_per_unit) STORED,
+    status ENUM('Available', 'Low', 'Finished', 'Expired') DEFAULT 'Available',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -45,7 +44,7 @@ CREATE TABLE Buyers (
 -- Sellers table
 CREATE TABLE Sellers (
     seller_id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    full_name VARCHAR(100) NOT NULL,
     contact_number VARCHAR(20) NOT NULL,
     email VARCHAR(100),
     address TEXT,
@@ -62,7 +61,8 @@ CREATE TABLE Orders (
     status ENUM('Ongoing', 'Completed', 'Cancelled') DEFAULT 'Ongoing',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (buyer_id) REFERENCES Buyers(buyer_id) ON DELETE CASCADE
+    FOREIGN KEY (buyer_id) REFERENCES Buyers(buyer_id) ON DELETE CASCADE,
+    CONSTRAINT check_deadline CHECK (deadline_date >= DATE(order_date))
 );
 
 -- Order_Items table

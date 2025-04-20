@@ -35,7 +35,7 @@ router.get('/:id/transactions', getSellerTransactionHistory);
 router.post(
   '/',
   [
-    check('name', 'Name is required').not().isEmpty(),
+    check('full_name', 'Name is required').not().isEmpty(),
     check('contact_number', 'Contact number is required').not().isEmpty()
   ],
   createSeller
@@ -47,7 +47,7 @@ router.post(
 router.put(
   '/:id',
   [
-    check('name', 'Name is required').not().isEmpty(),
+    check('full_name', 'Name is required').not().isEmpty(),
     check('contact_number', 'Contact number is required').not().isEmpty()
   ],
   updateSeller
