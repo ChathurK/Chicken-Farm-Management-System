@@ -1,33 +1,27 @@
 const express = require('express');
-const router = express.Router();
 const { check } = require('express-validator');
-const { 
-  getAllTransactions, 
-  getTransactionById,
-  getFinancialSummary,
-  createTransaction, 
-  updateTransaction, 
-  deleteTransaction 
-} = require('../controllers/transactionController');
+const transactionController = require('../controllers/transactionController');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 
-// Apply authentication middleware to all routes
+const router = express.Router();
+
+// Apply auth middleware to all routes
 router.use(authMiddleware);
 
 // @route   GET /api/transactions
 // @desc    Get all transactions
 // @access  Private
-router.get('/', getAllTransactions);
+router.get('/', transactionController.getAllTransactions);
 
 // @route   GET /api/transactions/summary
 // @desc    Get financial summary
 // @access  Private/Admin
-router.get('/summary', adminMiddleware, getFinancialSummary);
+router.get('/summary', adminMiddleware, transactionController.getFinancialSummary);
 
 // @route   GET /api/transactions/:id
 // @desc    Get transaction by ID
 // @access  Private
-router.get('/:id', getTransactionById);
+router.get('/:id', transactionController.getTransactionById);
 
 // @route   POST /api/transactions
 // @desc    Create new transaction
@@ -39,7 +33,7 @@ router.post(
     check('transaction_type', 'Transaction type must be either Income or Expense').isIn(['Income', 'Expense']),
     check('amount', 'Amount must be a positive number').isNumeric().toFloat().custom(value => value > 0)
   ],
-  createTransaction
+  transactionController.createTransaction
 );
 
 // @route   PUT /api/transactions/:id
@@ -52,12 +46,12 @@ router.put(
     check('transaction_type', 'Transaction type must be either Income or Expense').optional().isIn(['Income', 'Expense']),
     check('amount', 'Amount must be a positive number').optional().isNumeric().toFloat().custom(value => value > 0)
   ],
-  updateTransaction
+  transactionController.updateTransaction
 );
 
 // @route   DELETE /api/transactions/:id
 // @desc    Delete transaction
 // @access  Private/Admin
-router.delete('/:id', adminMiddleware, deleteTransaction);
+router.delete('/:id', adminMiddleware, transactionController.deleteTransaction);
 
 module.exports = router;

@@ -1,28 +1,22 @@
 const express = require('express');
-const router = express.Router();
 const { check } = require('express-validator');
-const { 
-  getAllUsers, 
-  getUserById, 
-  createUser, 
-  updateUser, 
-  updatePassword, 
-  deleteUser 
-} = require('../controllers/userController');
+const userController = require('../controllers/userController');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 
-// Apply authentication middleware to all routes
+const router = express.Router();
+
+// Apply auth middleware to all routes
 router.use(authMiddleware);
 
 // @route   GET /api/users
 // @desc    Get all users
 // @access  Private/Admin
-router.get('/', adminMiddleware, getAllUsers);
+router.get('/', adminMiddleware, userController.getAllUsers);
 
 // @route   GET /api/users/:id
 // @desc    Get user by ID
 // @access  Private/Admin
-router.get('/:id', adminMiddleware, getUserById);
+router.get('/:id', adminMiddleware, userController.getUserById);
 
 // @route   POST /api/users
 // @desc    Create new user
@@ -36,7 +30,7 @@ router.post(
     check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 }),
     check('role', 'Role must be either Admin or Employee').isIn(['Admin', 'Employee'])
   ],
-  createUser
+  userController.createUser
 );
 
 // @route   PUT /api/users/:id
@@ -50,7 +44,7 @@ router.put(
     check('email', 'Please include a valid email').isEmail(),
     check('role', 'Role must be either Admin or Employee').isIn(['Admin', 'Employee'])
   ],
-  updateUser
+  userController.updateUser
 );
 
 // @route   PUT /api/users/:id/password
@@ -61,12 +55,12 @@ router.put(
   [
     check('new_password', 'Please enter a password with 6 or more characters').isLength({ min: 6 })
   ],
-  updatePassword
+  userController.updatePassword
 );
 
 // @route   DELETE /api/users/:id
 // @desc    Delete user
 // @access  Private/Admin
-router.delete('/:id', adminMiddleware, deleteUser);
+router.delete('/:id', adminMiddleware, userController.deleteUser);
 
 module.exports = router;

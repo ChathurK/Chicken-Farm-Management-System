@@ -1,33 +1,27 @@
 const express = require('express');
-const router = express.Router();
 const { check } = require('express-validator');
-const { 
-  getAllBuyers, 
-  getBuyerById,
-  getBuyerOrderHistory,
-  createBuyer, 
-  updateBuyer, 
-  deleteBuyer 
-} = require('../controllers/buyerController');
+const buyerController = require('../controllers/buyerController');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 
-// Apply authentication middleware to all routes
+const router = express.Router();
+
+// Apply auth middleware to all routes
 router.use(authMiddleware);
 
 // @route   GET /api/buyers
 // @desc    Get all buyers
 // @access  Private
-router.get('/', getAllBuyers);
+router.get('/', buyerController.getAllBuyers);
 
 // @route   GET /api/buyers/:id
 // @desc    Get buyer by ID
 // @access  Private
-router.get('/:id', getBuyerById);
+router.get('/:id', buyerController.getBuyerById);
 
 // @route   GET /api/buyers/:id/orders
 // @desc    Get buyer's order history
 // @access  Private
-router.get('/:id/orders', getBuyerOrderHistory);
+router.get('/:id/orders', buyerController.getBuyerOrderHistory);
 
 // @route   POST /api/buyers
 // @desc    Create new buyer
@@ -38,7 +32,7 @@ router.post(
     check('full_name', 'Name is required').not().isEmpty(),
     check('contact_number', 'Contact number is required').not().isEmpty()
   ],
-  createBuyer
+  buyerController.createBuyer
 );
 
 // @route   PUT /api/buyers/:id
@@ -50,12 +44,12 @@ router.put(
     check('full_name', 'Name is required').not().isEmpty(),
     check('contact_number', 'Contact number is required').not().isEmpty()
   ],
-  updateBuyer
+  buyerController.updateBuyer
 );
 
 // @route   DELETE /api/buyers/:id
 // @desc    Delete buyer
 // @access  Private/Admin
-router.delete('/:id', adminMiddleware, deleteBuyer);
+router.delete('/:id', adminMiddleware, buyerController.deleteBuyer);
 
 module.exports = router;

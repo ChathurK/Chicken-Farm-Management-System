@@ -1,8 +1,12 @@
 const express = require('express');
 const { check } = require('express-validator');
 const livestockController = require('../controllers/livestockController');
+const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Apply auth middleware to all routes
+router.use(authMiddleware);
 
 // @route   GET /api/livestock
 // @desc    Get all livestock

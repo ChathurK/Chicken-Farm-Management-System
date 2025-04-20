@@ -1,35 +1,27 @@
 const express = require('express');
-const router = express.Router();
 const { check } = require('express-validator');
-const { 
-  getAllInventory, 
-  getInventoryById, 
-  getInventoryByCategory,
-  createInventory, 
-  updateInventory, 
-  updateInventoryStatus,
-  updateInventoryQuantity,
-  deleteInventory 
-} = require('../controllers/inventoryController');
+const inventoryController = require('../controllers/inventoryController');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 
-// Apply authentication middleware to all routes
+const router = express.Router();
+
+// Apply auth middleware to all routes
 router.use(authMiddleware);
 
 // @route   GET /api/inventory
 // @desc    Get all inventory items
 // @access  Private
-router.get('/', getAllInventory);
+router.get('/', inventoryController.getAllInventory);
 
 // @route   GET /api/inventory/:id
 // @desc    Get inventory item by ID
 // @access  Private
-router.get('/:id', getInventoryById);
+router.get('/:id', inventoryController.getInventoryById);
 
 // @route   GET /api/inventory/category/:category
 // @desc    Get inventory items by category
 // @access  Private
-router.get('/category/:category', getInventoryByCategory);
+router.get('/category/:category', inventoryController.getInventoryByCategory);
 
 // @route   POST /api/inventory
 // @desc    Create new inventory item
@@ -44,7 +36,7 @@ router.post(
     check('quantity', 'Quantity must be a number').isNumeric(),
     check('unit', 'Unit is required').not().isEmpty()
   ],
-  createInventory
+  inventoryController.createInventory
 );
 
 // @route   PUT /api/inventory/:id
@@ -60,7 +52,7 @@ router.put(
       .optional()
       .isNumeric()
   ],
-  updateInventory
+  inventoryController.updateInventory
 );
 
 // @route   PATCH /api/inventory/:id/status
@@ -72,7 +64,7 @@ router.patch(
     check('status', 'Status must be one of: Available, Low, Finished, Expired')
       .isIn(['Available', 'Low', 'Finished', 'Expired'])
   ],
-  updateInventoryStatus
+  inventoryController.updateInventoryStatus
 );
 
 // @route   PATCH /api/inventory/:id/quantity
@@ -83,12 +75,12 @@ router.patch(
   [
     check('quantity', 'Quantity must be a number').isNumeric()
   ],
-  updateInventoryQuantity
+  inventoryController.updateInventoryQuantity
 );
 
 // @route   DELETE /api/inventory/:id
 // @desc    Delete inventory item
 // @access  Private/Admin
-router.delete('/:id', adminMiddleware, deleteInventory);
+router.delete('/:id', adminMiddleware, inventoryController.deleteInventory);
 
 module.exports = router;

@@ -1,12 +1,12 @@
 const express = require('express');
 const { check } = require('express-validator');
 const chickenController = require('../controllers/chickenController');
-const auth = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
 // Apply auth middleware to all routes
-router.use(auth);
+router.use(authMiddleware);
 
 // @route   GET /api/chickens
 // @desc    Get all chickens
