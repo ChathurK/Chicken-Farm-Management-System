@@ -11,6 +11,10 @@ const buyerRoutes = require('./routes/buyers');
 const sellerRoutes = require('./routes/sellers');
 const orderRoutes = require('./routes/orders');
 const transactionRoutes = require('./routes/transactions');
+const livestockRoutes = require('./routes/livestock');
+const chickenRoutes = require('./routes/chickens');
+const chickRoutes = require('./routes/chicks');
+const eggRoutes = require('./routes/eggs');
 
 // Initialize express app
 const app = express();
@@ -34,6 +38,10 @@ app.use('/api/buyers', buyerRoutes);
 app.use('/api/sellers', sellerRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/livestock', livestockRoutes);
+app.use('/api/chickens', chickenRoutes);
+app.use('/api/chicks', chickRoutes);
+app.use('/api/eggs', eggRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
