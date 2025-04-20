@@ -73,13 +73,11 @@ exports.createInventory = async (req, res) => {
     const { 
       category, 
       item_name, 
-      batch_number, 
       quantity, 
       unit, 
       purchase_date, 
       expiration_date,
       cost_per_unit,
-      total_cost,
       status 
     } = req.body;
 
@@ -87,13 +85,11 @@ exports.createInventory = async (req, res) => {
     const inventory = await Inventory.create({
       category, 
       item_name, 
-      batch_number, 
       quantity, 
       unit, 
       purchase_date, 
       expiration_date,
       cost_per_unit,
-      total_cost: total_cost || (quantity * cost_per_unit),
       status
     });
 
@@ -124,13 +120,11 @@ exports.updateInventory = async (req, res) => {
     const { 
       category, 
       item_name, 
-      batch_number, 
       quantity, 
       unit, 
       purchase_date, 
       expiration_date,
       cost_per_unit,
-      total_cost,
       status 
     } = req.body;
 
@@ -138,13 +132,11 @@ exports.updateInventory = async (req, res) => {
     inventory = await Inventory.update(req.params.id, {
       category, 
       item_name, 
-      batch_number, 
       quantity, 
       unit, 
       purchase_date, 
       expiration_date,
       cost_per_unit,
-      total_cost: total_cost || (quantity * cost_per_unit),
       status
     });
 

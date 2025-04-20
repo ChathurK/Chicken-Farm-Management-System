@@ -38,11 +38,11 @@ router.post(
   '/',
   [
     check('category', 'Category is required').not().isEmpty(),
-    check('category', 'Category must be one of: Eggs, Chicks, Chickens, Feed, Medication, Supplies')
-      .isIn(['Eggs', 'Chicks', 'Chickens', 'Feed', 'Medication', 'Supplies']),
+    check('category', 'Category must be one of: Feed, Medication, Supplies, Other')
+      .isIn(['Feed', 'Medication', 'Supplies', 'Other']),
     check('item_name', 'Item name is required').not().isEmpty(),
-    check('batch_number', 'Batch number is required').not().isEmpty(),
-    check('quantity', 'Quantity must be a number').isNumeric()
+    check('quantity', 'Quantity must be a number').isNumeric(),
+    check('unit', 'Unit is required').not().isEmpty()
   ],
   createInventory
 );
@@ -53,11 +53,12 @@ router.post(
 router.put(
   '/:id',
   [
-    check('category', 'Category must be one of: Eggs, Chicks, Chickens, Feed, Medication, Supplies')
-      .isIn(['Eggs', 'Chicks', 'Chickens', 'Feed', 'Medication', 'Supplies']),
-    check('item_name', 'Item name is required').not().isEmpty(),
-    check('batch_number', 'Batch number is required').not().isEmpty(),
-    check('quantity', 'Quantity must be a number').isNumeric()
+    check('category', 'Category must be one of: Feed, Medication, Supplies, Other')
+      .optional()
+      .isIn(['Feed', 'Medication', 'Supplies', 'Other']),
+    check('quantity', 'Quantity must be a number')
+      .optional()
+      .isNumeric()
   ],
   updateInventory
 );
@@ -68,8 +69,8 @@ router.put(
 router.patch(
   '/:id/status',
   [
-    check('status', 'Status must be one of: Available, Expired, Damaged')
-      .isIn(['Available', 'Expired', 'Damaged'])
+    check('status', 'Status must be one of: Available, Low, Finished, Expired')
+      .isIn(['Available', 'Low', 'Finished', 'Expired'])
   ],
   updateInventoryStatus
 );
