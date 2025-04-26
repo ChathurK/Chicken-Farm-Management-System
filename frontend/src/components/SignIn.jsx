@@ -41,6 +41,10 @@ const SignIn = () => {
     }
   };
 
+  const handleInputChange = () => {
+    setError(null);
+  };
+
   return (
     <div
       className="flex justify-center items-center min-h-screen bg-cover bg-center"
@@ -62,7 +66,10 @@ const SignIn = () => {
               type="email"
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                handleInputChange();
+              }}
               required
               disabled={isLoading}
               placeholder="Enter your email"
@@ -74,7 +81,10 @@ const SignIn = () => {
               type="password"
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                handleInputChange();
+              }}
               required
               disabled={isLoading}
               placeholder="Enter your password"
