@@ -1,22 +1,60 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
+import { useAuth } from "../context/AuthContext";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  const navigate = useNavigate();
+  const { login, user } = useAuth();
 
-  const handleSubmit = (e) => {
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'Admin') {
+        navigate('/admindashboard');
+      } else {
+        navigate('/dashboard');
+      }
+    }
+  }, [user, navigate]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Sign In:", { email, password });
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await login(email, password);
+      
+      // The redirection will happen through the useEffect hook
+      // once the user state is updated
+      
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-cover bg-center" style={{ backgroundImage: `url(${assets.signInBg})`}}>
+    <div
+      className="flex justify-center items-center min-h-screen bg-cover bg-center"
+      style={{ backgroundImage: `url(${assets.signInBg})` }}
+    >
       <div className="bg-white bg-opacity-50 backdrop-blur-sm p-8 rounded-lg shadow-lg w-96">
-        <h2 className="text-2xl font-bold text-center text-gray-700 mb-4">
-          Sign In
-        </h2>
+        <h2 className="text-2xl font-bold text-center text-gray-700 mb-4">Sign In</h2>
+        
+        {error && (
+          <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            {error}
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-gray-600">Email</label>
@@ -26,6 +64,8 @@ const SignIn = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={isLoading}
+              placeholder="Enter your email"
             />
           </div>
           <div>
@@ -36,13 +76,18 @@ const SignIn = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={isLoading}
+              placeholder="Enter your password"
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition"
+            disabled={isLoading}
+            className={`w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition ${
+              isLoading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
-            Sign In
+            {isLoading ? "Signing In..." : "Sign In"}
           </button>
         </form>
         <p className="text-center text-gray-600 mt-4">
@@ -51,6 +96,12 @@ const SignIn = () => {
             Sign Up
           </Link>
         </p>
+        <div className="mt-4 text-center text-gray-600">
+          <p className="text-sm">Demo Accounts:</p>
+          <p className="text-xs">Admin: admin@chickenfarm.com</p>
+          <p className="text-xs">Employee: employee@chickenfarm.com</p>
+          <p className="text-xs">Password for both: password123</p>
+        </div>
       </div>
     </div>
   );

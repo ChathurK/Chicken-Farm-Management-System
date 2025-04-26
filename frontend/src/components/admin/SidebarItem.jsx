@@ -1,17 +1,26 @@
 import { useContext, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { SidebarContext } from './Sidebar';
 import { CaretDown } from '@phosphor-icons/react';
 
-export function SidebarItem({ icon, text, alert, to }) {
+export function SidebarItem({ icon, text, alert, to, onClick }) {
     const { pathname } = useLocation();
     const { expanded } = useContext(SidebarContext);
+    const navigate = useNavigate();
     const active = pathname === to;
+
+    const handleClick = (e) => {
+        if (onClick) {
+            e.preventDefault();
+            onClick();
+            if (to) navigate(to);
+        }
+    };
 
     return (
         <li className={`relative flex items-center py-2 px-3 my-1 font-medium rounded-md cursor-pointer transition-colors group
-            ${active ? "bg-gradient-to-tr from-blue-200 to-blue-400 text-blue-800" : "hover:bg-amber-600 text-gray-800 transition-colors duration-300"}`}>
-            <Link to={to} className='flex justify-center items-center w-full'>
+            ${active ? "bg-amber-500 text-black" : "hover:bg-amber-400 text-gray-700 transition-colors duration-300"}`}>
+            <Link to={to} className='flex justify-center items-center w-full' onClick={handleClick}>
                 {icon}
                 <span className={`overflow-hidden transition-all ${expanded ? "w-52 ml-3" : "w-0"}`}>{text}</span>
             </Link>
@@ -35,7 +44,7 @@ export function SubMenu({ icon, text, children }) {
                 tabIndex={0}
                 onKeyDown={(e) => e.key === 'Enter' && setOpen(!open)}
                 className={`flex justify-center items-center py-2 px-3 font-medium rounded-md cursor-pointer 
-                transition-colors duration-300 hover:bg-amber-600 text-gray-800`}>
+                transition-colors duration-300 hover:bg-amber-400 text-gray-700`}>
                 {icon}
                 <span className={`overflow-hidden transition-all ${expanded ? "w-40 ml-3" : "w-0 text-nowrap"}`}>
                     {text}
