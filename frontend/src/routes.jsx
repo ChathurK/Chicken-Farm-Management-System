@@ -1,4 +1,4 @@
-import LandingPage from './components/LandingPage';
+import LandingPage from './components/landing/LandingPage';
 import SignIn from './components/SignIn';
 import SignUp from './components/SignUp';
 import AdminDashboard from './components/admin/Dashboard';

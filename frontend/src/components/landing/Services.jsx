@@ -20,7 +20,7 @@ const services = [
     id: 3,
     name: "Custom Orders",
     description:
-      "We accept custom orders for eggs and chicks, tailored to meet the specific requirements of our customers. Whether you need a small batch or bulk supply, we’ve got you covered.",
+      "We accept custom orders for eggs and chicks, tailored to meet the specific requirements of our customers. Whether you need a small batch or bulk supply, we've got you covered.",
     icon: ListNumbers,
   },
   {
@@ -55,7 +55,7 @@ const Services = () => {
                         <span className="text-2xl sm:text-4xl font-semibold mb-2">Services</span>
                     </h1>
                     <p className="text-gray-500 text-center text-balance mb-8">
-                        At KTM Farm, we specialize in providing high-quality agricultural products and services to meet the needs of our local community. Here’s what we offer:
+                        At KTM Farm, we specialize in providing high-quality agricultural products and services to meet the needs of our local community. Here's what we offer:
                     </p>
                 </div>
                 <div className="mx-auto max-w-2xl lg:max-w-4xl mb-4">

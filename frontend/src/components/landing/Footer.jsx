@@ -1,5 +1,5 @@
 import React from "react";
-import { assets } from "../assets/assets";
+import { assets } from "../../assets/assets";
 import { FacebookLogo, InstagramLogo, TwitterLogo, GithubLogo, YoutubeLogo } from "@phosphor-icons/react";
 
 const Footer = () => {
@@ -7,7 +7,7 @@ const Footer = () => {
     <footer className="bg-amber-50 text-gray-700 py-8">
       {/* Top Row: Logo and Name */}
       <div className="flex flex-col items-center">
-        <img src={assets.faviconBlackFilled} alt="KTM AGRI Logo" className="h-10 mb-2" /> {/* Adjust logo path */}
+        <img src={assets.faviconBlackFilled} alt="KTM AGRI Logo" className="h-10 mb-2" />
         <h2 className="text-xl font-semibold">KTM AGRI</h2>
       </div>
 
