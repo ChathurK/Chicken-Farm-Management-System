@@ -1,0 +1,23 @@
+import React from 'react';
+import DashboardLayout from './DashboardLayout';
+import { useAuth } from '../../context/AuthContext';
+
+export default function EmployeeDashboard() {
+  const { user } = useAuth();
+
+  return (
+    <DashboardLayout>
+      <div className="bg-white rounded-lg shadow p-6">
+        <h1 className="text-2xl font-bold mb-4">Employee Dashboard</h1>
+        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+          <p><span className="font-semibold">Welcome,</span> {user?.full_name}</p>
+          <p><span className="font-semibold">Email:</span> {user?.email}</p>
+          <p><span className="font-semibold">Role:</span> {user?.role}</p>
+        </div>
+        <p className="text-gray-600">
+          This is the employee dashboard where you can manage inventory, update order status, and record inventory changes.
+        </p>
+      </div>
+    </DashboardLayout>
+  );
+}

@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const ProtectedRoute = ({ requireAdmin = false }) => {
+const ProtectedRoute = ({ requireAdmin = false, requireEmployee = false }) => {
   const { user, loading, isAuthenticated } = useAuth();
   
   // Show loading state while checking authentication
@@ -18,8 +18,13 @@ const ProtectedRoute = ({ requireAdmin = false }) => {
   if (requireAdmin && user?.role !== 'Admin') {
     return <Navigate to="/unauthorized" replace />;
   }
+
+  // If employee access is required but user is not an employee, redirect
+  if (requireEmployee && user?.role !== 'Employee') {
+    return <Navigate to="/unauthorized" replace />;
+  }
   
-  // User is authenticated (and is admin if required)
+  // User is authenticated and has appropriate role
   return <Outlet />;
 };
 
