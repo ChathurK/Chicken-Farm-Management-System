@@ -6,7 +6,7 @@ const Unauthorized = () => {
   const { user } = useAuth();
   
   // Determine where to redirect based on user role
-  const redirectPath = user?.role === 'Admin' ? '/admindashboard' : '/dashboard';
+  const redirectPath = user?.role === 'Admin' ? '/admindashboard' : '/employeedashboard';
   
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">

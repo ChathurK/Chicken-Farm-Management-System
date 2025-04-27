@@ -3,9 +3,57 @@
 ```
 CHICKEN-FARM-MANAGEMENT-SYSTEM-II/
 │
+├── .gitignore
+│
+├── backend/
+│   ├── src/
+│   │   ├── config/
+│   │   │   └── database.js
+│   │   ├── controllers/
+│   │   │   ├── authController.js
+│   │   │   ├── buyerController.js
+│   │   │   ├── chickController.js
+│   │   │   ├── chickenController.js
+│   │   │   ├── eggController.js
+│   │   │   ├── inventoryController.js
+│   │   │   ├── livestockController.js
+│   │   │   ├── orderController.js
+│   │   │   ├── sellerController.js
+│   │   │   ├── transactionController.js
+│   │   │   └── userController.js
+│   │   ├── middleware/
+│   │   │   └── auth.js
+│   │   ├── models/
+│   │   │   ├── Buyer.js
+│   │   │   ├── Chick.js
+│   │   │   ├── Chicken.js
+│   │   │   ├── Egg.js
+│   │   │   ├── Inventory.js
+│   │   │   ├── Livestock.js
+│   │   │   ├── Order.js
+│   │   │   ├── Seller.js
+│   │   │   ├── Transaction.js
+│   │   │   └── User.js
+│   │   ├── routes/
+│   │   │   ├── auth.js
+│   │   │   ├── buyers.js
+│   │   │   ├── chickens.js
+│   │   │   ├── chicks.js
+│   │   │   ├── eggs.js
+│   │   │   ├── inventory.js
+│   │   │   ├── livestock.js
+│   │   │   ├── orders.js
+│   │   │   ├── sellers.js
+│   │   │   ├── transactions.js
+│   │   │   └── users.js
+│   │   ├── utils/
+│   │   │   ├── dbSetup.sql
+│   │   │   └── seedData.js
+│   │   └── index.js
+│   ├── .env
+│   └── package.json
+│
 ├── frontend/
-│   ├── node_modules/
-│   ├── public/
 │   ├── src/
 │   │   ├── assets/
 │   │   │   ├── aboutUs.svg
@@ -13,27 +61,35 @@ CHICKEN-FARM-MANAGEMENT-SYSTEM-II/
 │   │   │   ├── faviconBlackFilled.png
 │   │   │   ├── faviconWhiteFilled.png
 │   │   │   ├── landingPageBg.jpg
-│   │   │   ├── signInPageBg.jpg
-│   │   │   └── poultryFarmWithChickens.jpg
+│   │   │   └── signInPageBg.jpg
 │   │   ├── components/
-│   │   │   ├── About.jsx
-│   │   │   ├── ContactUs.jsx
-│   │   │   ├── Footer.jsx
-│   │   │   ├── Header.jsx
-│   │   │   ├── LandingPage.jsx
-│   │   │   ├── Navbar.jsx
 │   │   │   ├── NotFound.jsx
-│   │   │   ├── ScreenSizeIndicator.jsx (*Not tracking*)
-│   │   │   ├── Services.jsx
+│   │   │   ├── ProtectedRoute.jsx
+│   │   │   ├── ScreenSizeIndicator.jsx
 │   │   │   ├── SignIn.jsx
 │   │   │   ├── SignUp.jsx
-│   │   │   └── admin/
-│   │   │       ├── AdminSidebarContent.jsx
-│   │   │       ├── Dashboard.jsx
-│   │   │       ├── DashboardLayout.jsx
-│   │   │       ├── Sidebar.jsx
-│   │   │       ├── SidebarItem.jsx
-│   │   │       └── Topbar.jsx
+│   │   │   ├── Unauthorized.jsx
+│   │   │   ├── admin/
+│   │   │   │   ├── AdminSidebarContent.jsx
+│   │   │   │   ├── Dashboard.jsx
+│   │   │   │   ├── DashboardLayout.jsx
+│   │   │   │   ├── Sidebar.jsx
+│   │   │   │   ├── SidebarItem.jsx
+│   │   │   │   └── Topbar.jsx
+│   │   │   ├── employee/
+│   │   │   │   ├── Dashboard.jsx
+│   │   │   │   ├── DashboardLayout.jsx
+│   │   │   │   └── EmployeeSidebarContent.jsx
+│   │   │   └── landing/
+│   │   │       ├── About.jsx
+│   │   │       ├── ContactUs.jsx
+│   │   │       ├── Footer.jsx
+│   │   │       ├── Header.jsx
+│   │   │       ├── LandingPage.jsx
+│   │   │       ├── Navbar.jsx
+│   │   │       └── Services.jsx
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx
 │   │   ├── App.jsx
 │   │   ├── index.css
 │   │   ├── main.jsx
@@ -41,18 +97,15 @@ CHICKEN-FARM-MANAGEMENT-SYSTEM-II/
 │   ├── .gitignore
 │   ├── eslint.config.js
 │   ├── index.html
-│   ├── package-lock.json
 │   ├── package.json
 │   ├── postcss.config.js
 │   ├── tailwind.config.js
 │   └── vite.config.js
 │
-├── projectInfo/
-│   ├── colors.txt
-│   ├── database.sql
-│   ├── poultryFarmRequirementCatalogue.md
-│   ├── projectInfo.md
-│   └── projectStructure.md
-│
-└── .gitignore
+└── projectInfo/
+    ├── colors.md
+    ├── database.sql
+    ├── poultryFarmRequirementCatalogue.md
+    ├── projectInfo.md
+    └── projectStructure.md
 ```
