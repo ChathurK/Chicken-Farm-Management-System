@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
+import { useAuth } from "../context/AuthContext";
 
 const SignUp = () => {
   const [firstName, setFirstName] = useState("");
@@ -9,23 +10,58 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState("Employee"); // Default role is Employee
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const navigate = useNavigate();
+  const { register } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      alert("Passwords do not match!");
+      setError("Passwords do not match!");
       return;
     }
-    console.log("Sign Up:", { firstName, lastName, email, password, role });
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await register({
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        password,
+        role
+      });
+      
+      // On successful registration, the AuthContext will update and redirect
+      if (role === 'Admin') {
+        navigate('/admindashboard');
+      } else {
+        navigate('/employeedashboard');
+      }
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div
       className="flex justify-center items-center min-h-screen bg-cover bg-center"
-      style={{ backgroundImage: `url(${assets.signUpBg})` }}
+      style={{ backgroundImage: `url(${assets.signInBg})` }}
     >
       <div className="bg-white bg-opacity-50 backdrop-blur-sm p-8 rounded-lg shadow-lg w-auto">
         <h2 className="text-2xl font-bold text-center text-gray-700 mb-4">Sign Up</h2>
+        
+        {error && (
+          <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            {error}
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* First Name and Last Name in one row */}
           <div className="flex gap-4">
@@ -37,6 +73,7 @@ const SignUp = () => {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
             <div className="flex-1">
@@ -47,6 +84,7 @@ const SignUp = () => {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -58,6 +96,7 @@ const SignUp = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -68,6 +107,7 @@ const SignUp = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -78,6 +118,7 @@ const SignUp = () => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -88,6 +129,7 @@ const SignUp = () => {
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 required
+                disabled={isLoading}
               >
                 <option value="Admin">Admin</option>
                 <option value="Employee">Employee</option>
@@ -102,6 +144,7 @@ const SignUp = () => {
           <button
             type="submit"
             className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition"
+            disabled={isLoading}
           >
             Sign Up
           </button>

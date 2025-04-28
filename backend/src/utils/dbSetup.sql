@@ -6,7 +6,8 @@ USE ChickenFarmManagementSystem;
 -- Users table
 CREATE TABLE Users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
-    full_name VARCHAR(100) NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('Admin', 'Employee') NOT NULL,
@@ -33,7 +34,8 @@ CREATE TABLE Inventory (
 -- Buyers table
 CREATE TABLE Buyers (
     buyer_id INT AUTO_INCREMENT PRIMARY KEY,
-    full_name VARCHAR(100) NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
     contact_number VARCHAR(20) NOT NULL,
     email VARCHAR(100),
     address TEXT,
@@ -44,7 +46,8 @@ CREATE TABLE Buyers (
 -- Sellers table
 CREATE TABLE Sellers (
     seller_id INT AUTO_INCREMENT PRIMARY KEY,
-    full_name VARCHAR(100) NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
     contact_number VARCHAR(20) NOT NULL,
     email VARCHAR(100),
     address TEXT,

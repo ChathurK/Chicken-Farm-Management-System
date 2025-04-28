@@ -10,27 +10,27 @@ async function seedDatabase() {
     const passwordHash = await bcrypt.hash('password123', 10);
     
     await db.execute(`
-      INSERT INTO Users (full_name, email, password_hash, role) VALUES 
-      ('Admin User', 'admin@chickenfarm.com', ?, 'Admin'),
-      ('Employee User', 'employee@chickenfarm.com', ?, 'Employee')
+      INSERT INTO Users (first_name, last_name, email, password_hash, role) VALUES 
+      ('Admin', 'User', 'admin@chickenfarm.com', ?, 'Admin'),
+      ('Employee', 'User', 'employee@chickenfarm.com', ?, 'Employee')
     `, [passwordHash, passwordHash]);
     
     // Seed Buyers
     console.log('Seeding Buyers...');
     await db.execute(`
-      INSERT INTO Buyers (full_name, contact_number, email, address) VALUES 
-      ('Martha Restaurant', '123-456-7890', 'orders@martha.com', '123 Main St, Cityville'),
-      ('Fresh Foods Market', '234-567-8901', 'purchasing@freshfoods.com', '456 Oak Ave, Townsburg'),
-      ('Grocery Express', '345-678-9012', 'supply@groceryexpress.com', '789 Pine Rd, Villageton')
+      INSERT INTO Buyers (first_name, last_name, contact_number, email, address) VALUES 
+      ('Martha', 'Restaurant', '123-456-7890', 'orders@martha.com', '123 Main St, Cityville'),
+      ('Fresh', 'Foods Market', '234-567-8901', 'purchasing@freshfoods.com', '456 Oak Ave, Townsburg'),
+      ('Grocery', 'Express', '345-678-9012', 'supply@groceryexpress.com', '789 Pine Rd, Villageton')
     `);
     
     // Seed Sellers
     console.log('Seeding Sellers...');
     await db.execute(`
-      INSERT INTO Sellers (full_name, contact_number, email, address) VALUES 
-      ('Feed Supply Co', '456-789-0123', 'sales@feedsupply.com', '101 Grain St, Farmville'),
-      ('Chicken Health Products', '567-890-1234', 'orders@chickenhealth.com', '202 Medicine Ave, Vettown'),
-      ('Farm Equipment Ltd', '678-901-2345', 'info@farmequipment.com', '303 Tool Rd, Machinery City')
+      INSERT INTO Sellers (first_name, last_name, contact_number, email, address) VALUES 
+      ('Feed', 'Supply Co', '456-789-0123', 'sales@feedsupply.com', '101 Grain St, Farmville'),
+      ('Chicken', 'Health Products', '567-890-1234', 'orders@chickenhealth.com', '202 Medicine Ave, Vettown'),
+      ('Farm', 'Equipment Ltd', '678-901-2345', 'info@farmequipment.com', '303 Tool Rd, Machinery City')
     `);
     
     // Seed Inventory
@@ -119,11 +119,11 @@ async function seedDatabase() {
     `);
 
     console.log('Database seeding completed successfully.');
+    process.exit(0);
     
   } catch (error) {
     console.error('Error seeding database:', error.message);
-  } finally {
-    process.exit();
+    process.exit(1)
   }
 }
 

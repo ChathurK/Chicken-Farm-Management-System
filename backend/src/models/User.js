@@ -4,16 +4,16 @@ const bcrypt = require('bcrypt');
 class User {
     // Create a new user
     static async create(userData) {
-        const { full_name, email, password, role } = userData;
+        const { first_name, last_name, email, password, role } = userData;
         
         // Hash password
         const salt = await bcrypt.genSalt(10);
         const password_hash = await bcrypt.hash(password, salt);
         
-        const query = 'INSERT INTO Users (full_name, email, password_hash, role) VALUES (?, ?, ?, ?)';
-        const [result] = await db.execute(query, [full_name, email, password_hash, role]);
+        const query = 'INSERT INTO Users (first_name, last_name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)';
+        const [result] = await db.execute(query, [first_name, last_name, email, password_hash, role]);
         
-        return { user_id: result.insertId, full_name, email, role };
+        return { user_id: result.insertId, first_name, last_name, email, role };
     }
     
     // Find user by email
@@ -25,27 +25,27 @@ class User {
     
     // Find user by ID
     static async findById(id) {
-        const query = 'SELECT user_id, full_name, email, role, created_at FROM Users WHERE user_id = ?';
+        const query = 'SELECT user_id, first_name, last_name, email, role, created_at FROM Users WHERE user_id = ?';
         const [rows] = await db.execute(query, [id]);
         return rows[0];
     }
     
     // Get all users
     static async findAll() {
-        const query = 'SELECT user_id, full_name, email, role, created_at FROM Users';
+        const query = 'SELECT user_id, first_name, last_name, email, role, created_at FROM Users';
         const [rows] = await db.execute(query);
         return rows;
     }
     
     // Update user
     static async update(id, userData) {
-        const { full_name, email, role } = userData;
+        const { first_name, last_name, email, role } = userData;
         
         // Update query without password
-        const query = 'UPDATE Users SET full_name = ?, email = ?, role = ? WHERE user_id = ?';
-        await db.execute(query, [full_name, email, role, id]);
+        const query = 'UPDATE Users SET first_name = ?, last_name = ?, email = ?, role = ? WHERE user_id = ?';
+        await db.execute(query, [first_name, last_name, email, role, id]);
         
-        return { user_id: id, full_name, email, role };
+        return { user_id: id, first_name, last_name, email, role };
     }
     
     // Update password

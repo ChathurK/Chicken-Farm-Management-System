@@ -35,8 +35,8 @@ class Transaction {
         const query = `
             SELECT t.*, 
                    i.item_name, i.category,
-                   b.full_name as buyer_name,
-                   s.name as seller_name
+                   CONCAT(b.first_name, ' ', b.last_name) as buyer_name,
+                   CONCAT(s.first_name, ' ', s.last_name) as seller_name
             FROM Transactions t
             LEFT JOIN Inventory i ON t.inventory_id = i.inventory_id
             LEFT JOIN Buyers b ON t.buyer_id = b.buyer_id
@@ -53,8 +53,8 @@ class Transaction {
         const query = `
             SELECT t.*, 
                    i.item_name, i.category,
-                   b.full_name as buyer_name,
-                   s.name as seller_name
+                   CONCAT(b.first_name, ' ', b.last_name) as buyer_name,
+                   CONCAT(s.first_name, ' ', s.last_name) as seller_name
             FROM Transactions t
             LEFT JOIN Inventory i ON t.inventory_id = i.inventory_id
             LEFT JOIN Buyers b ON t.buyer_id = b.buyer_id
@@ -71,8 +71,8 @@ class Transaction {
         let query = `
             SELECT t.*, 
                    i.item_name, i.category,
-                   b.full_name as buyer_name,
-                   s.name as seller_name
+                   CONCAT(b.first_name, ' ', b.last_name) as buyer_name,
+                   CONCAT(s.first_name, ' ', s.last_name) as seller_name
             FROM Transactions t
             LEFT JOIN Inventory i ON t.inventory_id = i.inventory_id
             LEFT JOIN Buyers b ON t.buyer_id = b.buyer_id

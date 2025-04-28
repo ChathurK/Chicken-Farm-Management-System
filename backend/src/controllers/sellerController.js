@@ -60,7 +60,7 @@ exports.createSeller = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { full_name, contact_number, email, address } = req.body;
+    const { first_name, last_name, contact_number, email, address } = req.body;
 
     // Check if email already exists
     if (email) {
@@ -72,7 +72,8 @@ exports.createSeller = async (req, res) => {
 
     // Create seller
     const seller = await Seller.create({
-      full_name,
+      first_name,
+      last_name,
       contact_number,
       email,
       address
@@ -102,7 +103,7 @@ exports.updateSeller = async (req, res) => {
       return res.status(404).json({ msg: 'Seller not found' });
     }
 
-    const { full_name, contact_number, email, address } = req.body;
+    const { first_name, last_name, contact_number, email, address } = req.body;
 
     // Check if email already exists and is different from current seller's email
     if (email && email !== seller.email) {
@@ -114,7 +115,8 @@ exports.updateSeller = async (req, res) => {
 
     // Update seller
     seller = await Seller.update(req.params.id, {
-      full_name,
+      first_name,
+      last_name,
       contact_number,
       email,
       address

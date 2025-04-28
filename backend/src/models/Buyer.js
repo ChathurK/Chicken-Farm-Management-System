@@ -3,10 +3,10 @@ const db = require('../config/database');
 class Buyer {
     // Create a new buyer
     static async create(buyerData) {
-        const { full_name, contact_number, email, address } = buyerData;
+        const { first_name, last_name, contact_number, email, address } = buyerData;
         
-        const query = 'INSERT INTO Buyers (full_name, contact_number, email, address) VALUES (?, ?, ?, ?)';
-        const [result] = await db.execute(query, [full_name, contact_number, email, address]);
+        const query = 'INSERT INTO Buyers (first_name, last_name, contact_number, email, address) VALUES (?, ?, ?, ?, ?)';
+        const [result] = await db.execute(query, [first_name, last_name, contact_number, email, address]);
         
         return { buyer_id: result.insertId, ...buyerData };
     }
@@ -27,17 +27,17 @@ class Buyer {
     
     // Get all buyers
     static async findAll() {
-        const query = 'SELECT * FROM Buyers ORDER BY full_name ASC';
+        const query = 'SELECT * FROM Buyers ORDER BY last_name ASC, first_name ASC';
         const [rows] = await db.execute(query);
         return rows;
     }
     
     // Update buyer
     static async update(id, buyerData) {
-        const { full_name, contact_number, email, address } = buyerData;
+        const { first_name, last_name, contact_number, email, address } = buyerData;
         
-        const query = 'UPDATE Buyers SET full_name = ?, contact_number = ?, email = ?, address = ? WHERE buyer_id = ?';
-        await db.execute(query, [full_name, contact_number, email, address, id]);
+        const query = 'UPDATE Buyers SET first_name = ?, last_name = ?, contact_number = ?, email = ?, address = ? WHERE buyer_id = ?';
+        await db.execute(query, [first_name, last_name, contact_number, email, address, id]);
         
         return { buyer_id: id, ...buyerData };
     }

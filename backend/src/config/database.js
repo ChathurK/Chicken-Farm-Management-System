@@ -26,7 +26,7 @@ const testConnection = async () => {
 // Call test connection function
 testConnection();
 
-/* const initializeDatabase = async () => {
+const initializeDatabase = async () => {
   try {
     // Check if Users table exists (as a test)
     const [tables] = await pool.query(`
@@ -54,13 +54,15 @@ testConnection();
       }
       
       console.log('Database schema created successfully');
+      process.exit(0);
     }
   } catch (error) {
     console.error('Error initializing database:', error.message);
+    process.exit(1);
   }
 };
 
 // Call this function when the application starts
-initializeDatabase(); */
+initializeDatabase();
 
 module.exports = pool;

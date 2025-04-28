@@ -41,7 +41,7 @@ exports.createUser = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { full_name, email, password, role } = req.body;
+    const { first_name, last_name, email, password, role } = req.body;
 
     // Check if user already exists
     let user = await User.findByEmail(email);
@@ -51,7 +51,8 @@ exports.createUser = async (req, res) => {
 
     // Create user
     user = await User.create({
-      full_name,
+      first_name,
+      last_name,
       email,
       password,
       role
@@ -81,11 +82,12 @@ exports.updateUser = async (req, res) => {
       return res.status(404).json({ msg: 'User not found' });
     }
 
-    const { full_name, email, role } = req.body;
+    const { first_name, last_name, email, role } = req.body;
 
     // Update user
     user = await User.update(req.params.id, {
-      full_name,
+      first_name,
+      last_name,
       email,
       role
     });

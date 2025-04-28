@@ -25,7 +25,8 @@ router.post(
   '/',
   [
     adminMiddleware,
-    check('full_name', 'Name is required').not().isEmpty(),
+    check('first_name', 'First name is required').not().isEmpty(),
+    check('last_name', 'Last name is required').not().isEmpty(),
     check('email', 'Please include a valid email').isEmail(),
     check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 }),
     check('role', 'Role must be either Admin or Employee').isIn(['Admin', 'Employee'])
@@ -40,7 +41,8 @@ router.put(
   '/:id',
   [
     adminMiddleware,
-    check('full_name', 'Name is required').not().isEmpty(),
+    check('first_name', 'First name is required').not().isEmpty(),
+    check('last_name', 'Last name is required').not().isEmpty(),
     check('email', 'Please include a valid email').isEmail(),
     check('role', 'Role must be either Admin or Employee').isIn(['Admin', 'Employee'])
   ],

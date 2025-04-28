@@ -13,7 +13,7 @@ exports.register = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { full_name, email, password, role } = req.body;
+    const { first_name, last_name, email, password, role } = req.body;
 
     // Check if user already exists
     let user = await User.findByEmail(email);
@@ -23,7 +23,8 @@ exports.register = async (req, res) => {
 
     // Create user
     user = await User.create({
-      full_name,
+      first_name,
+      last_name,
       email,
       password,
       role: role || 'Employee' // Default role is Employee
@@ -95,7 +96,8 @@ exports.login = async (req, res) => {
           token,
           user: {
             user_id: user.user_id,
-            full_name: user.full_name,
+            first_name: user.first_name,
+            last_name: user.last_name,
             email: user.email,
             role: user.role
           }

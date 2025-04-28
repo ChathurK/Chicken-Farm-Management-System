@@ -29,7 +29,8 @@ router.get('/:id/orders', buyerController.getBuyerOrderHistory);
 router.post(
   '/',
   [
-    check('full_name', 'Name is required').not().isEmpty(),
+    check('first_name', 'First name is required').not().isEmpty(),
+    check('last_name', 'Last name is required').not().isEmpty(),
     check('contact_number', 'Contact number is required').not().isEmpty()
   ],
   buyerController.createBuyer
@@ -41,7 +42,8 @@ router.post(
 router.put(
   '/:id',
   [
-    check('full_name', 'Name is required').not().isEmpty(),
+    check('first_name', 'First name is required').not().isEmpty(),
+    check('last_name', 'Last name is required').not().isEmpty(),
     check('contact_number', 'Contact number is required').not().isEmpty()
   ],
   buyerController.updateBuyer

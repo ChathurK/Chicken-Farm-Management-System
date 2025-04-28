@@ -60,7 +60,7 @@ exports.createBuyer = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { full_name, contact_number, email, address } = req.body;
+    const { first_name, last_name, contact_number, email, address } = req.body;
 
     // Check if email already exists
     if (email) {
@@ -72,7 +72,8 @@ exports.createBuyer = async (req, res) => {
 
     // Create buyer
     const buyer = await Buyer.create({
-      full_name,
+      first_name,
+      last_name,
       contact_number,
       email,
       address
@@ -102,7 +103,7 @@ exports.updateBuyer = async (req, res) => {
       return res.status(404).json({ msg: 'Buyer not found' });
     }
 
-    const { full_name, contact_number, email, address } = req.body;
+    const { first_name, last_name, contact_number, email, address } = req.body;
 
     // Check if email already exists and is different from current buyer's email
     if (email && email !== buyer.email) {
@@ -114,7 +115,8 @@ exports.updateBuyer = async (req, res) => {
 
     // Update buyer
     buyer = await Buyer.update(req.params.id, {
-      full_name,
+      first_name,
+      last_name,
       contact_number,
       email,
       address

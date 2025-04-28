@@ -95,7 +95,7 @@ const Topbar = () => {
           {showProfileMenu && (
             <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg z-10 py-2 border border-gray-200">
               <div className="px-4 py-3 border-b border-gray-200">
-                <p className="text-sm font-medium">{user?.full_name || 'User'}</p>
+                <p className="text-sm font-medium">{user?.first_name ? `${user.first_name} ${user.last_name}` : 'User'}</p>
                 <p className="text-xs text-gray-500 mt-1">{user?.email || 'user@example.com'}</p>
               </div>
               <a 
