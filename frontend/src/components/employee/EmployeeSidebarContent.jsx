@@ -1,5 +1,5 @@
 import React from 'react';
-import { SidebarItem, SubMenu } from '../admin/SidebarItem';
+import { SidebarItem, SubMenu } from '../shared/SidebarItem';
 import { House, ShoppingCart, Bird, ArchiveBox, SignOut } from '@phosphor-icons/react';
 import { useAuth } from '../../context/AuthContext';
 

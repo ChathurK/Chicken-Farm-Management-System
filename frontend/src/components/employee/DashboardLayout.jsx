@@ -1,6 +1,6 @@
 import React from 'react';
-import Sidebar from '../admin/Sidebar';
-import Topbar from '../admin/Topbar';
+import Sidebar from '../shared/Sidebar';
+import Topbar from '../shared/Topbar';
 import EmployeeSidebarContent from './EmployeeSidebarContent';
 
 export default function DashboardLayout({ children }) {

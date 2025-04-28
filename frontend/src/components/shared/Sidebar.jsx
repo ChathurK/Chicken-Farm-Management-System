@@ -3,7 +3,6 @@ import { assets } from '../../assets/assets'
 import { createContext, useState } from 'react'
 
 export const SidebarContext = createContext()
-// const SidebarContext = createContext()
 
 export default function Sidebar({ children }) {
   const [expanded, setExpanded] = useState(true)

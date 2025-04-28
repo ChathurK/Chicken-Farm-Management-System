@@ -72,14 +72,15 @@ CHICKEN-FARM-MANAGEMENT-SYSTEM-II/
 │   │   │   ├── admin/
 │   │   │   │   ├── AdminSidebarContent.jsx
 │   │   │   │   ├── Dashboard.jsx
-│   │   │   │   ├── DashboardLayout.jsx
-│   │   │   │   ├── Sidebar.jsx
-│   │   │   │   ├── SidebarItem.jsx
-│   │   │   │   └── Topbar.jsx
+│   │   │   │   └── DashboardLayout.jsx
 │   │   │   ├── employee/
 │   │   │   │   ├── Dashboard.jsx
 │   │   │   │   ├── DashboardLayout.jsx
 │   │   │   │   └── EmployeeSidebarContent.jsx
+│   │   │   ├── shared/
+│   │   │   │   ├── Sidebar.jsx
+│   │   │   │   ├── SidebarItem.jsx
+│   │   │   │   └── Topbar.jsx
 │   │   │   └── landing/
 │   │   │       ├── About.jsx
 │   │   │       ├── ContactUs.jsx
