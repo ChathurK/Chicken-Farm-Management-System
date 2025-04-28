@@ -27,7 +27,7 @@ class Seller {
     
     // Get all sellers
     static async findAll() {
-        const query = 'SELECT * FROM Sellers ORDER BY last_name ASC, first_name ASC';
+        const query = 'SELECT * FROM Sellers ORDER BY first_name ASC, last_name ASC';
         const [rows] = await db.execute(query);
         return rows;
     }
