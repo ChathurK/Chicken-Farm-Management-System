@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Bell, UserCircle, Moon, Sun, SignOut, User } from '@phosphor-icons/react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -8,6 +8,35 @@ const Topbar = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { user, logout } = useAuth();
   
+  // Refs for dropdown containers
+  const notificationRef = useRef(null);
+  const profileRef = useRef(null);
+
+  // Effect to handle clicks outside of dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Close notification dropdown if click is outside
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+      
+      // Close profile dropdown if click is outside
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    // Add event listener when dropdowns are open
+    if (showNotifications || showProfileMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    // Cleanup event listener
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications, showProfileMenu]);
+
   // Demo notifications
   const notifications = [
     { id: 1, message: "New order received", time: "5 min ago" },
@@ -54,7 +83,7 @@ const Topbar = () => {
         </button>
         
         {/* Notifications */}
-        <div className="relative">
+        <div className="relative" ref={notificationRef}>
           <button 
             onClick={handleNotificationClick} 
             className="p-2 rounded-full hover:bg-gray-200 transition-colors duration-300"
@@ -89,7 +118,7 @@ const Topbar = () => {
         </div>
         
         {/* User Profile */}
-        <div className="relative">
+        <div className="relative" ref={profileRef}>
           <button 
             onClick={handleProfileClick}
             className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-200 transition-colors duration-300"
