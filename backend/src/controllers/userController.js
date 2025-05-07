@@ -10,7 +10,7 @@ exports.getAllUsers = async (req, res) => {
     res.json(users);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ msg: 'Server Error' });
   }
 };
 
@@ -26,7 +26,7 @@ exports.getUserById = async (req, res) => {
     res.json(user);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ msg: 'Server Error' });
   }
 };
 
@@ -61,13 +61,13 @@ exports.createUser = async (req, res) => {
     res.status(201).json(user);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ msg: 'Server Error' });
   }
 };
 
 // @desc    Update user
 // @route   PUT /api/users/:id
-// @access  Private/Admin
+// @access  Private/Admin or Self (for own profile)
 exports.updateUser = async (req, res) => {
   try {
     // Check for validation errors
@@ -82,20 +82,42 @@ exports.updateUser = async (req, res) => {
       return res.status(404).json({ msg: 'User not found' });
     }
 
+    // Check permissions - users can only update their own profile, admins can update any
+    const isSelfUpdate = req.user.id === parseInt(req.params.id);
+    const isAdmin = req.user.role === 'Admin';
+    
+    if (!isSelfUpdate && !isAdmin) {
+      return res.status(403).json({ msg: 'Not authorized to update this user' });
+    }
+
     const { first_name, last_name, email, role } = req.body;
 
-    // Update user
-    user = await User.update(req.params.id, {
+    // For self-updates, don't allow role changes
+    // For admin updates, allow role changes
+    let updateData = {
       first_name,
       last_name,
-      email,
-      role
-    });
+      email
+    };
+
+    // Only include role for admin updates of other users
+    if (isAdmin && !isSelfUpdate && role) {
+      updateData.role = role;
+    }
+
+    // Update user
+    user = await User.update(req.params.id, updateData);
 
     res.json(user);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    
+    // Check for duplicate entry errors from MySQL
+    if (err.message && err.message.includes('Duplicate entry') && err.message.includes('email')) {
+      return res.status(400).json({ msg: 'Email address is already in use by another account' });
+    }
+    
+    res.status(500).json({ msg: 'Server Error' });
   }
 };
 
@@ -129,7 +151,7 @@ exports.updatePassword = async (req, res) => {
     res.json({ msg: 'Password updated' });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ msg: 'Server Error' });
   }
 };
 
@@ -150,6 +172,6 @@ exports.deleteUser = async (req, res) => {
     res.json({ msg: 'User removed' });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ msg: 'Server Error' });
   }
 };

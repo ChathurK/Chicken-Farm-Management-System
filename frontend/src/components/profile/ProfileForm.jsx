@@ -41,12 +41,19 @@ const ProfileForm = ({ user }) => {
 
   const handleCancel = () => {
     setIsEditing(false);
-    setError(''); // Clear any error messages when canceling
+    setError('');
+    setSuccess('');
     setFormData({
       first_name: user.first_name || '',
       last_name: user.last_name || '',
       email: user.email || ''
     });
+  };
+
+  const toggleEditMode = () => {
+    setIsEditing(true);
+    setSuccess('');
+    setError('');
   };
 
   return (
@@ -67,7 +74,7 @@ const ProfileForm = ({ user }) => {
         {!isEditing && (
           <button
             type="button"
-            onClick={() => setIsEditing(true)}
+            onClick={toggleEditMode}
             className="inline-flex items-center px-4 py-2 border border-amber-600 text-sm font-medium rounded-md text-amber-600 bg-white hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors duration-300"
           >
             Edit Profile

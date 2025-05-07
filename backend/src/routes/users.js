@@ -35,16 +35,18 @@ router.post(
 );
 
 // @route   PUT /api/users/:id
-// @desc    Update user
-// @access  Private/Admin
+// @desc    Update user - Used by both admins and self-updates
+// @access  Private/Admin or Self
 router.put(
   '/:id',
   [
-    adminMiddleware,
     check('first_name', 'First name is required').not().isEmpty(),
     check('last_name', 'Last name is required').not().isEmpty(),
     check('email', 'Please include a valid email').isEmail(),
-    check('role', 'Role must be either Admin or Employee').isIn(['Admin', 'Employee'])
+    // Role validation only applies when provided (for admin updates of other users)
+    check('role', 'Role must be either Admin or Employee')
+      .optional()
+      .isIn(['Admin', 'Employee'])
   ],
   userController.updateUser
 );

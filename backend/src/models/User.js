@@ -41,11 +41,29 @@ class User {
     static async update(id, userData) {
         const { first_name, last_name, email, role } = userData;
         
+        // Get the current user to preserve role if not provided
+        let currentUser;
+        if (role === undefined) {
+            currentUser = await this.findById(id);
+        }
+        
         // Update query without password
         const query = 'UPDATE Users SET first_name = ?, last_name = ?, email = ?, role = ? WHERE user_id = ?';
-        await db.execute(query, [first_name, last_name, email, role, id]);
+        await db.execute(query, [
+            first_name, 
+            last_name, 
+            email, 
+            role !== undefined ? role : currentUser.role, 
+            id
+        ]);
         
-        return { user_id: id, first_name, last_name, email, role };
+        return { 
+            user_id: id, 
+            first_name, 
+            last_name, 
+            email, 
+            role: role !== undefined ? role : currentUser.role 
+        };
     }
     
     // Update password
