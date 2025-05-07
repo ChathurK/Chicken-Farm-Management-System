@@ -33,10 +33,20 @@ const ProfileForm = ({ user }) => {
       setSuccess('Profile updated successfully');
       setIsEditing(false);
     } catch (err) {
-      setError(err.message || 'Failed to update profile');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setError(''); // Clear any error messages when canceling
+    setFormData({
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
+      email: user.email || ''
+    });
   };
 
   return (
@@ -158,14 +168,7 @@ const ProfileForm = ({ user }) => {
           <div className="flex justify-end space-x-3">
             <button
               type="button"
-              onClick={() => {
-                setIsEditing(false);
-                setFormData({
-                  first_name: user.first_name || '',
-                  last_name: user.last_name || '',
-                  email: user.email || ''
-                });
-              }}
+              onClick={handleCancel}
               className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
             >
               Cancel

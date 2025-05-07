@@ -110,7 +110,17 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.msg || 'Profile update failed');
+        // Handle different error response formats
+        if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+          // Express-validator format with array of errors
+          throw new Error(data.errors[0].msg);
+        } else if (data.msg) {
+          // Simple message format
+          throw new Error(data.msg);
+        } else {
+          // Fallback message
+          throw new Error('Failed to update profile');
+        }
       }
       
       // Update user data in state
@@ -118,7 +128,8 @@ export const AuthProvider = ({ children }) => {
       
       return data;
     } catch (error) {
-      throw new Error(error.message || 'Profile update failed');
+      // Just re-throw the error, it will be handled by the component
+      throw error;
     }
   };
 
