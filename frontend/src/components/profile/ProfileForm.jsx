@@ -123,7 +123,7 @@ const ProfileForm = ({ user }) => {
                 value={formData.first_name}
                 onChange={handleChange}
                 required
-                className="mt-1 focus:ring-amber-500 focus:border-amber-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                className="mt-1 px-2 py-1 border rounded-md focus:outline-none focus:border-amber-500 block w-full shadow-sm sm:text-sm border-gray-300"
               />
             </div>
             <div>
@@ -137,7 +137,7 @@ const ProfileForm = ({ user }) => {
                 value={formData.last_name}
                 onChange={handleChange}
                 required
-                className="mt-1 focus:ring-amber-500 focus:border-amber-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                className="mt-1 px-2 py-1 border rounded-md focus:outline-none focus:border-amber-500 block w-full shadow-sm sm:text-sm border-gray-300"
               />
             </div>
             <div className="sm:col-span-2">
@@ -151,7 +151,7 @@ const ProfileForm = ({ user }) => {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="mt-1 focus:ring-amber-500 focus:border-amber-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                className="mt-1 px-2 py-1 border rounded-md focus:outline-none focus:border-amber-500 block w-full shadow-sm sm:text-sm border-gray-300"
               />
             </div>
           </div>

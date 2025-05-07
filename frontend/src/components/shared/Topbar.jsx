@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, UserCircle, Moon, Sun, SignOut, User } from '@phosphor-icons/react';
 import { useAuth } from '../../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Topbar = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   
   // Refs for dropdown containers
   const notificationRef = useRef(null);
@@ -136,9 +137,9 @@ const Topbar = () => {
                 <p className="text-xs text-gray-500 mt-1">{user?.email || 'user@example.com'}</p>
               </div>
               <Link 
-                to="/profile" 
-                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-300"
+                to="/profile"
                 onClick={() => setShowProfileMenu(false)}
+                className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-300"
               >
                 <User size={16} weight='duotone' />
                 My Profile

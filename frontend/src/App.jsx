@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import ScreenSizeIndicator from './components/ScreenSizeIndicator';
 import routes from './routes';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -8,8 +8,15 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 const AuthCheck = ({ children }) => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
+    // Skip redirect if the user is going to a permitted page
+    const allowedPaths = ['/profile', '/unauthorized'];
+    if (allowedPaths.includes(location.pathname)) {
+      return;
+    }
+
     if (!loading && user) {
       // Redirect based on user role
       if (user.role === 'Admin') {
@@ -18,7 +25,7 @@ const AuthCheck = ({ children }) => {
         navigate('/employeedashboard');
       }
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, location.pathname]);
 
   return children;
 };
