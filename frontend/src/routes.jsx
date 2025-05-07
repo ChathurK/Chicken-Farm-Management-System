@@ -6,6 +6,7 @@ import EmployeeDashboard from './components/employee/Dashboard';
 import NotFound from './components/NotFound';
 import Unauthorized from './components/Unauthorized';
 import ProtectedRoute from './components/ProtectedRoute';
+import Profile from './components/profile/Profile';
 
 const routes = [
   { path: '/', element: <LandingPage /> },
@@ -24,6 +25,13 @@ const routes = [
     element: <ProtectedRoute requireEmployee={true} />,
     children: [
       { path: '/employeedashboard', element: <EmployeeDashboard /> }
+    ],
+  },
+  // Protected routes for any authenticated user
+  {
+    element: <ProtectedRoute />,
+    children: [
+      { path: '/profile', element: <Profile /> }
     ],
   },
   { path: '*', element: <NotFound /> },

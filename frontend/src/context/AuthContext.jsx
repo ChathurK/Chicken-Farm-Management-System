@@ -95,6 +95,33 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Update user profile function
+  const updateProfile = async (userId, updatedData) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token
+        },
+        body: JSON.stringify(updatedData)
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.msg || 'Profile update failed');
+      }
+      
+      // Update user data in state
+      setUser(data);
+      
+      return data;
+    } catch (error) {
+      throw new Error(error.message || 'Profile update failed');
+    }
+  };
+
   // Logout function
   const logout = () => {
     // Remove token from localStorage
@@ -117,7 +144,8 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    isAuthenticated
+    isAuthenticated,
+    updateProfile
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

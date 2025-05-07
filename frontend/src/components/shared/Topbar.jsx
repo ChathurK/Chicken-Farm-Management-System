@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, UserCircle, Moon, Sun, SignOut, User } from '@phosphor-icons/react';
 import { useAuth } from '../../context/AuthContext';
+import { Link } from 'react-router-dom';
 
 const Topbar = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -134,13 +135,14 @@ const Topbar = () => {
                 <p className="text-sm font-medium">{user?.first_name ? `${user.first_name} ${user.last_name}` : 'User'}</p>
                 <p className="text-xs text-gray-500 mt-1">{user?.email || 'user@example.com'}</p>
               </div>
-              <a 
-                href="/profile" 
+              <Link 
+                to="/profile" 
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-300"
+                onClick={() => setShowProfileMenu(false)}
               >
                 <User size={16} weight='duotone' />
                 My Profile
-              </a>
+              </Link>
               <button 
                 onClick={logout} 
                 className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-300"
