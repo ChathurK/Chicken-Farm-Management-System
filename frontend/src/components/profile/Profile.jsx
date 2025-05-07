@@ -1,11 +1,23 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import ProfileForm from './ProfileForm';
 import PasswordForm from './PasswordForm';
+import { CaretLeft } from '@phosphor-icons/react';
 
 const Profile = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
+  const navigate = useNavigate();
+
+  const handleBackClick = () => {
+    // Redirect based on user role
+    if (user && user.role === 'Admin') {
+      navigate('/admindashboard');
+    } else {
+      navigate('/employeedashboard');
+    }
+  };
 
   if (!user) {
     return (
@@ -25,7 +37,16 @@ const Profile = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto w-full">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">My Profile</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">My Profile</h1>
+          <button
+            onClick={handleBackClick}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-600 bg-white border border-amber-600 rounded-md hover:bg-amber-50 transition-colors duration-300"
+          >
+            <CaretLeft size={16} weight="duotone" />
+            Back to Dashboard
+          </button>
+        </div>
         
         {/* Tabs */}
         <div className="flex border-b border-gray-200 mb-6">

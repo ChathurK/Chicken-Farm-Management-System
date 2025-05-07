@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, UserCircle, Moon, Sun, SignOut, User } from '@phosphor-icons/react';
+import { Bell, UserCircle, Moon, Sun, SignOut, User, CaretDown } from '@phosphor-icons/react';
 import { useAuth } from '../../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -123,10 +123,15 @@ const Topbar = () => {
         <div className="relative" ref={profileRef}>
           <button 
             onClick={handleProfileClick}
-            className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-200 transition-colors duration-300"
+            className="flex items-center gap-1 p-2 rounded-full hover:bg-gray-200 transition-colors duration-300"
             aria-label="User menu"
           >
             <UserCircle size={28} weight='duotone' className="text-amber-600" />
+            <CaretDown 
+              size={12} 
+              weight='duotone' 
+              className={`text-amber-600 transition-transform duration-300 ${showProfileMenu ? 'rotate-180' : ''}`} 
+            />
           </button>
           
           {/* Profile dropdown */}
