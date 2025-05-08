@@ -11,7 +11,7 @@ export default function AdminSidebarContent() {
             <SidebarItem 
                 icon={<House size={20} weight="duotone" />} 
                 text="Dashboard" 
-                to="/admindashboard" 
+                to="/admin/dashboard" 
             />
             <SidebarItem 
                 icon={<CalendarDots size={20} weight="duotone" />} 

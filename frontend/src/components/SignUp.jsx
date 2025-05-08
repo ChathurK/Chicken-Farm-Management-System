@@ -37,9 +37,9 @@ const SignUp = () => {
       
       // On successful registration, the AuthContext will update and redirect
       if (role === 'Admin') {
-        navigate('/admindashboard');
+        navigate('/admin/dashboard');
       } else {
-        navigate('/employeedashboard');
+        navigate('/employee/dashboard');
       }
     } catch (error) {
       setError(error.message);

@@ -11,7 +11,7 @@ export default function EmployeeSidebarContent() {
             <SidebarItem 
                 icon={<House size={20} weight="duotone" />} 
                 text="Dashboard" 
-                to="/employeedashboard" 
+                to="/employee/dashboard" 
             />
             <SidebarItem 
                 icon={<ShoppingCart size={20} weight="duotone" />} 

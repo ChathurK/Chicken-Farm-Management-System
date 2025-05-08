@@ -17,14 +17,14 @@ const routes = [
   {
     element: <ProtectedRoute requireAdmin={true} />,
     children: [
-      { path: '/admindashboard', element: <AdminDashboard /> }
+      { path: '/admin/dashboard', element: <AdminDashboard /> }
     ],
   },
   // Protected routes for employee users
   {
     element: <ProtectedRoute requireEmployee={true} />,
     children: [
-      { path: '/employeedashboard', element: <EmployeeDashboard /> }
+      { path: '/employee/dashboard', element: <EmployeeDashboard /> }
     ],
   },
   // Protected routes for any authenticated user

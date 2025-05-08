@@ -13,9 +13,9 @@ const Profile = () => {
   const handleBackClick = () => {
     // Redirect based on user role
     if (user && user.role === 'Admin') {
-      navigate('/admindashboard');
+      navigate('/admin/dashboard');
     } else {
-      navigate('/employeedashboard');
+      navigate('/employee/dashboard');
     }
   };
 

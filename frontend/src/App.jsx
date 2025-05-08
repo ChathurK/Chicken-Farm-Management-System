@@ -20,9 +20,9 @@ const AuthCheck = ({ children }) => {
     if (!loading && user) {
       // Redirect based on user role
       if (user.role === 'Admin') {
-        navigate('/admindashboard');
+        navigate('/admin/dashboard');
       } else {
-        navigate('/employeedashboard');
+        navigate('/employee/dashboard');
       }
     }
   }, [user, loading, navigate, location.pathname]);

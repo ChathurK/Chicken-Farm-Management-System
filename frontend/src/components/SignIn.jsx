@@ -16,9 +16,9 @@ const SignIn = () => {
   useEffect(() => {
     if (user) {
       if (user.role === 'Admin') {
-        navigate('/admindashboard');
+        navigate('/admin/dashboard');
       } else {
-        navigate('/employeedashboard');
+        navigate('/employee/dashboard');
       }
     }
   }, [user, navigate]);
