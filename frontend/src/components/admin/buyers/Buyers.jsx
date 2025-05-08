@@ -14,7 +14,7 @@ const Buyers = () => {
   const [sortDirection, setSortDirection] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(8); // Number of items per page
   const [showAddModal, setShowAddModal] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [buyerToDelete, setBuyerToDelete] = useState(null);
@@ -217,6 +217,7 @@ const Buyers = () => {
               onClick={() => {
                 setShowConfirmDelete(false);
                 setBuyerToDelete(null);
+                setError(null);
               }}
               className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
             >

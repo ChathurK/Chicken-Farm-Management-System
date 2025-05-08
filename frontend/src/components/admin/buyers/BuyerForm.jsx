@@ -74,6 +74,7 @@ const BuyerForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setError(null);
     setFormData(prev => ({
       ...prev,
       [name]: value
