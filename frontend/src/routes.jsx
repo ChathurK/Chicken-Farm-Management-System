@@ -8,6 +8,15 @@ import Unauthorized from './components/Unauthorized';
 import ProtectedRoute from './components/ProtectedRoute';
 import Profile from './components/profile/Profile';
 
+// Admin components
+import Calendar from './components/admin/calendar/Calendar';
+import Orders from './components/admin/orders/Orders';
+import Income from './components/admin/finance/income/Income';
+import Expenses from './components/admin/finance/expenses/Expenses';
+import Buyers from './components/admin/buyers/Buyers';
+import Sellers from './components/admin/sellers/Sellers';
+import Employees from './components/admin/employees/Employees';
+
 const routes = [
   { path: '/', element: <LandingPage /> },
   { path: '/signin', element: <SignIn /> },
@@ -17,7 +26,14 @@ const routes = [
   {
     element: <ProtectedRoute requireAdmin={true} />,
     children: [
-      { path: '/admin/dashboard', element: <AdminDashboard /> }
+      { path: '/admin/dashboard', element: <AdminDashboard /> },
+      { path: '/admin/calendar', element: <Calendar /> },
+      { path: '/admin/orders', element: <Orders /> },
+      { path: '/admin/finance/income', element: <Income /> },
+      { path: '/admin/finance/expenses', element: <Expenses /> },
+      { path: '/admin/buyers', element: <Buyers /> },
+      { path: '/admin/sellers', element: <Sellers /> },
+      { path: '/admin/employees', element: <Employees /> },
     ],
   },
   // Protected routes for employee users
