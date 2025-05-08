@@ -11,9 +11,11 @@ const AuthCheck = ({ children }) => {
   const location = useLocation();
 
   useEffect(() => {
-    // Skip redirect if the user is going to a permitted page
-    const allowedPaths = ['/profile', '/unauthorized'];
-    if (allowedPaths.includes(location.pathname)) {
+    // Skip redirect if user is already in a role-appropriate path
+    if (location.pathname.startsWith('/admin/') ||
+      location.pathname.startsWith('/employee/') ||
+      location.pathname === '/profile' ||
+      location.pathname === '/unauthorized') {
       return;
     }
 
