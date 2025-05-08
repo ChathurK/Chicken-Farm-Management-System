@@ -140,7 +140,6 @@ export const AuthProvider = ({ children }) => {
     // Clear user data from state
     setToken(null);
     setUser(null);
-    // Redirect can be handled by the component using this function
   };
 
   // Check if user is authenticated
@@ -151,6 +150,7 @@ export const AuthProvider = ({ children }) => {
   // Context value
   const value = {
     user,
+    token,
     loading,
     login,
     register,

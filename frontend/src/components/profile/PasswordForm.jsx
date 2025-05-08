@@ -14,6 +14,9 @@ const PasswordForm = ({ userId }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setError('');
+    setSuccess('');
+    // Update form data
     setFormData({
       ...formData,
       [name]: value
