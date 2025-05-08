@@ -14,6 +14,8 @@ import Orders from './components/admin/orders/Orders';
 import Income from './components/admin/finance/income/Income';
 import Expenses from './components/admin/finance/expenses/Expenses';
 import Buyers from './components/admin/buyers/Buyers';
+import BuyerForm from './components/admin/buyers/BuyerForm';
+import BuyerDetails from './components/admin/buyers/BuyerDetails';
 import Sellers from './components/admin/sellers/Sellers';
 import Employees from './components/admin/employees/Employees';
 
@@ -32,6 +34,9 @@ const routes = [
       { path: '/admin/finance/income', element: <Income /> },
       { path: '/admin/finance/expenses', element: <Expenses /> },
       { path: '/admin/buyers', element: <Buyers /> },
+      { path: '/admin/buyers/add', element: <BuyerForm /> },
+      { path: '/admin/buyers/edit/:id', element: <BuyerForm /> },
+      { path: '/admin/buyers/:id', element: <BuyerDetails /> },
       { path: '/admin/sellers', element: <Sellers /> },
       { path: '/admin/employees', element: <Employees /> },
     ],
