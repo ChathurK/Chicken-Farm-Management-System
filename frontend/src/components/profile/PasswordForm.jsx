@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Lock } from '@phosphor-icons/react';
+import api from '../../utils/api';
 
 const PasswordForm = ({ userId }) => {
   const { token } = useAuth();
@@ -43,28 +44,19 @@ const PasswordForm = ({ userId }) => {
     setLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:5000/api/users/${userId}/password`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': token
-        },
-        body: JSON.stringify({ new_password: formData.new_password })
+      await api.put(`/api/users/${userId}/password`, {
+        new_password: formData.new_password
       });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.msg || 'Failed to update password');
-      }
       
       setSuccess('Password updated successfully');
+      
+      // Reset form
       setFormData({
         new_password: '',
         confirm_password: ''
       });
     } catch (err) {
-      setError(err.message || 'Failed to update password');
+      setError(err.response?.data?.msg || 'Failed to update password');
     } finally {
       setLoading(false);
     }

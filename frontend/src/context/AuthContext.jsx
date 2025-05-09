@@ -1,4 +1,5 @@
 import { createContext, useState, useContext, useEffect } from 'react';
+import api from '../utils/api';
 
 // Create the context
 const AuthContext = createContext();
@@ -14,19 +15,8 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
       if (token) {
         try {
-          const response = await fetch('http://localhost:5000/api/auth/me', {
-            headers: {
-              'x-auth-token': token
-            }
-          });
-          
-          if (response.ok) {
-            const userData = await response.json();
-            setUser(userData);
-          } else {
-            // Token is invalid or expired
-            logout();
-          }
+          const response = await api.get('/api/auth/me');
+          setUser(response.data);
         } catch (error) {
           console.error('Auth check failed:', error);
           logout();
@@ -42,94 +32,59 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async (email, password) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, password })
+      const response = await api.post('/api/auth/login', { 
+        email, 
+        password 
       });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.msg || 'Login failed');
-      }
       
       // Save token to localStorage and state
-      localStorage.setItem('token', data.token);
-      setToken(data.token);
-      setUser(data.user);
+      localStorage.setItem('token', response.data.token);
+      setToken(response.data.token);
+      setUser(response.data.user);
       
-      return data;
+      return response.data;
     } catch (error) {
-      throw new Error(error.message || 'Login failed');
+      throw new Error(error.response?.data?.msg || 'Login failed');
     }
   };
 
   // Register function
   const register = async (userData) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(userData)
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.msg || 'Registration failed');
-      }
+      const response = await api.post('/api/auth/register', userData);
       
       // Save token to localStorage and state
-      localStorage.setItem('token', data.token);
-      setToken(data.token);
-      setUser(data.user);
+      localStorage.setItem('token', response.data.token);
+      setToken(response.data.token);
+      setUser(response.data.user);
       
-      return data;
+      return response.data;
     } catch (error) {
-      throw new Error(error.message || 'Registration failed');
+      throw new Error(error.response?.data?.msg || 'Registration failed');
     }
   };
 
   // Update user profile function
   const updateProfile = async (userId, updatedData) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': token
-        },
-        body: JSON.stringify(updatedData)
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        // Handle different error response formats
-        if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
-          // Express-validator format with array of errors
-          throw new Error(data.errors[0].msg);
-        } else if (data.msg) {
-          // Simple message format
-          throw new Error(data.msg);
-        } else {
-          // Fallback message
-          throw new Error('Failed to update profile');
-        }
-      }
+      const response = await api.put(`/api/users/${userId}`, updatedData);
       
       // Update user data in state
-      setUser(data);
+      setUser(response.data);
       
-      return data;
+      return response.data;
     } catch (error) {
-      // Just re-throw the error, it will be handled by the component
-      throw error;
+      // Handle different error response formats
+      if (error.response?.data?.errors && Array.isArray(error.response.data.errors) && error.response.data.errors.length > 0) {
+        // Express-validator format with array of errors
+        throw new Error(error.response.data.errors[0].msg);
+      } else if (error.response?.data?.msg) {
+        // Simple message format
+        throw new Error(error.response.data.msg);
+      } else {
+        // Fallback message
+        throw new Error('Failed to update profile');
+      }
     }
   };
 
