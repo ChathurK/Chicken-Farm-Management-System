@@ -14,7 +14,7 @@ const Buyers = () => {
   const [sortDirection, setSortDirection] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [itemsPerPage] = useState(8); // Number of items per page
+  const [itemsPerPage] = useState(20); // Number of items per page
   const [showAddModal, setShowAddModal] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [buyerToDelete, setBuyerToDelete] = useState(null);
@@ -237,7 +237,7 @@ const Buyers = () => {
 
   return (
     <DashboardLayout>
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="flex flex-col bg-white rounded-lg shadow p-6 h-full">
         {/* Header with title and add button */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Buyers</h1>
@@ -277,9 +277,9 @@ const Buyers = () => {
         </div>
         
         {/* Buyers Table */}
-        <div className="overflow-x-auto">
+        <div className="h-[calc(100vh-350px)] overflow-auto mb-4">
           <table className="w-full text-sm text-left text-gray-500">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0">
               <tr>
                 <th scope="col" className="px-6 py-3 cursor-pointer hover:text-amber-600" onClick={() => handleSort('name')}>
                   <div className="flex items-center">
@@ -308,9 +308,12 @@ const Buyers = () => {
             </tbody>
           </table>
         </div>
-        
-        {/* Pagination */}
-        {!loading && buyers.length > 0 && <Pagination />}
+          {/* Pagination */}
+        {!loading && buyers.length > 0 && (
+          <div className="mt-auto">
+            <Pagination />
+          </div>
+        )}
         
         {/* Delete Confirmation Modal */}
         <DeleteConfirmationModal />
