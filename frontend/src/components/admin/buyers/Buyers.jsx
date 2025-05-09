@@ -22,7 +22,7 @@ const Buyers = () => {
   // Fetch buyers data
   useEffect(() => {
     fetchBuyers();
-  }, [currentPage, sortField, sortDirection]);
+  }, [currentPage, sortField, sortDirection, searchTerm]);
 
   const fetchBuyers = async () => {
     try {
