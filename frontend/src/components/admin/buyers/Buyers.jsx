@@ -22,7 +22,7 @@ const Buyers = () => {
   // Fetch buyers data
   useEffect(() => {
     fetchBuyers();
-  }, [currentPage, sortField, sortDirection]);
+  }, [currentPage, sortField, sortDirection, searchTerm]);
 
   const fetchBuyers = async () => {
     try {
@@ -281,19 +281,19 @@ const Buyers = () => {
           <table className="w-full text-sm text-left text-gray-500">
             <thead className="text-xs text-gray-700 uppercase bg-gray-50">
               <tr>
-                <th scope="col" className="px-6 py-3 cursor-pointer" onClick={() => handleSort('name')}>
+                <th scope="col" className="px-6 py-3 cursor-pointer hover:text-amber-600" onClick={() => handleSort('name')}>
                   <div className="flex items-center">
                     Name
                     <ArrowsDownUp size={14} className="ml-1" />
                   </div>
                 </th>
-                <th scope="col" className="px-6 py-3 cursor-pointer" onClick={() => handleSort('contact_number')}>
+                <th scope="col" className="px-6 py-3 cursor-pointer hover:text-amber-600" onClick={() => handleSort('contact_number')}>
                   <div className="flex items-center">
                     Contact Number
                     <ArrowsDownUp size={14} className="ml-1" />
                   </div>
                 </th>
-                <th scope="col" className="px-6 py-3 cursor-pointer" onClick={() => handleSort('email')}>
+                <th scope="col" className="px-6 py-3 cursor-pointer hover:text-amber-600" onClick={() => handleSort('email')}>
                   <div className="flex items-center">
                     Email
                     <ArrowsDownUp size={14} className="ml-1" />
