@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
 import { ArrowLeft } from '@phosphor-icons/react';
@@ -109,19 +109,20 @@ const BuyerForm = () => {
       setSubmitting(false);
       navigate('/admin/buyers');
     } catch (err) {
-      const errorMsg = err.response?.data?.msg || 'Error saving buyer data';
-      
       // Handle validation errors from API
       if (err.response?.data?.errors) {
         const apiErrors = {};
         err.response.data.errors.forEach(error => {
-          const field = error.param;
+          const field = error.path;
           apiErrors[field] = error.msg;
         });
         setValidationErrors(apiErrors);
+        setError(null); // Clear general error if validation errors exist
+      } else {
+        const errorMsg = err.response?.data?.msg;
+
+        setError(errorMsg);
       }
-      
-      setError(errorMsg);
       setSubmitting(false);
     }
   };
@@ -152,6 +153,7 @@ const BuyerForm = () => {
           <h1 className="text-2xl font-bold">{isEditing ? 'Edit Buyer' : 'Add New Buyer'}</h1>
         </div>
         
+        {/* Display error message if any */}
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
             {error}

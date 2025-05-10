@@ -31,7 +31,8 @@ router.post(
   [
     check('first_name', 'First name is required').not().isEmpty(),
     check('last_name', 'Last name is required').not().isEmpty(),
-    check('contact_number', 'Contact number is required').not().isEmpty()
+    check('contact_number', 'Contact number is required').not().isEmpty(),
+    check('email', 'Please include a valid email').isEmail()
   ],
   buyerController.createBuyer
 );
