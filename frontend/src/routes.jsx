@@ -17,6 +17,8 @@ import Buyers from './components/admin/buyers/Buyers';
 import BuyerForm from './components/admin/buyers/BuyerForm';
 import BuyerDetails from './components/admin/buyers/BuyerDetails';
 import Sellers from './components/admin/sellers/Sellers';
+import SellerForm from './components/admin/sellers/SellerForm';
+import SellerDetails from './components/admin/sellers/SellerDetails';
 import Employees from './components/admin/employees/Employees';
 
 const routes = [
@@ -38,22 +40,21 @@ const routes = [
       { path: '/admin/buyers/edit/:id', element: <BuyerForm /> },
       { path: '/admin/buyers/:id', element: <BuyerDetails /> },
       { path: '/admin/sellers', element: <Sellers /> },
+      { path: '/admin/sellers/add', element: <SellerForm /> },
+      { path: '/admin/sellers/edit/:id', element: <SellerForm /> },
+      { path: '/admin/sellers/:id', element: <SellerDetails /> },
       { path: '/admin/employees', element: <Employees /> },
     ],
   },
   // Protected routes for employee users
   {
     element: <ProtectedRoute requireEmployee={true} />,
-    children: [
-      { path: '/employee/dashboard', element: <EmployeeDashboard /> }
-    ],
+    children: [{ path: '/employee/dashboard', element: <EmployeeDashboard /> }],
   },
   // Protected routes for any authenticated user
   {
     element: <ProtectedRoute />,
-    children: [
-      { path: '/profile', element: <Profile /> }
-    ],
+    children: [{ path: '/profile', element: <Profile /> }],
   },
   { path: '*', element: <NotFound /> },
 ];

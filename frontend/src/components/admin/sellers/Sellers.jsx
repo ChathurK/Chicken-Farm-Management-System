@@ -1,94 +1,352 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
-import { Plus, MagnifyingGlass, Pencil, Trash } from '@phosphor-icons/react';
+import { Plus, MagnifyingGlass, Pencil, Trash, Eye, ArrowsClockwise, SortAscending, SortDescending } from '@phosphor-icons/react';
+import { ConfirmationModal } from './SellerModal';
+import api from '../../../utils/api';
 
 const Sellers = () => {
-  // Sample sellers data
-  const [sellers, setSellers] = useState([
-    { id: 1, name: 'Farm Supply Co', contact: 'Robert Johnson', phone: '123-456-7890', email: 'robert@farmsupply.com', type: 'Feed Supplier' },
-    { id: 2, name: 'Poultry Supplies Ltd', contact: 'Jennifer Williams', phone: '234-567-8901', email: 'jennifer@poultrysupplies.com', type: 'Equipment' },
-    { id: 3, name: 'Egg Crate Manufacturers', contact: 'David Brown', phone: '345-678-9012', email: 'david@eggcrates.com', type: 'Packaging' },
-    { id: 4, name: 'MediVet Supplies', contact: 'Lisa Garcia', phone: '456-789-0123', email: 'lisa@medivet.com', type: 'Medication' },
-    { id: 5, name: 'Organic Feed Inc', contact: 'Thomas Moore', phone: '567-890-1234', email: 'thomas@organicfeed.com', type: 'Feed Supplier' },
-  ]);
-  
+  const navigate = useNavigate();
+
+  // State variables
+  const [sellers, setSellers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // Filter sellers based on search term
-  const filteredSellers = sellers.filter(seller => 
-    seller.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    seller.contact.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    seller.type.toLowerCase().includes(searchTerm.toLowerCase())
+  const [sellerToDelete, setSellerToDelete] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState({
+    field: 'first_name',
+    direction: 'asc',
+  });
+
+  const sellersPerPage = 10;
+
+  // Fetch sellers
+  const fetchSellers = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/api/sellers');
+      setSellers(response.data);
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to load sellers. Please try again.');
+      setLoading(false);
+      console.error('Error fetching sellers:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchSellers();
+  }, []);
+
+  // Handle delete seller
+  const handleDeleteClick = (seller) => {
+    setSellerToDelete(seller);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await api.delete(`/api/sellers/${sellerToDelete.seller_id}`);
+      setSellers(
+        sellers.filter(
+          (seller) => seller.seller_id !== sellerToDelete.seller_id
+        )
+      );
+      setShowDeleteModal(false);
+    } catch (err) {
+      setError('Failed to delete seller. Please try again.');
+      console.error('Error deleting seller:', err);
+    }
+  };
+
+  // Handle sorting
+  const handleSort = (field) => {
+    let direction = 'asc';
+    if (sortConfig.field === field && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ field, direction });
+  };
+
+  // Filter and sort sellers
+  const filteredSellers = sellers.filter(
+    (seller) =>
+      `${seller.first_name} ${seller.last_name}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      (seller.email &&
+        seller.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      seller.contact_number.includes(searchTerm)
   );
+
+  const sortedSellers = [...filteredSellers].sort((a, b) => {
+    const { field, direction } = sortConfig;
+
+    // Handle nested fields (e.g., first_name + last_name for full name)
+    if (field === 'name') {
+      const fullNameA = `${a.first_name} ${a.last_name}`.toLowerCase();
+      const fullNameB = `${b.first_name} ${b.last_name}`.toLowerCase();
+
+      if (direction === 'asc') {
+        return fullNameA.localeCompare(fullNameB);
+      } else {
+        return fullNameB.localeCompare(fullNameA);
+      }
+    }
+
+    // For other fields
+    const valueA = (a[field] || '').toLowerCase();
+    const valueB = (b[field] || '').toLowerCase();
+
+    if (direction === 'asc') {
+      return valueA.localeCompare(valueB);
+    } else {
+      return valueB.localeCompare(valueA);
+    }
+  });
+
+  // Pagination
+  const indexOfLastSeller = currentPage * sellersPerPage;
+  const indexOfFirstSeller = indexOfLastSeller - sellersPerPage;
+  const currentSellers = sortedSellers.slice(
+    indexOfFirstSeller,
+    indexOfLastSeller
+  );
+  const totalPages = Math.ceil(sortedSellers.length / sellersPerPage);
+
+  // Get sort icon
+  const getSortIcon = (field) => {
+    if (sortConfig.field !== field) {
+      return null;
+    }
+
+    return sortConfig.direction === 'asc' ? (
+      <SortAscending size={16} weight="bold" className="ml-1 inline" />
+    ) : (
+      <SortDescending size={16} weight="bold" className="ml-1 inline" />
+    );
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString();
+  };
 
   return (
     <DashboardLayout>
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex justify-between items-center mb-6">
+      <div className="rounded-lg bg-white p-6 shadow">
+        {/* Header */}
+        <div className="mb-6 flex flex-wrap items-center justify-between">
           <h1 className="text-2xl font-bold">Sellers</h1>
-          <button className="bg-amber-500 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-            <Plus size={20} weight="bold" />
-            Add New Seller
-          </button>
+          <div className="mt-2 flex gap-2 sm:mt-0">
+            <button
+              onClick={fetchSellers}
+              className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-gray-600 hover:bg-gray-50"
+              disabled={loading}
+            >
+              <ArrowsClockwise
+                size={18}
+                weight="bold"
+                className={loading ? 'animate-spin' : ''}
+              />
+              {loading ? 'Loading...' : 'Refresh'}
+            </button>
+            <button
+              onClick={() => navigate('/admin/sellers/add')}
+              className="flex items-center gap-1 rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
+            >
+              <Plus size={18} weight="bold" />
+              Add New Seller
+            </button>
+          </div>
         </div>
-        
+
+        {/* Error message */}
+        {error && (
+          <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+            <p>{error}</p>
+          </div>
+        )}
+
         {/* Search */}
         <div className="mb-6">
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <MagnifyingGlass size={20} className="text-gray-400" />
             </div>
             <input
               type="text"
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-amber-500 focus:border-amber-500 block w-full pl-10 p-2.5"
-              placeholder="Search sellers by name, contact, or type"
+              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:ring-amber-500"
+              placeholder="Search by name, email, or phone number"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
-        
+
         {/* Sellers Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left text-gray-500">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+          <table className="w-full text-left text-sm text-gray-500">
+            <thead className="bg-gray-50 text-xs uppercase text-gray-700">
               <tr>
-                <th scope="col" className="px-6 py-3">Seller Name</th>
-                <th scope="col" className="px-6 py-3">Contact Person</th>
-                <th scope="col" className="px-6 py-3">Phone</th>
-                <th scope="col" className="px-6 py-3">Email</th>
-                <th scope="col" className="px-6 py-3">Type</th>
-                <th scope="col" className="px-6 py-3">Actions</th>
+                <th
+                  scope="col"
+                  className="cursor-pointer px-4 py-3"
+                  onClick={() => handleSort('name')}
+                >
+                  <div className="flex items-center">
+                    Seller Name
+                    {getSortIcon('name')}
+                  </div>
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Contact Number
+                </th>
+                <th
+                  scope="col"
+                  className="cursor-pointer px-4 py-3"
+                  onClick={() => handleSort('email')}
+                >
+                  <div className="flex items-center">
+                    Email
+                    {getSortIcon('email')}
+                  </div>
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Added On
+                </th>
+                <th scope="col" className="px-4 py-3 text-right">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
-              {filteredSellers.map((seller) => (
-                <tr key={seller.id} className="bg-white border-b hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{seller.name}</td>
-                  <td className="px-6 py-4">{seller.contact}</td>
-                  <td className="px-6 py-4">{seller.phone}</td>
-                  <td className="px-6 py-4">{seller.email}</td>
-                  <td className="px-6 py-4">{seller.type}</td>
-                  <td className="px-6 py-4 flex gap-2">
-                    <button className="text-blue-500 hover:text-blue-700">
-                      <Pencil size={20} weight="duotone" />
-                    </button>
-                    <button className="text-red-500 hover:text-red-700">
-                      <Trash size={20} weight="duotone" />
-                    </button>
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="px-4 py-10 text-center">
+                    <div className="flex justify-center">
+                      <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-amber-500"></div>
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : currentSellers.length > 0 ? (
+                currentSellers.map((seller) => (
+                  <tr
+                    key={seller.seller_id}
+                    className="border-b bg-white hover:bg-gray-50"
+                  >
+                    <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">
+                      {seller.first_name} {seller.last_name}
+                    </td>
+                    <td className="px-4 py-3">{seller.contact_number}</td>
+                    <td className="px-4 py-3">{seller.email || '-'}</td>
+                    <td className="px-4 py-3">
+                      {formatDate(seller.created_at)}
+                    </td>
+                    <td className="flex justify-end gap-2 px-4 py-3">
+                      <button
+                        onClick={() =>
+                          navigate(`/admin/sellers/${seller.seller_id}`)
+                        }
+                        className="text-amber-500 hover:text-amber-700"
+                        title="View Details"
+                      >
+                        <Eye size={20} weight="duotone" />
+                      </button>
+                      <button
+                        onClick={() =>
+                          navigate(`/admin/sellers/edit/${seller.seller_id}`)
+                        }
+                        className="text-blue-500 hover:text-blue-700"
+                        title="Edit"
+                      >
+                        <Pencil size={20} weight="duotone" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(seller)}
+                        className="text-red-500 hover:text-red-700"
+                        title="Delete"
+                      >
+                        <Trash size={20} weight="duotone" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="5"
+                    className="px-4 py-10 text-center text-gray-500"
+                  >
+                    No sellers found matching your search.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
-        
-        {filteredSellers.length === 0 && (
-          <div className="text-center py-4">
-            <p className="text-gray-500">No sellers found matching your search.</p>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-4 flex items-center justify-between">
+            <div className="text-sm text-gray-500">
+              Showing {indexOfFirstSeller + 1} to{' '}
+              {Math.min(indexOfLastSeller, sortedSellers.length)} of{' '}
+              {sortedSellers.length} sellers
+            </div>
+            <div className="flex">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="rounded-l-lg border bg-gray-100 px-3 py-1 text-gray-700 disabled:opacity-50"
+              >
+                Previous
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`border-b border-t px-3 py-1 ${
+                      currentPage === page
+                        ? 'bg-amber-500 text-white'
+                        : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="rounded-r-lg border bg-gray-100 px-3 py-1 text-gray-700 disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        title="Delete Seller"
+        message={`Are you sure you want to delete the seller "${sellerToDelete ? `${sellerToDelete.first_name} ${sellerToDelete.last_name}` : ''}"? This action cannot be undone.`}
+        confirmText="Delete"
+        confirmButtonClass="bg-red-500 hover:bg-red-600"
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setSellerToDelete(null);
+        }}
+      />
     </DashboardLayout>
   );
 };
