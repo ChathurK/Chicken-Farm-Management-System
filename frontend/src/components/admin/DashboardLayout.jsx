@@ -14,7 +14,7 @@ export default function DashboardLayout({ children }) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         <Topbar />
-        <main className="p-4 space-y-4 overflow-y-auto">{children}</main>
+        <main className="p-4 h-screen space-y-4 overflow-y-auto">{children}</main>
       </div>
     </div>
   );

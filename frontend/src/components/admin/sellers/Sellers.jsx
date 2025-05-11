@@ -180,7 +180,7 @@ const Sellers = () => {
         </div>
 
         {/* Sellers Table */}
-        <div className="h-[calc(100vh-338px)] overflow-auto">
+        <div className="h-[calc(100vh-336px)] overflow-auto rounded-lg border border-gray-200 shadow-sm">
           <table className="w-full text-left text-sm text-gray-500">
             <thead className="bg-gray-50 text-xs uppercase text-gray-700 sticky top-0">
               <tr>

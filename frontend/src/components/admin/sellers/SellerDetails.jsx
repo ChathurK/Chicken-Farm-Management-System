@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  ArrowLeft,
-  Pencil,
-  Trash,
-  User,
-  Phone,
-  Envelope,
-  MapPin,
-  Clock,
-} from '@phosphor-icons/react';
+import { ArrowLeft, Pencil, Trash, User, Phone, Envelope, MapPin, Clock } from '@phosphor-icons/react';
 import DashboardLayout from '../DashboardLayout';
 import SellerTransactionHistory from './SellerTransactionHistory';
 import { ConfirmationModal } from './SellerModal';
@@ -32,7 +23,11 @@ const SellerDetails = () => {
         setSeller(response.data);
         setLoading(false);
       } catch (err) {
-        setError('Failed to load seller details. Please try again.');
+        if (err.response.status === 404) {
+          setSeller(false);
+        } else {
+          setError('Failed to load seller details. Please try again.');
+        }
         setLoading(false);
         console.error('Error fetching seller details:', err);
       }
@@ -71,7 +66,7 @@ const SellerDetails = () => {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+        <div className="mb-4 rounded-lg bg-red-100 px-4 py-3 text-red-700">
           <p>{error}</p>
           <button
             onClick={() => navigate('/admin/sellers')}
@@ -220,6 +215,7 @@ const SellerDetails = () => {
         title="Delete Seller"
         message="Are you sure you want to delete this seller? This action cannot be undone."
         confirmText="Delete"
+        cancelText="Cancel"
         confirmButtonClass="bg-red-500 hover:bg-red-600"
         onConfirm={handleDelete}
         onCancel={() => setShowDeleteModal(false)}
