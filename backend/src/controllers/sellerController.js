@@ -79,10 +79,24 @@ exports.createSeller = async (req, res) => {
       address
     });
 
-    res.status(201).json(seller);
+    res.status(201).json({
+      success: true,
+      data: seller,
+      msg: 'Seller created successfully'
+    });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    
+    // Handle specific errors
+    if (err.message === 'Contact number already exists') {
+      return res.status(400).json({ msg: err.message });
+    }
+
+    res.status(500).json({
+      success: false,
+      msg: 'Server Error',
+      error: err.message
+    });
   }
 };
 
@@ -94,13 +108,19 @@ exports.updateSeller = async (req, res) => {
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ 
+        success: false,
+        errors: errors.array() 
+      });
     }
 
     // Check if seller exists
     let seller = await Seller.findById(req.params.id);
     if (!seller) {
-      return res.status(404).json({ msg: 'Seller not found' });
+      return res.status(404).json({ 
+        success: false,
+        msg: 'Seller not found' 
+      });
     }
 
     const { first_name, last_name, contact_number, email, address } = req.body;
@@ -109,7 +129,10 @@ exports.updateSeller = async (req, res) => {
     if (email && email !== seller.email) {
       const existingSeller = await Seller.findByEmail(email);
       if (existingSeller) {
-        return res.status(400).json({ msg: 'Seller with this email already exists' });
+        return res.status(400).json({ 
+          success: false,
+          msg: 'Seller with this email already exists'
+        });
       }
     }
 
@@ -122,10 +145,27 @@ exports.updateSeller = async (req, res) => {
       address
     });
 
-    res.json(seller);
+    res.json({
+      success: true,
+      data: seller,
+      msg: 'Seller updated successfully'
+    });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    
+    // Handle specific errors
+    if (err.message === 'Contact number already exists') {
+      return res.status(400).json({ 
+        success: false,
+        msg: err.message
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      msg: 'Server Error',
+      error: err.message
+    });
   }
 };
 
@@ -137,15 +177,34 @@ exports.deleteSeller = async (req, res) => {
     // Check if seller exists
     let seller = await Seller.findById(req.params.id);
     if (!seller) {
-      return res.status(404).json({ msg: 'Seller not found' });
+      return res.status(404).json({ 
+        success: false,
+        msg: 'Seller not found'
+      });
     }
 
     // Delete seller
     await Seller.delete(req.params.id);
 
-    res.json({ msg: 'Seller removed' });
+    res.json({ 
+      success: true,
+      msg: 'Seller removed successfully'
+    });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    
+    // Handle specific errors
+    if (err.message.includes('Cannot delete seller because')) {
+      return res.status(400).json({ 
+        success: false,
+        msg: err.message
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      msg: 'Server Error',
+      error: err.message
+    });
   }
 };

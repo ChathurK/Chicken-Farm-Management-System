@@ -57,7 +57,7 @@ const Sellers = () => {
       );
       setShowDeleteModal(false);
     } catch (err) {
-      setError('Failed to delete seller. Please try again.');
+      setError(err.response.data.msg);
       console.error('Error deleting seller:', err);
     }
   };

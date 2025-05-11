@@ -41,7 +41,7 @@ const SellerDetails = () => {
       await api.delete(`/api/sellers/${id}`);
       navigate('/admin/sellers');
     } catch (err) {
-      setError('Failed to delete seller. Please try again.');
+      setError(err.response.data.msg);
       console.error('Error deleting seller:', err);
     } finally {
       setShowDeleteModal(false);

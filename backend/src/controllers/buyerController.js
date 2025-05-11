@@ -1,5 +1,5 @@
-const Buyer = require('../models/Buyer');
-const { validationResult } = require('express-validator');
+const Buyer = require("../models/Buyer");
+const { validationResult } = require("express-validator");
 
 // @desc    Get all buyers
 // @route   GET /api/buyers
@@ -40,7 +40,7 @@ exports.getBuyerOrderHistory = async (req, res) => {
     if (!buyer) {
       return res.status(404).json({ msg: 'Buyer not found' });
     }
-    
+
     const orderHistory = await Buyer.getOrderHistory(req.params.id);
     res.json(orderHistory);
   } catch (err) {
@@ -76,13 +76,27 @@ exports.createBuyer = async (req, res) => {
       last_name,
       contact_number,
       email,
-      address
+      address,
     });
 
-    res.status(201).json(buyer);
+    res.status(201).json({
+      success: true,
+      data: buyer,
+      msg: "Buyer created successfully",
+    });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+
+    // Handle specific errors
+    if (err.message === "Contact number already exists") {
+      return res.status(400).json({ msg: err.message });
+    }
+
+    res.status(500).json({
+      success: false,
+      msg: "Server Error",
+      error: err.message,
+    });
   }
 };
 
@@ -100,7 +114,10 @@ exports.updateBuyer = async (req, res) => {
     // Check if buyer exists
     let buyer = await Buyer.findById(req.params.id);
     if (!buyer) {
-      return res.status(404).json({ msg: 'Buyer not found' });
+      return res.status(404).json({
+        success: false,
+        msg: "Buyer not found",
+      });
     }
 
     const { first_name, last_name, contact_number, email, address } = req.body;
@@ -109,7 +126,10 @@ exports.updateBuyer = async (req, res) => {
     if (email && email !== buyer.email) {
       const existingBuyer = await Buyer.findByEmail(email);
       if (existingBuyer) {
-        return res.status(400).json({ msg: 'Buyer with this email already exists' });
+        return res.status(400).json({
+          success: false,
+          msg: "Buyer with this email already exists",
+        });
       }
     }
 
@@ -119,13 +139,30 @@ exports.updateBuyer = async (req, res) => {
       last_name,
       contact_number,
       email,
-      address
+      address,
     });
 
-    res.json(buyer);
+    res.json({
+      success: true,
+      data: buyer,
+      msg: "Buyer updated successfully",
+    });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+
+    // Handle specific errors
+    if (err.message === "Contact number already exists") {
+      return res.status(400).json({
+        success: false,
+        msg: err.message,
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      msg: "Server Error",
+      error: err.message,
+    });
   }
 };
 
@@ -137,15 +174,34 @@ exports.deleteBuyer = async (req, res) => {
     // Check if buyer exists
     let buyer = await Buyer.findById(req.params.id);
     if (!buyer) {
-      return res.status(404).json({ msg: 'Buyer not found' });
+      return res.status(404).json({
+        success: false,
+        msg: "Buyer not found",
+      });
     }
 
     // Delete buyer
     await Buyer.delete(req.params.id);
 
-    res.json({ msg: 'Buyer removed' });
+    res.json({
+      success: true,
+      msg: "Buyer removed successfully",
+    });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+
+    // Handle specific errors
+    if (err.message.includes("Cannot delete buyer because")) {
+      return res.status(400).json({
+        success: false,
+        msg: err.message,
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      msg: "Server Error",
+      error: err.message,
+    });
   }
 };

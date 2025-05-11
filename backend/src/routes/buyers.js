@@ -29,10 +29,19 @@ router.get('/:id/orders', buyerController.getBuyerOrderHistory);
 router.post(
   '/',
   [
-    check('first_name', 'First name is required').not().isEmpty(),
-    check('last_name', 'Last name is required').not().isEmpty(),
-    check('contact_number', 'Contact number is required').not().isEmpty(),
-    check('email', 'Please include a valid email').isEmail()
+    check('first_name', 'First name is required').not().isEmpty().trim().escape(),
+    check('last_name', 'Last name is required').not().isEmpty().trim().escape(),
+    check('contact_number', 'Contact number is required')
+      .not().isEmpty()
+      .trim()
+      .custom(value => {
+        // Allow only numbers, spaces, +, and -
+        if (!/^[0-9\s+\-()]+$/.test(value)) {
+          throw new Error('Contact number must contain only digits, spaces, and the following characters: +, -, ()');
+        }
+        return true;
+      }),
+    check('email', 'Please include a valid email').isEmail().normalizeEmail()
   ],
   buyerController.createBuyer
 );
@@ -43,10 +52,19 @@ router.post(
 router.put(
   '/:id',
   [
-    check('first_name', 'First name is required').not().isEmpty(),
-    check('last_name', 'Last name is required').not().isEmpty(),
-    check('contact_number', 'Contact number is required').not().isEmpty(),
-    check('email', 'Please include a valid email').isEmail()
+    check('first_name', 'First name is required').not().isEmpty().trim().escape(),
+    check('last_name', 'Last name is required').not().isEmpty().trim().escape(),
+    check('contact_number', 'Contact number is required')
+      .not().isEmpty()
+      .trim()
+      .custom(value => {
+        // Allow only numbers, spaces, +, and -
+        if (!/^[0-9\s+\-()]+$/.test(value)) {
+          throw new Error('Contact number must contain only digits, spaces, and the following characters: +, -, ()');
+        }
+        return true;
+      }),
+    check('email', 'Please include a valid email').isEmail().normalizeEmail()
   ],
   buyerController.updateBuyer
 );

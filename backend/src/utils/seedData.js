@@ -113,9 +113,9 @@ async function seedDatabase() {
     // Seed Employees
     console.log('Seeding Employees...');
     await db.execute(`
-      INSERT INTO Employees (user_id, department, position, salary, hire_date) VALUES 
-      (1, 'Management', 'Farm Manager', 60000.00, '2022-01-15'),
-      (2, 'Operations', 'Farm Worker', 35000.00, '2022-03-01')
+      INSERT INTO Employees (user_id, department, position, salary, hire_date, contact_number, address) VALUES 
+      (1, 'Management', 'Farm Manager', 60000.00, '2022-01-15', '123-456-7890', '123 Main St, Cityville'),
+      (2, 'Operations', 'Farm Worker', 35000.00, '2022-03-01', '234-567-8901', '456 Oak Ave, Townsburg')
     `);
 
     console.log('Database seeding completed successfully.');

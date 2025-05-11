@@ -41,7 +41,7 @@ const BuyerDetails = () => {
       await api.delete(`/api/buyers/${id}`);
       navigate('/admin/buyers');
     } catch (err) {
-      setError('Failed to delete buyer. Please try again.');
+      setError(err.response.data.msg);
       console.error('Error deleting buyer:', err);
     } finally {
       setShowDeleteModal(false);
