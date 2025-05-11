@@ -1,196 +1,225 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Pencil, Trash, User, Phone, Envelope, MapPin, Clock } from '@phosphor-icons/react';
 import DashboardLayout from '../DashboardLayout';
-import { ArrowLeft, Pencil, Package, CalendarBlank, CurrencyCircleDollar, ClockCountdown } from '@phosphor-icons/react';
+import BuyerOrderHistory from './BuyerOrderHistory';
+import { ConfirmationModal } from './BuyerModal';
 import api from '../../../utils/api';
 
 const BuyerDetails = () => {
-  const navigate = useNavigate();
   const { id } = useParams();
-  
+  const navigate = useNavigate();
+
   const [buyer, setBuyer] = useState(null);
-  const [orderHistory, setOrderHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
-    fetchBuyerData();
-    fetchOrderHistory();
+    const fetchBuyerDetails = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(`/api/buyers/${id}`);
+        setBuyer(response.data);
+        setLoading(false);
+      } catch (err) {
+        if (err.response.status === 404) {
+          setBuyer(false);
+        } else {
+          setError('Failed to load buyer details. Please try again.');
+        }
+        setLoading(false);
+        console.error('Error fetching buyer details:', err);
+      }
+    };
+
+    fetchBuyerDetails();
   }, [id]);
 
-  const fetchBuyerData = async () => {
+  const handleDelete = async () => {
     try {
-      const response = await api.get(`/api/buyers/${id}`);
-      setBuyer(response.data);
+      await api.delete(`/api/buyers/${id}`);
+      navigate('/admin/buyers');
     } catch (err) {
-      setError(err.response?.data?.msg || 'Error fetching buyer data');
+      setError('Failed to delete buyer. Please try again.');
+      console.error('Error deleting buyer:', err);
+    } finally {
+      setShowDeleteModal(false);
     }
   };
 
-  const fetchOrderHistory = async () => {
-    try {
-      const response = await api.get(`/api/buyers/${id}/orders`);
-      setOrderHistory(response.data);
-      setLoading(false);
-    } catch (err) {
-      setError(err.response?.data?.msg || 'Error fetching order history');
-      setLoading(false);
-    }
-  };
-
-  // Format date to a more readable format
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  // Get status badge color
-  const getStatusColor = (status) => {
-    switch(status?.toLowerCase()) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'processing': return 'bg-blue-100 text-blue-800';
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
-            <span className="ml-2">Loading...</span>
-          </div>
+        <div className="flex h-64 items-center justify-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-amber-500"></div>
         </div>
       </DashboardLayout>
     );
   }
 
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="mb-4 rounded-lg bg-red-100 px-4 py-3 text-red-700">
+          <p>{error}</p>
+          <button
+            onClick={() => navigate('/admin/buyers')}
+            className="mt-2 text-red-700 underline hover:text-red-800"
+          >
+            Return to Buyers List
+          </button>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!buyer) {
+    return (
+      <DashboardLayout>
+        <div className="py-8 text-center">
+          <p className="text-gray-500">Buyer not found.</p>
+          <button
+            onClick={() => navigate('/admin/buyers')}
+            className="mt-2 text-amber-500 hover:text-amber-600"
+          >
+            Return to Buyers List
+          </button>
+        </div>
+      </DashboardLayout>
+    );
+  }
+  
   return (
     <DashboardLayout>
-      <div className="bg-white rounded-lg shadow">
-        {/* Header with back button */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center">
-            <button 
+      <div className="rounded-lg bg-white p-6 shadow">
+        {/* Header with back button and actions */}
+        <div className="mb-6 flex flex-wrap items-center justify-between">
+          <div className="mb-2 flex items-center sm:mb-0">
+            <button
               onClick={() => navigate('/admin/buyers')}
-              className="mr-4 text-gray-600 hover:text-amber-600"
+              className="mr-4 text-gray-600 hover:text-amber-500"
             >
               <ArrowLeft size={24} weight="duotone" />
             </button>
-            <h1 className="text-2xl font-bold">Buyer Details</h1>
-            
-            {/* Edit button */}
-            <button 
+            <h1 className="text-2xl font-bold">
+              {buyer.first_name} {buyer.last_name}
+            </h1>
+          </div>
+
+          <div className="flex gap-2">
+            <button
               onClick={() => navigate(`/admin/buyers/edit/${id}`)}
-              className="ml-auto text-amber-600 hover:text-amber-700 flex items-center"
+              className="flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
-              <Pencil size={18} weight="duotone" className="mr-1" />
+              <Pencil size={18} weight="bold" />
               Edit
+            </button>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
+            >
+              <Trash size={18} weight="bold" />
+              Delete
             </button>
           </div>
         </div>
-        
-        {error && (
-          <div className="m-6 p-3 bg-red-100 text-red-700 rounded-md">
-            {error}
-          </div>
-        )}
-        
-        {buyer && (
-          <div className="p-6">
-            {/* Buyer Information */}
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Name</h3>
-                  <p className="mt-1 text-base">{buyer.first_name} {buyer.last_name}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Contact Number</h3>
-                  <p className="mt-1 text-base">{buyer.contact_number}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Email</h3>
-                  <p className="mt-1 text-base">{buyer.email || "-"}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Address</h3>
-                  <p className="mt-1 text-base">{buyer.address || "-"}</p>
-                </div>
-                {buyer.created_at && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">Customer Since</h3>
-                    <p className="mt-1 text-base">{formatDate(buyer.created_at)}</p>
-                  </div>
-                )}
+
+        {/* Buyer details card */}
+        <div className="mb-8 rounded-lg bg-gray-50 p-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="flex items-start gap-3">
+              <User
+                size={24}
+                weight="duotone"
+                className="mt-0.5 text-amber-500"
+              />
+              <div>
+                <h3 className="text-sm text-gray-500">Name</h3>
+                <p className="font-medium text-gray-800">
+                  {buyer.first_name} {buyer.last_name}
+                </p>
               </div>
             </div>
-            
-            {/* Order History Section */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Order History</h2>
+
+            <div className="flex items-start gap-3">
+              <Phone
+                size={24}
+                weight="duotone"
+                className="mt-0.5 text-amber-500"
+              />
+              <div>
+                <h3 className="text-sm text-gray-500">Contact Number</h3>
+                <p className="font-medium text-gray-800">
+                  {buyer.contact_number}
+                </p>
               </div>
-              
-              {orderHistory.length === 0 ? (
-                <div className="bg-gray-50 rounded-lg p-6 text-center">
-                  <Package size={48} weight="duotone" className="mx-auto text-gray-400 mb-2" />
-                  <p className="text-gray-600">No order history found for this buyer.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left text-gray-500">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3">Order ID</th>
-                        <th scope="col" className="px-6 py-3">Date</th>
-                        <th scope="col" className="px-6 py-3">Items</th>
-                        <th scope="col" className="px-6 py-3">Total</th>
-                        <th scope="col" className="px-6 py-3">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orderHistory.map((order) => (
-                        <tr key={order.order_id} className="bg-white border-b hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/admin/orders/${order.order_id}`)}>
-                          <td className="px-6 py-4 font-medium text-amber-600">#{order.order_id}</td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center">
-                              <CalendarBlank size={16} weight="duotone" className="text-gray-400 mr-2" />
-                              {formatDate(order.order_date)}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center">
-                              <Package size={16} weight="duotone" className="text-gray-400 mr-2" />
-                              {order.total_items || 0}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center">
-                              <CurrencyCircleDollar size={16} weight="duotone" className="text-gray-400 mr-2" />
-                              ${parseFloat(order.order_total || 0).toFixed(2)}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(order.status)}`}>
-                              {order.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+            </div>
+
+            <div className="flex items-start gap-3">
+              <Envelope
+                size={24}
+                weight="duotone"
+                className="mt-0.5 text-amber-500"
+              />
+              <div>
+                <h3 className="text-sm text-gray-500">Email</h3>
+                <p className="font-medium text-gray-800">
+                  {buyer.email || 'Not provided'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <Clock
+                size={24}
+                weight="duotone"
+                className="mt-0.5 text-amber-500"
+              />
+              <div>
+                <h3 className="text-sm text-gray-500">Customer Since</h3>
+                <p className="font-medium text-gray-800">
+                  {formatDate(buyer.created_at)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 md:col-span-2">
+              <MapPin
+                size={24}
+                weight="duotone"
+                className="mt-0.5 text-amber-500"
+              />
+              <div>
+                <h3 className="text-sm text-gray-500">Address</h3>
+                <p className="font-medium text-gray-800">
+                  {buyer.address || 'Not provided'}
+                </p>
+              </div>
             </div>
           </div>
-        )}
+        </div>
+
+        {/* Order History */}
+        <BuyerOrderHistory buyerId={id} />
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        title="Delete Buyer"
+        message="Are you sure you want to delete this buyer? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        confirmButtonClass="bg-red-500 hover:bg-red-600"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteModal(false)}
+      />
     </DashboardLayout>
   );
 };

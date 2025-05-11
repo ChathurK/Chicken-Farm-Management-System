@@ -1,323 +1,349 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
-import { Plus, MagnifyingGlass, ArrowsDownUp, Eye, Pencil, Trash } from '@phosphor-icons/react';
+import {
+  Plus,
+  MagnifyingGlass,
+  Pencil,
+  Trash,
+  Eye,
+  SortAscending,
+  SortDescending,
+  CaretLeft,
+  CaretRight,
+  X,
+} from '@phosphor-icons/react';
+import { ConfirmationModal } from './BuyerModal';
 import api from '../../../utils/api';
 
 const Buyers = () => {
   const navigate = useNavigate();
+
+  // State variables
   const [buyers, setBuyers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState('first_name');
-  const [sortDirection, setSortDirection] = useState('asc');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [itemsPerPage] = useState(20); // Number of items per page
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [buyerToDelete, setBuyerToDelete] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState({
+    field: 'first_name',
+    direction: 'asc',
+  });
 
-  // Fetch buyers data
-  useEffect(() => {
-    fetchBuyers();
-  }, [currentPage, sortField, sortDirection, searchTerm]);
-
+  const buyersPerPage = 10;
+  // Fetch buyers
   const fetchBuyers = async () => {
     try {
       setLoading(true);
       const response = await api.get('/api/buyers');
-      
-      // Process response data
-      let data = response.data;
-      
-      // Filter by search term
-      if (searchTerm) {
-        data = data.filter(buyer => 
-          `${buyer.first_name} ${buyer.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          buyer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          buyer.contact_number?.includes(searchTerm)
-        );
-      }
-      
-      // Sort data
-      data.sort((a, b) => {
-        // Handle nested fields like first_name + last_name
-        const fieldA = sortField === 'name' 
-          ? `${a.first_name} ${a.last_name}`.toLowerCase() 
-          : String(a[sortField]).toLowerCase();
-          
-        const fieldB = sortField === 'name' 
-          ? `${b.first_name} ${b.last_name}`.toLowerCase() 
-          : String(b[sortField]).toLowerCase();
-        
-        if (fieldA < fieldB) return sortDirection === 'asc' ? -1 : 1;
-        if (fieldA > fieldB) return sortDirection === 'asc' ? 1 : -1;
-        return 0;
-      });
-      
-      // Calculate pagination
-      const totalItems = data.length;
-      setTotalPages(Math.ceil(totalItems / itemsPerPage));
-      
-      // Get current page items
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      const endIndex = startIndex + itemsPerPage;
-      const paginatedData = data.slice(startIndex, endIndex);
-      
-      setBuyers(data);
+      setBuyers(response.data);
       setLoading(false);
     } catch (err) {
-      setError(err.response?.data?.msg || 'Error fetching buyers');
+      setError('Failed to load buyers. Please try again.');
       setLoading(false);
+      console.error('Error fetching buyers:', err);
     }
   };
 
+  useEffect(() => {
+    fetchBuyers();
+  }, []);
+
+  // Handle delete buyer
+  const handleDeleteClick = (buyer) => {
+    setBuyerToDelete(buyer);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await api.delete(`/api/buyers/${buyerToDelete.buyer_id}`);
+      setBuyers(
+        buyers.filter((buyer) => buyer.buyer_id !== buyerToDelete.buyer_id)
+      );
+      setShowDeleteModal(false);
+    } catch (err) {
+      setError('Failed to delete buyer. Please try again.');
+      console.error('Error deleting buyer:', err);
+    }
+  };
   // Handle sorting
   const handleSort = (field) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    let direction = 'asc';
+    if (sortConfig.field === field && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ field, direction });
+  };
+
+  // Filter and sort buyers
+  const filteredBuyers = buyers.filter(
+    (buyer) =>
+      `${buyer.first_name} ${buyer.last_name}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      (buyer.email &&
+        buyer.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      buyer.contact_number.includes(searchTerm)
+  );
+
+  const sortedBuyers = [...filteredBuyers].sort((a, b) => {
+    const { field, direction } = sortConfig;
+
+    // Handle nested fields (e.g., first_name + last_name for full name)
+    if (field === 'name') {
+      const fullNameA = `${a.first_name} ${a.last_name}`.toLowerCase();
+      const fullNameB = `${b.first_name} ${b.last_name}`.toLowerCase();
+
+      if (direction === 'asc') {
+        return fullNameA.localeCompare(fullNameB);
+      } else {
+        return fullNameB.localeCompare(fullNameA);
+      }
+    }
+
+    // For other fields
+    const valueA = (a[field] || '').toLowerCase();
+    const valueB = (b[field] || '').toLowerCase();
+
+    if (direction === 'asc') {
+      return valueA.localeCompare(valueB);
     } else {
-      setSortField(field);
-      setSortDirection('asc');
+      return valueB.localeCompare(valueA);
     }
-  };
+  });
 
-  // Handle deleting a buyer
-  const deleteBuyer = async (id) => {
-    try {
-      await api.delete(`/api/buyers/${id}`);
-      
-      // Refresh buyers list
-      fetchBuyers();
-      setShowConfirmDelete(false);
-      setBuyerToDelete(null);
-    } catch (err) {
-      setError(err.response?.data?.msg || 'Error deleting buyer');
-    }
-  };
+  // Pagination
+  const indexOfLastBuyer = currentPage * buyersPerPage;
+  const indexOfFirstBuyer = indexOfLastBuyer - buyersPerPage;
+  const currentBuyers = sortedBuyers.slice(indexOfFirstBuyer, indexOfLastBuyer);
+  const totalPages = Math.ceil(sortedBuyers.length / buyersPerPage);
 
-  // Filtered and sorted buyers for the current page
-  const displayBuyers = () => {
-    if (loading) {
-      return (
-        <tr>
-          <td colSpan="6" className="px-6 py-4 text-center">
-            <div className="flex justify-center items-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500"></div>
-              <span className="ml-2">Loading...</span>
-            </div>
-          </td>
-        </tr>
-      );
-    }
-    
-    if (buyers.length === 0) {
-      return (
-        <tr>
-          <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-            No buyers found
-          </td>
-        </tr>
-      );
+  // Get sort icon
+  const getSortIcon = (field) => {
+    if (sortConfig.field !== field) {
+      return null;
     }
 
-    // Calculate pagination slice
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginatedBuyers = buyers.slice(startIndex, startIndex + itemsPerPage);
-    
-    return paginatedBuyers.map(buyer => (
-      <tr key={buyer.buyer_id} className="bg-white border-b hover:bg-gray-50">
-        <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-          {buyer.first_name} {buyer.last_name}
-        </td>
-        <td className="px-6 py-4">{buyer.contact_number}</td>
-        <td className="px-6 py-4">{buyer.email || "-"}</td>
-        <td className="px-6 py-4">{buyer.address || "-"}</td>
-        <td className="px-6 py-4 flex gap-2">
-          <button 
-            onClick={() => navigate(`/admin/buyers/${buyer.buyer_id}`)}
-            className="text-blue-600 hover:text-blue-900"
-            title="View Details"
-          >
-            <Eye size={20} weight="duotone" />
-          </button>
-          <button 
-            onClick={() => navigate(`/admin/buyers/edit/${buyer.buyer_id}`)}
-            className="text-amber-600 hover:text-amber-900"
-            title="Edit"
-          >
-            <Pencil size={20} weight="duotone" />
-          </button>
-          <button 
-            onClick={() => {
-              setBuyerToDelete(buyer);
-              setShowConfirmDelete(true);
-            }}
-            className="text-red-600 hover:text-red-900"
-            title="Delete"
-          >
-            <Trash size={20} weight="duotone" />
-          </button>
-        </td>
-      </tr>
-    ));
-  };
-
-  // Pagination controls
-  const Pagination = () => {
-    return (
-      <div className="flex justify-between items-center mt-4">
-        <div className="text-sm text-gray-500">
-          Showing {buyers.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, buyers.length)} of {buyers.length} entries
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className={`px-3 py-1 rounded ${currentPage === 1 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-          >
-            Previous
-          </button>
-          {[...Array(totalPages)].map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentPage(index + 1)}
-              className={`px-3 py-1 rounded ${currentPage === index + 1 ? 'bg-amber-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-            >
-              {index + 1}
-            </button>
-          ))}
-          <button
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-            className={`px-3 py-1 rounded ${currentPage === totalPages ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-          >
-            Next
-          </button>
-        </div>
-      </div>
+    return sortConfig.direction === 'asc' ? (
+      <SortAscending size={16} weight="bold" className="ml-1 inline" />
+    ) : (
+      <SortDescending size={16} weight="bold" className="ml-1 inline" />
     );
   };
-
-  // Delete confirmation modal
-  const DeleteConfirmationModal = () => {
-    if (!showConfirmDelete) return null;
-    
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-          <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
-          <p className="mb-6">
-            Are you sure you want to delete buyer: <span className="font-semibold">{buyerToDelete?.first_name} {buyerToDelete?.last_name}</span>? This action cannot be undone.
-          </p>
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={() => {
-                setShowConfirmDelete(false);
-                setBuyerToDelete(null);
-                setError(null);
-              }}
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => deleteBuyer(buyerToDelete.buyer_id)}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <DashboardLayout>
-      <div className="flex flex-col bg-white rounded-lg shadow p-6 h-full">
-        {/* Header with title and add button */}
-        <div className="flex justify-between items-center mb-6">
+      <div className="flex h-full flex-col rounded-lg bg-white p-6 shadow">
+        {/* Header */}
+        <div className="mb-6 flex flex-wrap items-center justify-between">
           <h1 className="text-2xl font-bold">Buyers</h1>
-          <button 
-            onClick={() => navigate('/admin/buyers/add')}
-            className="bg-amber-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-amber-600 transition-colors"
-          >
-            <Plus size={20} weight="bold" />
-            Add New Buyer
-          </button>
+          <div className="mt-2 sm:mt-0">
+            <button
+              onClick={() => navigate('/admin/buyers/add')}
+              className="flex items-center gap-1 rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
+            >
+              <Plus size={18} weight="bold" />
+              Add New Buyer
+            </button>
+          </div>
         </div>
-        
-        {/* Error message if any */}
+
+        {/* Error message */}
         {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
-            {error}
+          <div className="mb-4 rounded-md bg-red-100 p-3 text-red-700">
+            <p>{error}</p>
           </div>
         )}
-        
-        {/* Search and Filter */}
+
+        {/* Search */}
         <div className="mb-6">
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <MagnifyingGlass size={20} className="text-gray-400" />
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <MagnifyingGlass
+                size={20}
+                className="text-gray-400"
+                weight="duotone"
+              />
             </div>
             <input
               type="text"
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-amber-500 focus:border-amber-500 block w-full pl-10 p-2.5"
-              placeholder="Search by name, email, or phone number..."
+              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 pl-10 pr-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
+              placeholder="Search by name, email, or phone number"
               value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1); // Reset to first page on search
-              }}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+                title="Clear search"
+              >
+                <X size={18} weight="bold" />
+              </button>
+            )}
           </div>
         </div>
-        
+
         {/* Buyers Table */}
-        <div className="h-[calc(100vh-350px)] overflow-auto mb-4">
-          <table className="w-full text-sm text-left text-gray-500">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0">
+        <div className="h-[calc(100vh-336px)] overflow-auto rounded-lg border border-gray-200 shadow-sm">
+          <table className="w-full text-left text-sm text-gray-500">
+            <thead className="sticky top-0 bg-gray-50 text-xs uppercase text-gray-700">
               <tr>
-                <th scope="col" className="px-6 py-3 cursor-pointer hover:text-amber-600" onClick={() => handleSort('name')}>
+                <th
+                  scope="col"
+                  className="cursor-pointer px-4 py-3 hover:text-amber-600"
+                  onClick={() => handleSort('name')}
+                >
                   <div className="flex items-center">
-                    Name
-                    <ArrowsDownUp size={14} className="ml-1" />
+                    Buyer Name
+                    {getSortIcon('name')}
                   </div>
                 </th>
-                <th scope="col" className="px-6 py-3 cursor-pointer hover:text-amber-600" onClick={() => handleSort('contact_number')}>
-                  <div className="flex items-center">
-                    Contact Number
-                    <ArrowsDownUp size={14} className="ml-1" />
-                  </div>
+                <th scope="col" className="px-4 py-3">
+                  Contact Number
                 </th>
-                <th scope="col" className="px-6 py-3 cursor-pointer hover:text-amber-600" onClick={() => handleSort('email')}>
+                <th
+                  scope="col"
+                  className="cursor-pointer px-4 py-3 hover:text-amber-600"
+                  onClick={() => handleSort('email')}
+                >
                   <div className="flex items-center">
                     Email
-                    <ArrowsDownUp size={14} className="ml-1" />
+                    {getSortIcon('email')}
                   </div>
                 </th>
-                <th scope="col" className="px-6 py-3">Address</th>
-                <th scope="col" className="px-6 py-3">Actions</th>
+                <th scope="col" className="px-4 py-3">
+                  Address
+                </th>
+                <th scope="col" className="px-4 py-3 text-right">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
-              {displayBuyers()}
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="px-4 py-10 text-center">
+                    <div className="flex justify-center">
+                      <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-amber-500"></div>
+                    </div>
+                  </td>
+                </tr>
+              ) : currentBuyers.length > 0 ? (
+                currentBuyers.map((buyer) => (
+                  <tr
+                    key={buyer.buyer_id}
+                    className="border-b bg-white hover:bg-gray-50"
+                  >
+                    <td className="whitespace-nowrap px-4 py-4 font-medium text-gray-900">
+                      {buyer.first_name} {buyer.last_name}
+                    </td>
+                    <td className="px-4 py-4">{buyer.contact_number}</td>
+                    <td className="px-4 py-4">{buyer.email || '-'}</td>
+                    <td className="px-4 py-4">{buyer.address || '-'}</td>
+                    <td className="flex justify-end gap-2 px-4 py-4">
+                      <button
+                        onClick={() =>
+                          navigate(`/admin/buyers/${buyer.buyer_id}`)
+                        }
+                        className="text-amber-500 hover:text-amber-700"
+                        title="View Details"
+                      >
+                        <Eye size={20} weight="duotone" />
+                      </button>
+                      <button
+                        onClick={() =>
+                          navigate(`/admin/buyers/edit/${buyer.buyer_id}`)
+                        }
+                        className="text-blue-500 hover:text-blue-700"
+                        title="Edit"
+                      >
+                        <Pencil size={20} weight="duotone" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(buyer)}
+                        className="text-red-500 hover:text-red-700"
+                        title="Delete"
+                      >
+                        <Trash size={20} weight="duotone" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="5"
+                    className="px-4 py-10 text-center text-gray-500"
+                  >
+                    No buyers found matching your search.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
-          {/* Pagination */}
-        {!loading && buyers.length > 0 && (
-          <div className="mt-auto">
-            <Pagination />
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-4 flex items-center justify-between">
+            <div className="text-sm text-gray-500">
+              Showing {indexOfFirstBuyer + 1} to{' '}
+              {Math.min(indexOfLastBuyer, sortedBuyers.length)} of{' '}
+              {sortedBuyers.length} buyers
+            </div>
+            <div className="flex">
+              {/* Previous Button */}
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`flex items-center rounded-l-lg border bg-gray-100 px-3 py-1 text-gray-700 ${
+                  currentPage === 1
+                    ? 'cursor-not-allowed opacity-50'
+                    : 'hover:text-amber-500'
+                }`}
+              >
+                <CaretLeft size={14} weight="duotone" />
+                Prev
+              </button>
+
+              {/* Next Button */}
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className={`flex items-center rounded-r-lg border bg-gray-100 px-3 py-1 text-gray-700 ${
+                  currentPage === totalPages
+                    ? 'cursor-not-allowed opacity-50'
+                    : 'hover:text-amber-500'
+                }`}
+              >
+                Next
+                <CaretRight size={14} weight="duotone" />
+              </button>
+            </div>
           </div>
         )}
-        
-        {/* Delete Confirmation Modal */}
-        <DeleteConfirmationModal />
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        title="Delete Buyer"
+        message={`Are you sure you want to delete the buyer "${buyerToDelete ? `${buyerToDelete.first_name} ${buyerToDelete.last_name}` : ''}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        confirmButtonClass="bg-red-500 hover:bg-red-600"
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setBuyerToDelete(null);
+          setError(null);
+        }}
+      />
     </DashboardLayout>
   );
 };
