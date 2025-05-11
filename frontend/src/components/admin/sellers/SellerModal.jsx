@@ -1,7 +1,6 @@
-import React from 'react';
 import { X } from '@phosphor-icons/react';
 
-const SellerModal = ({ isOpen, title, children, onClose, size = 'md' }) => {
+const SellerModal = ({ isOpen, title, children, onClose, size = 'sm' }) => {
   if (!isOpen) return null;
 
   // Size classes for different modal sizes
@@ -13,7 +12,7 @@ const SellerModal = ({ isOpen, title, children, onClose, size = 'md' }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center overflow-auto bg-black bg-opacity-50">
       <div
         className={`m-4 w-full rounded-lg bg-white shadow-xl ${sizeClasses[size]}`}
       >
@@ -37,14 +36,14 @@ export const ConfirmationModal = ({
   isOpen,
   title,
   message,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
-  confirmButtonClass = 'bg-red-500 hover:bg-red-600',
+  confirmText,
+  cancelText,
+  confirmButtonClass,
   onConfirm,
   onCancel,
 }) => {
   return (
-    <SellerModal isOpen={isOpen} title={title} onClose={onCancel} size="sm">
+    <SellerModal isOpen={isOpen} title={title} onClose={onCancel} size='sm'>
       <div className="mb-6">
         <p className="text-gray-700">{message}</p>
       </div>

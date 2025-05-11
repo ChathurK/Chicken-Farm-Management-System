@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
-import { Plus, MagnifyingGlass, Pencil, Trash, Eye, ArrowsClockwise, SortAscending, SortDescending } from '@phosphor-icons/react';
+import { Plus, MagnifyingGlass, Pencil, Trash, Eye, SortAscending, SortDescending, CaretLeft, CaretRight, X } from '@phosphor-icons/react';
 import { ConfirmationModal } from './SellerModal';
 import api from '../../../utils/api';
 
@@ -130,30 +130,13 @@ const Sellers = () => {
     );
   };
 
-  // Format date for display
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString();
-  };
-
   return (
     <DashboardLayout>
-      <div className="rounded-lg bg-white p-6 shadow">
+      <div className="flex flex-col rounded-lg h-full bg-white p-6 shadow">
         {/* Header */}
         <div className="mb-6 flex flex-wrap items-center justify-between">
           <h1 className="text-2xl font-bold">Sellers</h1>
-          <div className="mt-2 flex gap-2 sm:mt-0">
-            <button
-              onClick={fetchSellers}
-              className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-gray-600 hover:bg-gray-50"
-              disabled={loading}
-            >
-              <ArrowsClockwise
-                size={18}
-                weight="bold"
-                className={loading ? 'animate-spin' : ''}
-              />
-              {loading ? 'Loading...' : 'Refresh'}
-            </button>
+          <div className="mt-2 sm:mt-0">
             <button
               onClick={() => navigate('/admin/sellers/add')}
               className="flex items-center gap-1 rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
@@ -166,35 +149,44 @@ const Sellers = () => {
 
         {/* Error message */}
         {error && (
-          <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+          <div className="mb-4 rounded-md bg-red-100 p-3 text-red-700">
             <p>{error}</p>
           </div>
         )}
-
+        
         {/* Search */}
         <div className="mb-6">
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <MagnifyingGlass size={20} className="text-gray-400" />
+              <MagnifyingGlass size={20} className="text-gray-400" weight='duotone' />
             </div>
             <input
               type="text"
-              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:ring-amber-500"
+              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 pl-10 pr-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
               placeholder="Search by name, email, or phone number"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+                title="Clear search"
+              >
+                <X size={18} weight="bold" />
+              </button>
+            )}
           </div>
         </div>
 
         {/* Sellers Table */}
-        <div className="overflow-x-auto">
+        <div className="h-[calc(100vh-338px)] overflow-auto">
           <table className="w-full text-left text-sm text-gray-500">
-            <thead className="bg-gray-50 text-xs uppercase text-gray-700">
+            <thead className="bg-gray-50 text-xs uppercase text-gray-700 sticky top-0">
               <tr>
                 <th
                   scope="col"
-                  className="cursor-pointer px-4 py-3"
+                  className="cursor-pointer px-4 py-3 hover:text-amber-600"
                   onClick={() => handleSort('name')}
                 >
                   <div className="flex items-center">
@@ -207,7 +199,7 @@ const Sellers = () => {
                 </th>
                 <th
                   scope="col"
-                  className="cursor-pointer px-4 py-3"
+                  className="cursor-pointer px-4 py-3 hover:text-amber-600"
                   onClick={() => handleSort('email')}
                 >
                   <div className="flex items-center">
@@ -216,7 +208,7 @@ const Sellers = () => {
                   </div>
                 </th>
                 <th scope="col" className="px-4 py-3">
-                  Added On
+                  Address
                 </th>
                 <th scope="col" className="px-4 py-3 text-right">
                   Actions
@@ -238,15 +230,13 @@ const Sellers = () => {
                     key={seller.seller_id}
                     className="border-b bg-white hover:bg-gray-50"
                   >
-                    <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">
+                    <td className="whitespace-nowrap px-4 py-4 font-medium text-gray-900">
                       {seller.first_name} {seller.last_name}
                     </td>
-                    <td className="px-4 py-3">{seller.contact_number}</td>
-                    <td className="px-4 py-3">{seller.email || '-'}</td>
-                    <td className="px-4 py-3">
-                      {formatDate(seller.created_at)}
-                    </td>
-                    <td className="flex justify-end gap-2 px-4 py-3">
+                    <td className="px-4 py-4">{seller.contact_number}</td>
+                    <td className="px-4 py-4">{seller.email || '-'}</td>
+                    <td className="px-4 py-4">{seller.address || '-'}</td>
+                    <td className="flex justify-end gap-2 px-4 py-4">
                       <button
                         onClick={() =>
                           navigate(`/admin/sellers/${seller.seller_id}`)
@@ -298,36 +288,28 @@ const Sellers = () => {
               {sortedSellers.length} sellers
             </div>
             <div className="flex">
+              {/* Previous Button */}
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="rounded-l-lg border bg-gray-100 px-3 py-1 text-gray-700 disabled:opacity-50"
+                className={`flex items-center rounded-l-lg border bg-gray-100 px-3 py-1 text-gray-700 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:text-amber-500'
+                  }`}
               >
-                Previous
+                <CaretLeft size={14} weight="duotone" />
+                Prev
               </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`border-b border-t px-3 py-1 ${
-                      currentPage === page
-                        ? 'bg-amber-500 text-white'
-                        : 'bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                )
-              )}
+
+              {/* Next Button */}
               <button
                 onClick={() =>
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                 }
                 disabled={currentPage === totalPages}
-                className="rounded-r-lg border bg-gray-100 px-3 py-1 text-gray-700 disabled:opacity-50"
+                className={`flex items-center rounded-r-lg border bg-gray-100 px-3 py-1 text-gray-700 ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:text-amber-500'
+                  }`}
               >
                 Next
+                <CaretRight size={14} weight='duotone' />
               </button>
             </div>
           </div>
@@ -340,11 +322,13 @@ const Sellers = () => {
         title="Delete Seller"
         message={`Are you sure you want to delete the seller "${sellerToDelete ? `${sellerToDelete.first_name} ${sellerToDelete.last_name}` : ''}"? This action cannot be undone.`}
         confirmText="Delete"
+        cancelText="Cancel"
         confirmButtonClass="bg-red-500 hover:bg-red-600"
         onConfirm={confirmDelete}
         onCancel={() => {
           setShowDeleteModal(false);
           setSellerToDelete(null);
+          setError(null);
         }}
       />
     </DashboardLayout>
