@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { X, ClipboardText, Check, WarningCircle } from '@phosphor-icons/react';
 
-const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword, apiError }) => {
+const EmployeeModal = ({
+  show,
+  onClose,
+  onSave,
+  employee,
+  temporaryPassword,
+  apiError,
+}) => {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -16,6 +23,7 @@ const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword, api
 
   const [errors, setErrors] = useState({});
   const [passwordCopied, setPasswordCopied] = useState(false);
+  const [generalError, setGeneralError] = useState(null);
 
   // Reset form when modal opens/closes or employee changes
   useEffect(() => {
@@ -49,6 +57,7 @@ const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword, api
         });
       }
       setErrors({});
+      setGeneralError(null);
     }
   }, [show, employee]);
 
@@ -56,19 +65,44 @@ const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword, api
   useEffect(() => {
     if (apiError) {
       const errorMessage = apiError.toLowerCase();
-      const newErrors = { ...errors };
+      const newErrors = {};
+      let isFieldSpecificError = false;
 
-      // Map common backend errors to specific form fields
-      if (errorMessage.includes('email already exists') || errorMessage.includes('please include a valid email')) {
-        newErrors.email = 'hi';
-      } else if (errorMessage.includes('contact number already exists')) {
-        newErrors.contact_number = 'hii';
-      } else {
-        setErrors(newErrors);
+      // Map validation errors to specific fields
+      if (errorMessage.includes('please include a valid email')) {
+        newErrors.email = 'Please enter a valid email address';
+        isFieldSpecificError = true;
       }
+
+      if (errorMessage.includes('contact number must contain only digits')) {
+        newErrors.contact_number =
+          'Contact number must contain only digits, spaces, and the characters: +, -, ()';
+        isFieldSpecificError = true;
+      }
+      
+      // Set the field-specific errors
+      setErrors((prev) => ({ ...prev, ...newErrors }));
+
+      // Handle general errors
+      if (isFieldSpecificError) {
+        setGeneralError(null);
+      } else {
+        // Extract the meaningful part of the error message
+        if (errorMessage.includes('failed to')) {
+          const colonIndex = apiError.indexOf(':');
+          if (colonIndex !== -1 && colonIndex < apiError.length - 1) {
+            setGeneralError(apiError.substring(colonIndex + 1).trim());
+          } else {
+            setGeneralError(apiError);
+          }
+        } else {
+          setGeneralError(apiError);
+        }
+      }
+    } else {
+      setGeneralError(null);
     }
   }, [apiError]);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -76,12 +110,23 @@ const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword, api
       [name]: value,
     });
 
-    // Clear error when field is edited
+    // Clear field error when field is edited
     if (errors[name]) {
       setErrors({
         ...errors,
         [name]: null,
       });
+    }
+
+    // Clear general error if it's related to this field
+    if (generalError) {
+      const errorMsg = generalError.toLowerCase();
+      if (
+        (name === 'email' && errorMsg.includes('email')) ||
+        (name === 'contact_number' && errorMsg.includes('contact'))
+      ) {
+        setGeneralError(null);
+      }
     }
   };
 
@@ -101,8 +146,7 @@ const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword, api
 
     if (!formData.department.trim())
       newErrors.department = 'Department is required';
-    if (!formData.position.trim())
-      newErrors.position = 'Position is required';
+    if (!formData.position.trim()) newErrors.position = 'Position is required';
 
     if (!formData.salary) {
       newErrors.salary = 'Salary is required';
@@ -110,8 +154,7 @@ const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword, api
       newErrors.salary = 'Salary must be a positive number';
     }
 
-    if (!formData.hire_date)
-      newErrors.hire_date = 'Hire date is required';
+    if (!formData.hire_date) newErrors.hire_date = 'Hire date is required';
     if (!formData.contact_number)
       newErrors.contact_number = 'Contact number is required';
 
@@ -152,7 +195,7 @@ const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword, api
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
           >
-            <X size={24} weight='bold' />
+            <X size={24} weight="bold" />
           </button>
         </div>
 
@@ -204,12 +247,12 @@ const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword, api
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6">
-            {/* Error Messages */}
-            {apiError && (
+            {/* General Error Messages */}
+            {generalError && (
               <div className="mb-4 rounded-lg bg-red-100 px-4 py-3 text-red-700">
                 <div className="flex items-center">
                   <WarningCircle size={20} className="mr-2" weight="fill" />
-                  <p>{apiError}</p>
+                  <p>{generalError}</p>
                 </div>
               </div>
             )}

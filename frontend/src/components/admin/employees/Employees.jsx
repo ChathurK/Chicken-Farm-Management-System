@@ -113,7 +113,7 @@ const Employees = () => {
         setShowModal(false);
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.msg;
+      const errorMessage = err.response?.data?.msg || err.message;
       setError(errorMessage);
       console.error('Error saving employee:', err);
     }
