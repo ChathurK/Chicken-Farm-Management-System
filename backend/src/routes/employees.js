@@ -54,11 +54,15 @@ router.post(
 router.put(
   "/:id",
   [
+    check("first_name", "First name is required").not().isEmpty().trim().escape(),
+    check("last_name", "Last name is required").not().isEmpty().trim().escape(),
+    check("email", "Please include a valid email").isEmail(),
     check("department", "Department is required").not().isEmpty().trim().escape(),
     check("position", "Position is required").not().isEmpty().trim().escape(),
     check("salary", "Salary must be a positive number")
       .isNumeric()
       .custom((value) => value > 0),
+    check("hire_date", "Hire date must be a valid date").optional().isISO8601().toDate(),
     check("contact_number", "Contact number is required").not().isEmpty().trim().custom((value) => {
       if (!/^[0-9\s+\-()]+$/.test(value)) {
         throw new Error(

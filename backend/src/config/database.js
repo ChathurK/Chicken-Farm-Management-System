@@ -28,10 +28,10 @@ testConnection();
 
 const initializeDatabase = async () => {
   try {
-    // Check if Users table exists (as a test)
+    // Check if Employees table exists (as a test)
     const [tables] = await pool.query(`
       SELECT TABLE_NAME FROM information_schema.TABLES 
-      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'Users'
+      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'Employees'
     `, [process.env.DB_NAME]);
     
     // If tables don't exist, create them
