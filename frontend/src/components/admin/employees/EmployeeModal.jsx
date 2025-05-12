@@ -142,7 +142,15 @@ const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword }) =
         {temporaryPassword ? (
           <div className="p-6">
             <div className="mb-4 rounded border border-green-400 bg-green-100 px-4 py-3 text-green-700">
-              <p className="font-bold">Employee Created Successfully!</p>
+              {employee ? (
+                <>
+                  <p className="font-bold">Password Updated Successfully!</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-bold">Employee Created Successfully!</p>
+                </>
+              )}
               <p>A temporary password has been generated for this employee:</p>
               <div className="mt-2 flex items-center justify-between rounded border bg-white p-2">
                 <code className="font-mono">{temporaryPassword}</code>
@@ -279,7 +287,7 @@ const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword }) =
                   name="salary"
                   value={formData.salary}
                   onChange={handleChange}
-                  step="2500"
+                  step="1000"
                   min="0"
                   className={`w-full rounded-lg border px-3 py-2 ${errors.salary ? 'border-red-500' : 'border-gray-300'} focus:border-amber-500 focus:outline-none`}
                 />

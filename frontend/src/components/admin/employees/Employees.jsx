@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '../DashboardLayout';
-import { Plus, MagnifyingGlass, Pencil, Trash, EnvelopeSimple, Phone, Key, X } from '@phosphor-icons/react';
+import {
+  Plus,
+  MagnifyingGlass,
+  Pencil,
+  Trash,
+  EnvelopeSimple,
+  Phone,
+  Key,
+  X,
+} from '@phosphor-icons/react';
 import api from '../../../utils/api';
 import EmployeeModal from './EmployeeModal';
 
@@ -72,7 +81,9 @@ const Employees = () => {
     }
 
     try {
-      const response = await api.put(`api/employees/${employeeId}/reset-password`);
+      const response = await api.put(
+        `api/employees/${employeeId}/reset-password`
+      );
       setTemporaryPassword(response.data.temporaryPassword);
       setCurrentEmployee(
         employees.find(
@@ -90,6 +101,8 @@ const Employees = () => {
 
   const handleSaveEmployee = async (employeeData) => {
     try {
+      let newTempPassword = '';
+
       if (currentEmployee) {
         // Update existing employee
         await api.put(`api/employees/${currentEmployee.user_id}`, employeeData);
@@ -98,14 +111,15 @@ const Employees = () => {
         const response = await api.post('api/employees', employeeData);
         // If response includes temporary password
         if (response.data.temporaryPassword) {
-          setTemporaryPassword(response.data.temporaryPassword);
+          newTempPassword = response.data.temporaryPassword;
+          setTemporaryPassword(newTempPassword);
         }
       }
 
       fetchEmployees();
 
       // Only close modal if no temporary password was returned
-      if (!temporaryPassword) {
+      if (!newTempPassword) {
         setShowModal(false);
       }
     } catch (err) {
@@ -117,6 +131,7 @@ const Employees = () => {
   };
 
   const closeModalAndReset = () => {
+    setError(null);
     setShowModal(false);
     setTemporaryPassword('');
     fetchEmployees();
@@ -169,7 +184,11 @@ const Employees = () => {
         <div className="mb-6">
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <MagnifyingGlass size={20} className="text-gray-400" weight="duotone" />
+              <MagnifyingGlass
+                size={20}
+                className="text-gray-400"
+                weight="duotone"
+              />
             </div>
             <input
               type="text"
@@ -201,8 +220,7 @@ const Employees = () => {
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="text-lg font-semibold">
-                      {employee.first_name}{' '}
-                      {employee.last_name}
+                      {employee.first_name} {employee.last_name}
                     </h3>
                     <p className="text-gray-600">{employee.position}</p>
                     {employee.department && (
@@ -215,11 +233,19 @@ const Employees = () => {
               </div>
               <div className="space-y-2 p-4">
                 <div className="flex items-center text-sm">
-                  <EnvelopeSimple size={16} className="mr-2 text-gray-400" weight='duotone' />
+                  <EnvelopeSimple
+                    size={16}
+                    className="mr-2 text-gray-400"
+                    weight="duotone"
+                  />
                   <span>{employee.email}</span>
                 </div>
                 <div className="flex items-center text-sm">
-                  <Phone size={16} className="mr-2 text-gray-400" weight='duotone' />
+                  <Phone
+                    size={16}
+                    className="mr-2 text-gray-400"
+                    weight="duotone"
+                  />
                   <span>{employee.contact_number}</span>
                 </div>
                 {employee.salary && (
