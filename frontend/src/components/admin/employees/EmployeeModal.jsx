@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, ClipboardText, Check } from '@phosphor-icons/react';
 
-const EmployeeModal = ({
-  show,
-  onClose,
-  onSave,
-  employee,
-  temporaryPassword,
-}) => {
+const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword }) => {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',

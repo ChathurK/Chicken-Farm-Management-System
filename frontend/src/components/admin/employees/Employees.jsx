@@ -92,7 +92,7 @@ const Employees = () => {
     try {
       if (currentEmployee) {
         // Update existing employee
-        await api.put(`api/employees/${currentEmployee.user_id || currentEmployee.id}`, employeeData);
+        await api.put(`api/employees/${currentEmployee.user_id}`, employeeData);
       } else {
         // Create new employee
         const response = await api.post('api/employees', employeeData);

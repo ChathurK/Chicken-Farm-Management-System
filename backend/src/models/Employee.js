@@ -33,14 +33,15 @@ class Employee {
     const query = "SELECT * FROM Employees WHERE user_id = ?";
     const [rows] = await db.execute(query, [userId]);
     return rows[0];
-  }
-
+    }
+    
   // Get all employees with user data
   static async findAllWithUserData() {
     const query = `
             SELECT e.*, u.first_name, u.last_name, u.email, u.role
             FROM Employees e
             JOIN Users u ON e.user_id = u.user_id
+            WHERE u.role = 'Employee'
         `;
     const [rows] = await db.execute(query);
     return rows;
@@ -70,6 +71,21 @@ class Employee {
     const query = "DELETE FROM Employees WHERE user_id = ?";
     const [result] = await db.execute(query, [userId]);
     return result.affectedRows > 0;
+  }
+
+  // Check if contact number already exists
+  static async findByContactNumber(contactNumber, excludeUserId = null) {
+    let query = "SELECT * FROM Employees WHERE contact_number = ?";
+    let params = [contactNumber];
+
+    // If updating an employee, exclude the current employee from the check
+    if (excludeUserId) {
+      query += " AND user_id != ?";
+      params.push(excludeUserId);
+    }
+
+    const [rows] = await db.execute(query, params);
+    return rows.length > 0 ? rows[0] : null;
   }
 }
 

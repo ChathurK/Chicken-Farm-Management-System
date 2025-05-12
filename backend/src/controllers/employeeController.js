@@ -67,9 +67,7 @@ exports.createEmployee = async (req, res) => {
       hire_date = new Date().toISOString().split("T")[0],
       contact_number,
       address,
-    } = req.body;
-
-    // Generate a temporary password (or use a provided one)
+    } = req.body; // Generate a temporary password (or use a provided one)
     const temporaryPassword = req.body.password || generateTemporaryPassword();
 
     // Check if user already exists
@@ -78,6 +76,14 @@ exports.createEmployee = async (req, res) => {
       return res
         .status(400)
         .json({ msg: "User with this email already exists" });
+    }
+
+    // Check if contact number already exists
+    const existingContact = await Employee.findByContactNumber(contact_number);
+    if (existingContact) {
+      return res
+        .status(400)
+        .json({ msg: "An employee with this contact number already exists" });
     }
 
     // Start transaction
@@ -131,13 +137,27 @@ exports.createEmployee = async (req, res) => {
     } catch (error) {
       await connection.rollback();
       console.error(error.message);
+
+      // Determine specific error type for better error messages
+      if (error.code === "ER_DUP_ENTRY") {
+        if (error.message.includes("contact_number")) {
+          return res.status(400).json({
+            msg: "An employee with this contact number already exists",
+          });
+        } else if (error.message.includes("email")) {
+          return res.status(400).json({
+            msg: "User with this email already exists",
+          });
+        }
+      }
+
       throw error;
     } finally {
       connection.release();
     }
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Server Error");
+    res.status(500).json({ msg: "Server Error", details: err.message });
   }
 };
 
@@ -165,6 +185,29 @@ exports.updateEmployee = async (req, res) => {
       contact_number,
       address,
     } = req.body;
+
+    // Check if email already exists (if trying to change email)
+    if (email) {
+      const existingUser = await User.findByEmail(email);
+      if (existingUser && existingUser.user_id != userId) {
+        return res.status(400).json({
+          msg: "Email address is already in use by another account",
+        });
+      }
+    }
+
+    // Check if contact number already exists (excluding current employee)
+    if (contact_number) {
+      const existingContact = await Employee.findByContactNumber(
+        contact_number,
+        userId
+      );
+      if (existingContact) {
+        return res.status(400).json({
+          msg: "An employee with this contact number already exists",
+        });
+      }
+    }
 
     // Start transaction
     const connection = await db.getConnection();
@@ -210,6 +253,20 @@ exports.updateEmployee = async (req, res) => {
       });
     } catch (error) {
       await connection.rollback();
+
+      // Handle specific error types
+      if (error.code === "ER_DUP_ENTRY") {
+        if (error.message.includes("contact_number")) {
+          return res.status(400).json({
+            msg: "An employee with this contact number already exists",
+          });
+        } else if (error.message.includes("email")) {
+          return res.status(400).json({
+            msg: "Email address is already in use by another account",
+          });
+        }
+      }
+
       throw error;
     } finally {
       connection.release();
@@ -226,9 +283,17 @@ exports.updateEmployee = async (req, res) => {
       return res
         .status(400)
         .json({ msg: "Email address is already in use by another account" });
+    } else if (
+      err.message &&
+      err.message.includes("Duplicate entry") &&
+      err.message.includes("contact_number")
+    ) {
+      return res
+        .status(400)
+        .json({ msg: "An employee with this contact number already exists" });
     }
 
-    res.status(500).json({ msg: "Server Error" });
+    res.status(500).json({ msg: "Server Error", details: err.message });
   }
 };
 
