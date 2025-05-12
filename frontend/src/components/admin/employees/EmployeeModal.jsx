@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, ClipboardText, Check } from '@phosphor-icons/react';
+import { X, ClipboardText, Check, WarningCircle } from '@phosphor-icons/react';
 
-const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword }) => {
+const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword, apiError }) => {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -51,6 +51,23 @@ const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword }) =
       setErrors({});
     }
   }, [show, employee]);
+
+  // Parse API errors into field-specific errors
+  useEffect(() => {
+    if (apiError) {
+      const errorMessage = apiError.toLowerCase();
+      const newErrors = { ...errors };
+
+      // Map common backend errors to specific form fields
+      if (errorMessage.includes('email already exists') || errorMessage.includes('please include a valid email')) {
+        newErrors.email = 'hi';
+      } else if (errorMessage.includes('contact number already exists')) {
+        newErrors.contact_number = 'hii';
+      } else {
+        setErrors(newErrors);
+      }
+    }
+  }, [apiError]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -111,7 +128,7 @@ const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword }) =
         ...formData,
         salary: parseFloat(formData.salary),
       };
-      
+
       onSave(employeeData);
     }
   };
@@ -187,6 +204,16 @@ const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword }) =
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6">
+            {/* Error Messages */}
+            {apiError && (
+              <div className="mb-4 rounded-lg bg-red-100 px-4 py-3 text-red-700">
+                <div className="flex items-center">
+                  <WarningCircle size={20} className="mr-2" weight="fill" />
+                  <p>{apiError}</p>
+                </div>
+              </div>
+            )}
+
             <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">

@@ -52,7 +52,7 @@ exports.createEmployee = async (req, res) => {
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ msg: errors.array().map(error => error.msg).join(", ") });
     }
 
     const {
@@ -169,7 +169,7 @@ exports.updateEmployee = async (req, res) => {
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ msg: errors.array().map(error => error.msg).join(", ") });
     }
 
     const userId = req.params.id;

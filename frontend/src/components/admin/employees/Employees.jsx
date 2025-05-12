@@ -1,15 +1,6 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '../DashboardLayout';
-import {
-  Plus,
-  MagnifyingGlass,
-  Pencil,
-  Trash,
-  EnvelopeSimple,
-  Phone,
-  Key,
-  X,
-} from '@phosphor-icons/react';
+import { Plus, MagnifyingGlass, Pencil, Trash, EnvelopeSimple, Phone, Key, X } from '@phosphor-icons/react';
 import api from '../../../utils/api';
 import EmployeeModal from './EmployeeModal';
 
@@ -81,9 +72,7 @@ const Employees = () => {
     }
 
     try {
-      const response = await api.put(
-        `api/employees/${employeeId}/reset-password`
-      );
+      const response = await api.put(`api/employees/${employeeId}/reset-password`);
       setTemporaryPassword(response.data.temporaryPassword);
       setCurrentEmployee(
         employees.find(
@@ -92,8 +81,9 @@ const Employees = () => {
       );
       setShowModal(true);
     } catch (err) {
+      const errorMessage = err.response?.data?.msg || err.message;
       setError(
-        'Failed to reset password: ' + (err.response?.data?.msg || err.message)
+        'Failed to reset password: ' + errorMessage
       );
       console.error('Error resetting password:', err);
     }
@@ -123,9 +113,8 @@ const Employees = () => {
         setShowModal(false);
       }
     } catch (err) {
-      setError(
-        'Failed to save employee: ' + (err.response?.data?.msg || err.message)
-      );
+      const errorMessage = err.response?.data?.msg;
+      setError(errorMessage);
       console.error('Error saving employee:', err);
     }
   };
@@ -174,7 +163,7 @@ const Employees = () => {
           </button>
         </div>
 
-        {error && (
+        {error && !showModal && (
           <div className="relative mb-4 rounded-md bg-red-100 p-3 text-red-700">
             {error}
           </div>
@@ -184,11 +173,7 @@ const Employees = () => {
         <div className="mb-6">
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <MagnifyingGlass
-                size={20}
-                className="text-gray-400"
-                weight="duotone"
-              />
+              <MagnifyingGlass size={20} className="text-gray-400" weight='duotone' />
             </div>
             <input
               type="text"
@@ -233,19 +218,11 @@ const Employees = () => {
               </div>
               <div className="space-y-2 p-4">
                 <div className="flex items-center text-sm">
-                  <EnvelopeSimple
-                    size={16}
-                    className="mr-2 text-gray-400"
-                    weight="duotone"
-                  />
+                  <EnvelopeSimple size={16} className="mr-2 text-gray-400" weight='duotone' />
                   <span>{employee.email}</span>
                 </div>
                 <div className="flex items-center text-sm">
-                  <Phone
-                    size={16}
-                    className="mr-2 text-gray-400"
-                    weight="duotone"
-                  />
+                  <Phone size={16} className="mr-2 text-gray-400" weight='duotone' />
                   <span>{employee.contact_number}</span>
                 </div>
                 {employee.salary && (
@@ -312,6 +289,7 @@ const Employees = () => {
         onClose={closeModalAndReset}
         onSave={handleSaveEmployee}
         temporaryPassword={temporaryPassword}
+        apiError={error}
       />
     </DashboardLayout>
   );
