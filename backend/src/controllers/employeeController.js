@@ -182,6 +182,7 @@ exports.updateEmployee = async (req, res) => {
       department,
       position,
       salary,
+      hire_date,
       contact_number,
       address,
     } = req.body;
@@ -234,6 +235,7 @@ exports.updateEmployee = async (req, res) => {
         department,
         position,
         salary,
+        hire_date,
         contact_number,
         address,
       };

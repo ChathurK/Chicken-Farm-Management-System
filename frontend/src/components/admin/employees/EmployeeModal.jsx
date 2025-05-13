@@ -3,7 +3,16 @@ import PropTypes from 'prop-types';
 import { X, ClipboardText, Check, WarningCircle } from '@phosphor-icons/react';
 
 // Form field component for reusability
-const FormField = ({ label, name, type = 'text', value, onChange, error, required = false, ...props }) => (
+const FormField = ({
+  label,
+  name,
+  type = 'text',
+  value,
+  onChange,
+  error,
+  required = false,
+  ...props
+}) => (
   <div>
     <label
       htmlFor={name}
@@ -52,7 +61,14 @@ FormField.propTypes = {
   required: PropTypes.bool,
 };
 
-const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword, apiError }) => {
+const EmployeeModal = ({
+  show,
+  onClose,
+  onSave,
+  employee,
+  temporaryPassword,
+  apiError,
+}) => {
   const initialFormState = {
     first_name: '',
     last_name: '',
@@ -74,6 +90,17 @@ const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword, api
   useEffect(() => {
     if (show) {
       if (employee) {
+        // Fix timezone issues with dates by handling them properly
+        let hireDate = '';
+        if (employee.hire_date) {
+          // Create a date with time part set to noon to avoid timezone issues
+          const date = new Date(employee.hire_date);
+          date.setHours(12, 0, 0, 0);
+          hireDate = date.toISOString().split('T')[0];
+        } else {
+          hireDate = new Date().toISOString().split('T')[0];
+        }
+
         setFormData({
           first_name: employee.first_name || '',
           last_name: employee.last_name || '',
@@ -81,9 +108,7 @@ const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword, api
           department: employee.department || '',
           position: employee.position || '',
           salary: employee.salary || '',
-          hire_date: employee.hire_date
-            ? new Date(employee.hire_date).toISOString().split('T')[0]
-            : new Date().toISOString().split('T')[0],
+          hire_date: hireDate,
           contact_number: employee.contact_number || '',
           address: employee.address || '',
         });
@@ -206,6 +231,7 @@ const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword, api
       const employeeData = {
         ...formData,
         salary: parseFloat(formData.salary),
+        hire_date: formData.hire_date, // Ensure hire_date is explicitly included
       };
 
       onSave(employeeData);

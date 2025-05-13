@@ -3,15 +3,7 @@ const db = require("../config/database");
 class Employee {
   // Create employee record
   static async create(employeeData) {
-    const {
-      user_id,
-      department,
-      position,
-      salary,
-      hire_date,
-      contact_number,
-      address,
-    } = employeeData;
+    const { user_id, department, position, salary, hire_date, contact_number, address } = employeeData;
 
     const query =
       "INSERT INTO Employees (user_id, department, position, salary, hire_date, contact_number, address) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -49,15 +41,15 @@ class Employee {
 
   // Update employee
   static async update(userId, employeeData) {
-    const { department, position, salary, contact_number, address } =
-      employeeData;
+    const { department, position, salary, hire_date, contact_number, address } = employeeData;
 
     const query =
-      "UPDATE Employees SET department = ?, position = ?, salary = ?, contact_number = ?, address = ? WHERE user_id = ?";
+      "UPDATE Employees SET department = ?, position = ?, salary = ?, hire_date = ?, contact_number = ?, address = ? WHERE user_id = ?";
     await db.execute(query, [
       department,
       position,
       salary,
+      hire_date,
       contact_number,
       address,
       userId,
