@@ -1,6 +1,17 @@
 import React from 'react';
 import { SidebarItem, SubMenu } from '../shared/SidebarItem';
-import { House, CalendarDots, ShoppingCart, CurrencyCircleDollar, Bird, ArchiveBox, Storefront, UserPlus, UsersThree, SignOut } from '@phosphor-icons/react';
+import {
+  House,
+  CalendarDots,
+  ShoppingCart,
+  CurrencyCircleDollar,
+  Bird,
+  ArchiveBox,
+  Storefront,
+  UserPlus,
+  UsersThree,
+  SignOut,
+} from '@phosphor-icons/react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function AdminSidebarContent() {
@@ -27,6 +38,8 @@ export default function AdminSidebarContent() {
         icon={<CurrencyCircleDollar size={20} weight="duotone" />}
         text="Finance"
       >
+        <SidebarItem text="Transactions" to="/admin/finance/transactions" />
+        <SidebarItem text="Financial Reports" to="/admin/finance/reports" />
         <SidebarItem text="Income" to="/admin/finance/income" />
         <SidebarItem text="Expenses" to="/admin/finance/expenses" />
       </SubMenu>
@@ -35,7 +48,10 @@ export default function AdminSidebarContent() {
         <SidebarItem text="Chicks" to="/admin/livestock/chicks" />
         <SidebarItem text="Chickens" to="/admin/livestock/chickens" />
       </SubMenu>
-      <SubMenu icon={<ArchiveBox size={20} weight="duotone" />} text="Inventory">
+      <SubMenu
+        icon={<ArchiveBox size={20} weight="duotone" />}
+        text="Inventory"
+      >
         <SidebarItem text="Feed" to="/admin/inventory/feed" />
         <SidebarItem text="Medications" to="/admin/inventory/medications" />
         <SidebarItem text="Other" to="/admin/inventory/other" />
