@@ -21,6 +21,10 @@ import SellerForm from './components/admin/sellers/SellerForm';
 import SellerDetails from './components/admin/sellers/SellerDetails';
 import Employees from './components/admin/employees/Employees';
 import Livestock from './components/admin/livestock/Livestock';
+import Inventory from './components/admin/inventory/Inventory';
+import InventoryForm from './components/admin/inventory/InventoryForm';
+import InventoryDetails from './components/admin/inventory/InventoryDetails';
+import InventoryReports from './components/admin/inventory/reports/InventoryReports';
 
 const routes = [
   { path: '/', element: <LandingPage /> },
@@ -48,6 +52,13 @@ const routes = [
       { path: '/admin/livestock/eggs', element: <Livestock /> },
       { path: '/admin/livestock/chicks', element: <Livestock /> },
       { path: '/admin/livestock/chickens', element: <Livestock /> },
+      { path: '/admin/inventory/feed', element: <Inventory /> },
+      { path: '/admin/inventory/medications', element: <Inventory /> },
+      { path: '/admin/inventory/other', element: <Inventory /> },
+      { path: '/admin/inventory/reports', element: <InventoryReports /> },
+      { path: '/admin/inventory/add/:category', element: <InventoryForm /> },
+      { path: '/admin/inventory/edit/:id', element: <InventoryForm /> },
+      { path: '/admin/inventory/:id', element: <InventoryDetails /> },
     ],
   },
   // Protected routes for employee users
