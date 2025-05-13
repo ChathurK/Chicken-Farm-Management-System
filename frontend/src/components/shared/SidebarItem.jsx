@@ -32,8 +32,25 @@ export function SidebarItem({ icon, text, alert, to, onClick }) {
 }
 
 export function SubMenu({ icon, text, children }) {
-    const [open, setOpen] = useState(false);
+    const { pathname } = useLocation();
     const { expanded } = useContext(SidebarContext);
+    
+    // Check if any child routes match the current path
+    const isActiveRoute = () => {
+        // Convert children to array if it's not already
+        const childrenArray = Array.isArray(children) ? children : [children];
+        
+        return childrenArray.some(child => {
+            // Check if the child is a SidebarItem with a matching route
+            if (child && child.props && child.props.to) {
+                return pathname.startsWith(child.props.to);
+            }
+            return false;
+        });
+    };
+    
+    // Initialize open state based on whether the current route is within this submenu
+    const [open, setOpen] = useState(isActiveRoute());
 
     return (
         <li className='relative my-1'>
@@ -44,7 +61,7 @@ export function SubMenu({ icon, text, children }) {
                 tabIndex={0}
                 onKeyDown={(e) => e.key === 'Enter' && setOpen(!open)}
                 className={`flex justify-center items-center py-2 px-3 font-medium rounded-md cursor-pointer 
-                transition-colors duration-300 hover:bg-amber-400 text-gray-700`}>
+                transition-colors duration-300 hover:bg-amber-400 text-gray-700 ${isActiveRoute() ? 'bg-amber-200' : ''}`}>
                 {icon}
                 <span className={`overflow-hidden transition-all ${expanded ? "w-40 ml-3" : "w-0 text-nowrap"}`}>
                     {text}
