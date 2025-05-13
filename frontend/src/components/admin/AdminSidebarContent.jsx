@@ -40,8 +40,6 @@ export default function AdminSidebarContent() {
       >
         <SidebarItem text="Transactions" to="/admin/finance/transactions" />
         <SidebarItem text="Financial Reports" to="/admin/finance/reports" />
-        <SidebarItem text="Income" to="/admin/finance/income" />
-        <SidebarItem text="Expenses" to="/admin/finance/expenses" />
       </SubMenu>
       <SubMenu icon={<Bird size={20} weight="duotone" />} text="Live Stock">
         <SidebarItem text="Eggs" to="/admin/livestock/eggs" />

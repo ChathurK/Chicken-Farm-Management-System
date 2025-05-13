@@ -21,8 +21,6 @@ import {
   TransactionDetails,
   FinancialReports,
 } from './components/admin/finance';
-import Income from './components/admin/finance/income/Income';
-import Expenses from './components/admin/finance/expenses/Expenses';
 // Other admin components
 import Buyers from './components/admin/buyers/Buyers';
 import BuyerForm from './components/admin/buyers/BuyerForm';
@@ -60,17 +58,9 @@ const routes = [
       // Finance routes
       { path: '/admin/finance/transactions', element: <TransactionList /> },
       { path: '/admin/finance/transactions/add', element: <TransactionForm /> },
-      {
-        path: '/admin/finance/transactions/edit/:id',
-        element: <TransactionForm />,
-      },
-      {
-        path: '/admin/finance/transactions/:id',
-        element: <TransactionDetails />,
-      },
+      { path: '/admin/finance/transactions/edit/:id', element: <TransactionForm /> },
+      { path: '/admin/finance/transactions/:id', element: <TransactionDetails /> },
       { path: '/admin/finance/reports', element: <FinancialReports /> },
-      { path: '/admin/finance/income', element: <Income /> },
-      { path: '/admin/finance/expenses', element: <Expenses /> },
       { path: '/admin/buyers', element: <Buyers /> },
       { path: '/admin/buyers/add', element: <BuyerForm /> },
       { path: '/admin/buyers/edit/:id', element: <BuyerForm /> },
