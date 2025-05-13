@@ -20,6 +20,7 @@ import Sellers from './components/admin/sellers/Sellers';
 import SellerForm from './components/admin/sellers/SellerForm';
 import SellerDetails from './components/admin/sellers/SellerDetails';
 import Employees from './components/admin/employees/Employees';
+import Livestock from './components/admin/livestock/Livestock';
 
 const routes = [
   { path: '/', element: <LandingPage /> },
@@ -44,6 +45,9 @@ const routes = [
       { path: '/admin/sellers/edit/:id', element: <SellerForm /> },
       { path: '/admin/sellers/:id', element: <SellerDetails /> },
       { path: '/admin/employees', element: <Employees /> },
+      { path: '/admin/livestock/eggs', element: <Livestock /> },
+      { path: '/admin/livestock/chicks', element: <Livestock /> },
+      { path: '/admin/livestock/chickens', element: <Livestock /> },
     ],
   },
   // Protected routes for employee users
