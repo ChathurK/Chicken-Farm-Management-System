@@ -1,15 +1,59 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
+import PropTypes from 'prop-types';
 import { X, ClipboardText, Check, WarningCircle } from '@phosphor-icons/react';
 
-const EmployeeModal = ({
-  show,
-  onClose,
-  onSave,
-  employee,
-  temporaryPassword,
-  apiError,
-}) => {
-  const [formData, setFormData] = useState({
+// Form field component for reusability
+const FormField = ({ label, name, type = 'text', value, onChange, error, required = false, ...props }) => (
+  <div>
+    <label
+      htmlFor={name}
+      className="mb-1 block text-sm font-medium text-gray-700"
+    >
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    {type === 'textarea' ? (
+      <textarea
+        id={name}
+        name={name}
+        value={value}
+        onChange={onChange}
+        className={`w-full rounded-lg border px-3 py-2 ${error ? 'border-red-500' : 'border-gray-300'} focus:border-amber-500 focus:outline-none`}
+        aria-invalid={error ? 'true' : 'false'}
+        {...props}
+      ></textarea>
+    ) : (
+      <input
+        id={name}
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        className={`w-full rounded-lg border px-3 py-2 ${error ? 'border-red-500' : 'border-gray-300'} focus:border-amber-500 focus:outline-none`}
+        aria-invalid={error ? 'true' : 'false'}
+        aria-required={required ? 'true' : 'false'}
+        {...props}
+      />
+    )}
+    {error && (
+      <p className="mt-1 text-xs text-red-500" id={`${name}-error`}>
+        {error}
+      </p>
+    )}
+  </div>
+);
+
+FormField.propTypes = {
+  label: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  type: PropTypes.string,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onChange: PropTypes.func.isRequired,
+  error: PropTypes.string,
+  required: PropTypes.bool,
+};
+
+const EmployeeModal = ({ show, onClose, onSave, employee, temporaryPassword, apiError }) => {
+  const initialFormState = {
     first_name: '',
     last_name: '',
     email: '',
@@ -19,8 +63,9 @@ const EmployeeModal = ({
     hire_date: new Date().toISOString().split('T')[0],
     contact_number: '',
     address: '',
-  });
+  };
 
+  const [formData, setFormData] = useState(initialFormState);
   const [errors, setErrors] = useState({});
   const [passwordCopied, setPasswordCopied] = useState(false);
   const [generalError, setGeneralError] = useState(null);
@@ -44,17 +89,7 @@ const EmployeeModal = ({
         });
       } else {
         // New employee - reset form
-        setFormData({
-          first_name: '',
-          last_name: '',
-          email: '',
-          department: '',
-          position: '',
-          salary: '',
-          hire_date: new Date().toISOString().split('T')[0],
-          contact_number: '',
-          address: '',
-        });
+        setFormData(initialFormState);
       }
       setErrors({});
       setGeneralError(null);
@@ -79,7 +114,7 @@ const EmployeeModal = ({
           'Contact number must contain only digits, spaces, and the characters: +, -, ()';
         isFieldSpecificError = true;
       }
-      
+
       // Set the field-specific errors
       setErrors((prev) => ({ ...prev, ...newErrors }));
 
@@ -103,6 +138,7 @@ const EmployeeModal = ({
       setGeneralError(null);
     }
   }, [apiError]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -203,13 +239,9 @@ const EmployeeModal = ({
           <div className="p-6">
             <div className="mb-4 rounded border border-green-400 bg-green-100 px-4 py-3 text-green-700">
               {employee ? (
-                <>
-                  <p className="font-bold">Password Updated Successfully!</p>
-                </>
+                <p className="font-bold">Password Updated Successfully!</p>
               ) : (
-                <>
-                  <p className="font-bold">Employee Created Successfully!</p>
-                </>
+                <p className="font-bold">Employee Created Successfully!</p>
               )}
               <p>A temporary password has been generated for this employee:</p>
               <div className="mt-2 flex items-center justify-between rounded border bg-white p-2">
@@ -258,162 +290,101 @@ const EmployeeModal = ({
             )}
 
             <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  First Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="first_name"
-                  value={formData.first_name}
-                  onChange={handleChange}
-                  className={`w-full rounded-lg border px-3 py-2 ${errors.first_name ? 'border-red-500' : 'border-gray-300'} focus:border-amber-500 focus:outline-none`}
-                />
-                {errors.first_name && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.first_name}
-                  </p>
-                )}
-              </div>
+              <FormField
+                label="First Name"
+                name="first_name"
+                value={formData.first_name}
+                onChange={handleChange}
+                error={errors.first_name}
+                required
+              />
 
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Last Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="last_name"
-                  value={formData.last_name}
-                  onChange={handleChange}
-                  className={`w-full rounded-lg border px-3 py-2 ${errors.last_name ? 'border-red-500' : 'border-gray-300'} focus:border-amber-500 focus:outline-none`}
-                />
-                {errors.last_name && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.last_name}
-                  </p>
-                )}
-              </div>
+              <FormField
+                label="Last Name"
+                name="last_name"
+                value={formData.last_name}
+                onChange={handleChange}
+                error={errors.last_name}
+                required
+              />
             </div>
 
             <div className="mb-4">
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Email <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
+              <FormField
+                label="Email"
                 name="email"
+                type="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`w-full rounded-lg border px-3 py-2 ${errors.email ? 'border-red-500' : 'border-gray-300'} focus:border-amber-500 focus:outline-none`}
+                error={errors.email}
+                required
               />
-              {errors.email && (
-                <p className="mt-1 text-xs text-red-500">{errors.email}</p>
-              )}
             </div>
 
             <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Department <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="department"
-                  value={formData.department}
-                  onChange={handleChange}
-                  className={`w-full rounded-lg border px-3 py-2 ${errors.department ? 'border-red-500' : 'border-gray-300'} focus:border-amber-500 focus:outline-none`}
-                />
-                {errors.department && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.department}
-                  </p>
-                )}
-              </div>
+              <FormField
+                label="Department"
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                error={errors.department}
+                required
+              />
 
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Position <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="position"
-                  value={formData.position}
-                  onChange={handleChange}
-                  className={`w-full rounded-lg border px-3 py-2 ${errors.position ? 'border-red-500' : 'border-gray-300'} focus:border-amber-500 focus:outline-none`}
-                />
-                {errors.position && (
-                  <p className="mt-1 text-xs text-red-500">{errors.position}</p>
-                )}
-              </div>
+              <FormField
+                label="Position"
+                name="position"
+                value={formData.position}
+                onChange={handleChange}
+                error={errors.position}
+                required
+              />
             </div>
 
             <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Salary <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  name="salary"
-                  value={formData.salary}
-                  onChange={handleChange}
-                  step="1000"
-                  min="0"
-                  className={`w-full rounded-lg border px-3 py-2 ${errors.salary ? 'border-red-500' : 'border-gray-300'} focus:border-amber-500 focus:outline-none`}
-                />
-                {errors.salary && (
-                  <p className="mt-1 text-xs text-red-500">{errors.salary}</p>
-                )}
-              </div>
+              <FormField
+                label="Salary"
+                name="salary"
+                type="number"
+                value={formData.salary}
+                onChange={handleChange}
+                error={errors.salary}
+                required
+                step="1000"
+                min="0"
+              />
 
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Hire Date <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  name="hire_date"
-                  value={formData.hire_date}
-                  onChange={handleChange}
-                  className={`w-full rounded-lg border px-3 py-2 ${errors.hire_date ? 'border-red-500' : 'border-gray-300'} focus:border-amber-500 focus:outline-none`}
-                />
-                {errors.hire_date && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.hire_date}
-                  </p>
-                )}
-              </div>
+              <FormField
+                label="Hire Date"
+                name="hire_date"
+                type="date"
+                value={formData.hire_date}
+                onChange={handleChange}
+                error={errors.hire_date}
+                required
+              />
             </div>
 
             <div className="mb-4">
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Contact Number <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
+              <FormField
+                label="Contact Number"
                 name="contact_number"
                 value={formData.contact_number}
                 onChange={handleChange}
-                className={`w-full rounded-lg border px-3 py-2 ${errors.contact_number ? 'border-red-500' : 'border-gray-300'} focus:border-amber-500 focus:outline-none`}
+                error={errors.contact_number}
+                required
               />
-              {errors.contact_number && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.contact_number}
-                </p>
-              )}
             </div>
 
             <div className="mb-4">
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Address
-              </label>
-              <textarea
+              <FormField
+                label="Address"
                 name="address"
+                type="textarea"
                 value={formData.address}
                 onChange={handleChange}
                 rows="3"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-amber-500 focus:outline-none"
-              ></textarea>
+              />
             </div>
 
             <div className="mt-6 flex justify-end gap-3">
@@ -438,4 +409,14 @@ const EmployeeModal = ({
   );
 };
 
-export default EmployeeModal;
+EmployeeModal.propTypes = {
+  show: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSave: PropTypes.func.isRequired,
+  employee: PropTypes.object,
+  temporaryPassword: PropTypes.string,
+  apiError: PropTypes.string,
+};
+
+// Use memo to prevent unnecessary re-renders
+export default memo(EmployeeModal);
