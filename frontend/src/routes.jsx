@@ -11,6 +11,9 @@ import Profile from './components/profile/Profile';
 // Admin components
 import Calendar from './components/admin/calendar/Calendar';
 import Orders from './components/admin/orders/Orders';
+import OrderForm from './components/admin/orders/OrderForm';
+import OrderDetails from './components/admin/orders/OrderDetails';
+import OrderItemForm from './components/admin/orders/OrderItemForm';
 import Income from './components/admin/finance/income/Income';
 import Expenses from './components/admin/finance/expenses/Expenses';
 import Buyers from './components/admin/buyers/Buyers';
@@ -38,6 +41,14 @@ const routes = [
       { path: '/admin/dashboard', element: <AdminDashboard /> },
       { path: '/admin/calendar', element: <Calendar /> },
       { path: '/admin/orders', element: <Orders /> },
+      { path: '/admin/orders/new', element: <OrderForm /> },
+      { path: '/admin/orders/edit/:id', element: <OrderForm /> },
+      { path: '/admin/orders/:id', element: <OrderDetails /> },
+      { path: '/admin/orders/:id/add-item', element: <OrderItemForm /> },
+      {
+        path: '/admin/orders/:id/edit-item/:itemId',
+        element: <OrderItemForm />,
+      },
       { path: '/admin/finance/income', element: <Income /> },
       { path: '/admin/finance/expenses', element: <Expenses /> },
       { path: '/admin/buyers', element: <Buyers /> },
