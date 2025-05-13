@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Plus,
-  MagnifyingGlass,
-  ArrowUp,
-  ArrowDown,
-  DotsThree,
-  Funnel,
-  Export,
-  Printer,
-} from '@phosphor-icons/react';
+import { Plus, MagnifyingGlass, CaretDown, ArrowUp, ArrowDown, DotsThree, Funnel, Export, Printer } from '@phosphor-icons/react';
 import DashboardLayout from '../DashboardLayout';
 import api from '../../../utils/api';
 
@@ -73,7 +64,7 @@ const TransactionList = () => {
       maxAmount: '',
       description: '',
     });
-    setShowFilters(false);
+    // setShowFilters(false);
   };
 
   const handleAddTransaction = () => {
@@ -101,7 +92,7 @@ const TransactionList = () => {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'LKR',
     }).format(amount);
   };
 
@@ -118,9 +109,9 @@ const TransactionList = () => {
         <div className="flex gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className={`flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none`}
           >
-            <Funnel size={20} />
+            <Funnel size={20} className={showFilters ? 'text-amber-500' : ''} weight='duotone' />
             Filters
           </button>
           <button
@@ -269,40 +260,22 @@ const TransactionList = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                  >
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Date
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                  >
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Type
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                  >
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Description
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                  >
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Related To
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                  >
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Amount
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500"
-                  >
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                     Actions
                   </th>
                 </tr>
@@ -322,12 +295,12 @@ const TransactionList = () => {
                     <td className="whitespace-nowrap px-6 py-4 text-sm">
                       <span
                         className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          transaction.transaction_type === 'income'
+                          transaction.transaction_type === 'Income'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
                         }`}
                       >
-                        {transaction.transaction_type === 'income' ? (
+                        {transaction.transaction_type === 'Income' ? (
                           <ArrowUp size={12} className="mr-1" />
                         ) : (
                           <ArrowDown size={12} className="mr-1" />
@@ -348,7 +321,7 @@ const TransactionList = () => {
                     <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
                       <span
                         className={
-                          transaction.transaction_type === 'income'
+                          transaction.transaction_type === 'Income'
                             ? 'text-green-600'
                             : 'text-red-600'
                         }

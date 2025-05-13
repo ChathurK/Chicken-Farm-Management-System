@@ -1,17 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  ArrowLeft,
-  Pencil,
-  Trash,
-  CurrencyDollar,
-  Clock,
-  ChatText,
-  UserCircle,
-  ShoppingBag,
-  ArrowUp,
-  ArrowDown,
-} from '@phosphor-icons/react';
+import { ArrowLeft, Pencil, Trash, Coins , Clock, ChatText, UserCircle, ShoppingBag, ArrowUp, ArrowDown } from '@phosphor-icons/react';
 import DashboardLayout from '../DashboardLayout';
 import api from '../../../utils/api';
 
@@ -68,7 +57,7 @@ const TransactionDetails = () => {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'LKR',
     }).format(amount);
   };
 
@@ -151,12 +140,12 @@ const TransactionDetails = () => {
         <div className="mb-6">
           <span
             className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
-              transaction.transaction_type === 'income'
+              transaction.transaction_type === 'Income'
                 ? 'bg-green-100 text-green-800'
                 : 'bg-red-100 text-red-800'
             }`}
           >
-            {transaction.transaction_type === 'income' ? (
+            {transaction.transaction_type === 'Income' ? (
               <ArrowUp size={16} className="mr-1" />
             ) : (
               <ArrowDown size={16} className="mr-1" />
@@ -170,7 +159,7 @@ const TransactionDetails = () => {
         <div className="mb-8 rounded-lg bg-gray-50 p-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="flex items-start gap-3">
-              <CurrencyDollar
+              <Coins
                 size={24}
                 weight="duotone"
                 className="mt-0.5 text-amber-500"
@@ -179,7 +168,7 @@ const TransactionDetails = () => {
                 <h3 className="text-sm text-gray-500">Amount</h3>
                 <p
                   className={`text-lg font-medium ${
-                    transaction.transaction_type === 'income'
+                    transaction.transaction_type === 'Income'
                       ? 'text-green-600'
                       : 'text-red-600'
                   }`}
@@ -294,7 +283,7 @@ const TransactionDetails = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
             <h3 className="mb-4 text-lg font-medium text-gray-900">
               Confirm Deletion

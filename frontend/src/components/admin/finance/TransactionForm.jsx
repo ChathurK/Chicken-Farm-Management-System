@@ -1,14 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  ArrowLeft,
-  FloppyDisk,
-  CurrencyDollar,
-  CalendarBlank,
-  ChatText,
-  UserCircle,
-  ShoppingBag,
-} from '@phosphor-icons/react';
+import { ArrowLeft, FloppyDisk, CurrencyDollar, CalendarBlank, ChatText, UserCircle, ShoppingBag } from '@phosphor-icons/react';
 import DashboardLayout from '../DashboardLayout';
 import api from '../../../utils/api';
 
@@ -19,7 +11,7 @@ const TransactionForm = () => {
 
   // Form state
   const [formData, setFormData] = useState({
-    transaction_type: 'expense',
+    transaction_type: 'Expense',
     amount: '',
     description: '',
     buyer_id: '',
@@ -94,8 +86,8 @@ const TransactionForm = () => {
       setFormData((prev) => ({
         ...prev,
         [name]: value,
-        buyer_id: value === 'income' ? '' : prev.buyer_id,
-        seller_id: value === 'expense' ? '' : prev.seller_id,
+        buyer_id: value === 'Income' ? '' : prev.buyer_id,
+        seller_id: value === 'Expense' ? '' : prev.seller_id,
       }));
     } else {
       setFormData((prev) => ({
@@ -127,12 +119,12 @@ const TransactionForm = () => {
     }
 
     // For income transactions, require buyer_id
-    if (formData.transaction_type === 'income' && !formData.buyer_id) {
+    if (formData.transaction_type === 'Income' && !formData.buyer_id) {
       errors.buyer_id = 'Buyer is required for income transactions';
     }
 
     // For expense transactions, require seller_id
-    if (formData.transaction_type === 'expense' && !formData.seller_id) {
+    if (formData.transaction_type === 'Expense' && !formData.seller_id) {
       errors.seller_id = 'Seller is required for expense transactions';
     }
 
@@ -179,7 +171,11 @@ const TransactionForm = () => {
     <DashboardLayout>
       <div className="mb-6 flex items-center">
         <button
-          onClick={() => navigate('/admin/finance/transactions')}
+          onClick={() =>
+            isEditMode
+              ? navigate(`/admin/finance/transactions/${id}`)
+              : navigate('/admin/finance/transactions')
+          }
           className="mr-4 text-gray-600 hover:text-amber-500"
         >
           <ArrowLeft size={24} weight="duotone" />
@@ -213,8 +209,8 @@ const TransactionForm = () => {
                     <input
                       type="radio"
                       name="transaction_type"
-                      value="income"
-                      checked={formData.transaction_type === 'income'}
+                      value="Income"
+                      checked={formData.transaction_type === 'Income'}
                       onChange={handleChange}
                       className="h-4 w-4 text-amber-500 focus:ring-amber-400"
                     />
@@ -224,8 +220,8 @@ const TransactionForm = () => {
                     <input
                       type="radio"
                       name="transaction_type"
-                      value="expense"
-                      checked={formData.transaction_type === 'expense'}
+                      value="Expense"
+                      checked={formData.transaction_type === 'Expense'}
                       onChange={handleChange}
                       className="h-4 w-4 text-amber-500 focus:ring-amber-400"
                     />
@@ -249,7 +245,7 @@ const TransactionForm = () => {
                 </label>
                 <div className="relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <CurrencyDollar size={20} className="text-gray-500" />
+                    <span className="text-lg font-normal text-gray-500">Rs.</span>
                   </div>
                   <input
                     type="number"
@@ -296,7 +292,7 @@ const TransactionForm = () => {
               </div>
 
               {/* Buyer - only show for income transactions */}
-              {formData.transaction_type === 'income' && (
+              {formData.transaction_type === 'Income' && (
                 <div>
                   <label
                     htmlFor="buyer_id"
@@ -336,7 +332,7 @@ const TransactionForm = () => {
               )}
 
               {/* Seller - only show for expense transactions */}
-              {formData.transaction_type === 'expense' && (
+              {formData.transaction_type === 'Expense' && (
                 <div>
                   <label
                     htmlFor="seller_id"
@@ -441,7 +437,11 @@ const TransactionForm = () => {
             <div className="mt-6 flex items-center justify-end space-x-3">
               <button
                 type="button"
-                onClick={() => navigate('/admin/finance/transactions')}
+                onClick={() =>
+                  isEditMode
+                    ? navigate(`/admin/finance/transactions/${id}`)
+                    : navigate('/admin/finance/transactions')
+                }
                 className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
                 Cancel

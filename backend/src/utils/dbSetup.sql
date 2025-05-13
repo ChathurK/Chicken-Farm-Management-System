@@ -15,20 +15,19 @@ CREATE TABLE Users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Inventory table
-CREATE TABLE Inventory (
-    inventory_id INT AUTO_INCREMENT PRIMARY KEY,
-    category ENUM('Feed', 'Medication', 'Supplies', 'Other') NOT NULL,
-    item_name VARCHAR(100) NOT NULL,
-    quantity DECIMAL(10, 2) NOT NULL,
-    unit VARCHAR(20) NOT NULL,
-    purchase_date DATE,
-    expiration_date DATE,
-    cost_per_unit DECIMAL(10, 2) DEFAULT 0.00,
-    total_cost DECIMAL(12, 2) GENERATED ALWAYS AS (quantity * cost_per_unit) STORED,
-    status ENUM('Available', 'Low', 'Finished', 'Expired') DEFAULT 'Available',
+-- Employees table (for additional employee info)
+CREATE TABLE Employees (
+    employee_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL UNIQUE,
+    department VARCHAR(50),
+    position VARCHAR(100),
+    salary DECIMAL(10, 2),
+    hire_date DATE NOT NULL,
+    contact_number VARCHAR(20) NOT NULL UNIQUE,
+    address TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
 
 -- Buyers table
@@ -51,16 +50,6 @@ CREATE TABLE Sellers (
     contact_number VARCHAR(20) NOT NULL UNIQUE,
     email VARCHAR(100) UNIQUE,
     address TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- Livestock table
-CREATE TABLE Livestock (
-    livestock_id INT AUTO_INCREMENT PRIMARY KEY,
-    type ENUM('Chicken', 'Chick', 'Egg') NOT NULL,
-    total_quantity INT NOT NULL,
-    status ENUM('Available', 'Reserved', 'Sold') DEFAULT 'Available',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -109,32 +98,30 @@ CREATE TABLE Egg_Records (
     CONSTRAINT check_expiration CHECK (expiration_date > laid_date)
 );
 
--- Orders table
-CREATE TABLE Orders (
-    order_id INT AUTO_INCREMENT PRIMARY KEY,
-    buyer_id INT NOT NULL,
-    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    deadline_date DATE,
-    status ENUM('Ongoing', 'Completed', 'Cancelled') DEFAULT 'Ongoing',
+-- Livestock table
+CREATE TABLE Livestock (
+    livestock_id INT AUTO_INCREMENT PRIMARY KEY,
+    type ENUM('Chicken', 'Chick', 'Egg') NOT NULL,
+    total_quantity INT NOT NULL,
+    status ENUM('Available', 'Reserved', 'Sold') DEFAULT 'Available',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (buyer_id) REFERENCES Buyers(buyer_id) ON DELETE CASCADE,
-    CONSTRAINT check_deadline CHECK (deadline_date >= DATE(order_date))
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Order_Items table
-CREATE TABLE Order_Items (
-    order_item_id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT NOT NULL,
-    livestock_id INT NOT NULL,
-    product_type ENUM('Chicken', 'Chick', 'Egg') NOT NULL,
-    quantity INT NOT NULL,
-    unit_price DECIMAL(10, 2) NOT NULL,
-    total_price DECIMAL(12, 2) GENERATED ALWAYS AS (quantity * unit_price) STORED,
+-- Inventory table
+CREATE TABLE Inventory (
+    inventory_id INT AUTO_INCREMENT PRIMARY KEY,
+    category ENUM('Feed', 'Medication', 'Supplies', 'Other') NOT NULL,
+    item_name VARCHAR(100) NOT NULL,
+    quantity DECIMAL(10, 2) NOT NULL,
+    unit VARCHAR(20) NOT NULL,
+    purchase_date DATE,
+    expiration_date DATE,
+    cost_per_unit DECIMAL(10, 2) DEFAULT 0.00,
+    total_cost DECIMAL(12, 2) GENERATED ALWAYS AS (quantity * cost_per_unit) STORED,
+    status ENUM('Available', 'Low', 'Finished', 'Expired') DEFAULT 'Available',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (order_id) REFERENCES Orders(order_id) ON DELETE CASCADE,
-    FOREIGN KEY (livestock_id) REFERENCES Livestock(livestock_id)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Transactions table
@@ -164,17 +151,30 @@ CREATE TABLE Transactions (
     FOREIGN KEY (seller_id) REFERENCES Sellers(seller_id)
 );
 
--- Employees table (for additional employee info)
-CREATE TABLE Employees (
-    employee_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL UNIQUE,
-    department VARCHAR(50),
-    position VARCHAR(100),
-    salary DECIMAL(10, 2),
-    hire_date DATE NOT NULL,
-    contact_number VARCHAR(20) NOT NULL UNIQUE,
-    address TEXT,
+-- Orders table
+CREATE TABLE Orders (
+    order_id INT AUTO_INCREMENT PRIMARY KEY,
+    buyer_id INT NOT NULL,
+    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deadline_date DATE,
+    status ENUM('Ongoing', 'Completed', 'Cancelled') DEFAULT 'Ongoing',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+    FOREIGN KEY (buyer_id) REFERENCES Buyers(buyer_id) ON DELETE CASCADE,
+    CONSTRAINT check_deadline CHECK (deadline_date >= DATE(order_date))
+);
+
+-- Order_Items table
+CREATE TABLE Order_Items (
+    order_item_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    livestock_id INT NOT NULL,
+    product_type ENUM('Chicken', 'Chick', 'Egg') NOT NULL,
+    quantity INT NOT NULL,
+    unit_price DECIMAL(10, 2) NOT NULL,
+    total_price DECIMAL(12, 2) GENERATED ALWAYS AS (quantity * unit_price) STORED,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES Orders(order_id) ON DELETE CASCADE,
+    FOREIGN KEY (livestock_id) REFERENCES Livestock(livestock_id)
 );
