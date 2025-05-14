@@ -1,7 +1,7 @@
 import { useState, useEffect, memo } from 'react';
 import PropTypes from 'prop-types';
 import DashboardLayout from '../DashboardLayout';
-import { Plus, MagnifyingGlass, Pencil, Trash, EnvelopeSimple, Phone, Key, X, Buildings, CalendarBlank, CurrencyDollar } from '@phosphor-icons/react';
+import { Plus, MagnifyingGlass, Pencil, Trash, EnvelopeSimple, Phone, Key, X, Buildings, CalendarBlank, HandCoins } from '@phosphor-icons/react';
 import api from '../../../utils/api';
 import EmployeeModal from './EmployeeModal';
 
@@ -40,7 +40,7 @@ const EmployeeCard = ({ employee, onEdit, onDelete, onResetPassword }) => {
         </div>
         {employee.salary && (
           <div className="flex items-center text-sm">
-            <CurrencyDollar
+            <HandCoins
               size={16}
               className="mr-1 text-gray-400"
               weight="duotone"

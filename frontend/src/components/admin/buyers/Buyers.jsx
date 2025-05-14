@@ -1,19 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
-import {
-  Plus,
-  MagnifyingGlass,
-  Pencil,
-  Trash,
-  Eye,
-  SortAscending,
-  SortDescending,
-  CaretLeft,
-  CaretRight,
-  X,
-} from '@phosphor-icons/react';
+import { Plus, MagnifyingGlass, Pencil, Trash, Eye, SortAscending, SortDescending, X } from '@phosphor-icons/react';
 import { ConfirmationModal } from './BuyerModal';
+import Pagination from '../../shared/Pagination';
 import api from '../../../utils/api';
 
 const Buyers = () => {
@@ -33,6 +23,7 @@ const Buyers = () => {
   });
 
   const buyersPerPage = 10;
+  
   // Fetch buyers
   const fetchBuyers = async () => {
     try {
@@ -285,48 +276,18 @@ const Buyers = () => {
             </tbody>
           </table>
         </div>
-
+        
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-gray-500">
-              Showing {indexOfFirstBuyer + 1} to{' '}
-              {Math.min(indexOfLastBuyer, sortedBuyers.length)} of{' '}
-              {sortedBuyers.length} buyers
-            </div>
-            <div className="flex">
-              {/* Previous Button */}
-              <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className={`flex items-center rounded-l-lg border bg-gray-100 px-3 py-1 text-gray-700 ${
-                  currentPage === 1
-                    ? 'cursor-not-allowed opacity-50'
-                    : 'hover:text-amber-500'
-                }`}
-              >
-                <CaretLeft size={14} weight="duotone" />
-                Prev
-              </button>
-
-              {/* Next Button */}
-              <button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-                className={`flex items-center rounded-r-lg border bg-gray-100 px-3 py-1 text-gray-700 ${
-                  currentPage === totalPages
-                    ? 'cursor-not-allowed opacity-50'
-                    : 'hover:text-amber-500'
-                }`}
-              >
-                Next
-                <CaretRight size={14} weight="duotone" />
-              </button>
-            </div>
-          </div>
-        )}
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={sortedBuyers.length}
+          itemsPerPage={buyersPerPage}
+          currentPageFirstItemIndex={indexOfFirstBuyer}
+          currentPageLastItemIndex={indexOfLastBuyer - 1}
+          onPageChange={setCurrentPage}
+          itemName="buyers"
+        />
       </div>
 
       {/* Delete Confirmation Modal */}

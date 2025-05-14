@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
-import { Plus, MagnifyingGlass, Pencil, Trash, Eye, SortAscending, SortDescending, CaretLeft, CaretRight, X } from '@phosphor-icons/react';
+import { Plus, MagnifyingGlass, Pencil, Trash, Eye, SortAscending, SortDescending, X } from '@phosphor-icons/react';
 import { ConfirmationModal } from './SellerModal';
+import Pagination from '../../shared/Pagination';
 import api from '../../../utils/api';
 
 const Sellers = () => {
@@ -280,40 +281,16 @@ const Sellers = () => {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-gray-500">
-              Showing {indexOfFirstSeller + 1} to{' '}
-              {Math.min(indexOfLastSeller, sortedSellers.length)} of{' '}
-              {sortedSellers.length} sellers
-            </div>
-            <div className="flex">
-              {/* Previous Button */}
-              <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className={`flex items-center rounded-l-lg border bg-gray-100 px-3 py-1 text-gray-700 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:text-amber-500'
-                  }`}
-              >
-                <CaretLeft size={14} weight="duotone" />
-                Prev
-              </button>
-
-              {/* Next Button */}
-              <button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-                className={`flex items-center rounded-r-lg border bg-gray-100 px-3 py-1 text-gray-700 ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:text-amber-500'
-                  }`}
-              >
-                Next
-                <CaretRight size={14} weight='duotone' />
-              </button>
-            </div>
-          </div>
-        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={sortedSellers.length}
+          itemsPerPage={sellersPerPage}
+          currentPageFirstItemIndex={indexOfFirstSeller}
+          currentPageLastItemIndex={indexOfLastSeller - 1}
+          onPageChange={setCurrentPage}
+          itemName="sellers"
+        />
       </div>
 
       {/* Delete Confirmation Modal */}
