@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MagnifyingGlass, Funnel, ArrowUp, ArrowDown, Trash, Eye, Pencil, Coin, Barn, Bird, Egg } from '@phosphor-icons/react';
+import { Plus, Funnel, SortAscending, SortDescending, Trash, Eye, Pencil, Coin, Barn, Bird, Egg } from '@phosphor-icons/react';
 import DashboardLayout from '../DashboardLayout';
 import Pagination from '../../shared/Pagination';
 import api from '../../../utils/api';
@@ -29,7 +29,6 @@ const TransactionList = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('transaction_date');
   const [sortDirection, setSortDirection] = useState('desc');
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Options for dropdowns
   const [buyers, setBuyers] = useState([]);
@@ -58,8 +57,6 @@ const TransactionList = () => {
         Object.entries(filters).forEach(([key, value]) => {
           if (value) queryParams.append(key, value);
         });
-        // Add search query if exists
-        if (searchQuery) queryParams.append('search', searchQuery);
 
         // Add sorting
         queryParams.append('sortBy', sortBy);
@@ -108,7 +105,7 @@ const TransactionList = () => {
     };
 
     fetchData();
-  }, [filters, searchQuery, sortBy, sortDirection, currentPage]);
+  }, [filters, sortBy, sortDirection, currentPage]);
 
   // Handle filter changes
   const handleFilterChange = (e) => {
@@ -146,14 +143,6 @@ const TransactionList = () => {
     setCurrentPage(1);
   };
 
-  // Handle search
-  const handleSearch = (e) => {
-    e.preventDefault();
-    const query = e.target.search.value;
-    setSearchQuery(query);
-    setCurrentPage(1);
-  };
-
   // Get category icon
   const getCategoryIcon = (category) => {
     switch (category) {
@@ -184,6 +173,7 @@ const TransactionList = () => {
       }
     }
   };
+
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -205,51 +195,29 @@ const TransactionList = () => {
 
   return (
     <DashboardLayout>
-      <div className="flex h-full flex-col rounded-lg bg-white p-6 shadow">
-        {/* Header */}
-        <div className="mb-6 flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-          <h1 className="text-2xl font-bold">Transactions</h1>
-          <button
-            onClick={() => navigate('/admin/finance/transactions/add')}
-            className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
-          >
-            <Plus size={20} weight="bold" />
-            <span>Add Transaction</span>
-          </button>
-        </div>
-
-        {/* Search and Filter Bar */}
+      <div className="flex h-full flex-col overflow-y-auto rounded-lg bg-white p-6 shadow">
         <div className="mb-6 rounded-lg bg-white p-4 shadow">
-          <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-            {/* Search Form */}
-            <form onSubmit={handleSearch} className="flex w-full max-w-md items-center">
-              <div className="relative w-full">
-                <input
-                  type="text"
-                  name="search"
-                  placeholder="Search transactions..."
-                  className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
-                />
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <MagnifyingGlass size={20} className="text-gray-500" />
-                </div>
-              </div>
-              <button
-                type="submit"
-                className="ml-2 rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
-              >
-                Search
-              </button>
-            </form>
+          {/* Header */}
+          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+            <h1 className="text-2xl font-bold">Transactions</h1>
 
-            {/* Filter Toggle Button */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-50 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
-            >
-              <Funnel size={20} weight="duotone" />
-              <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
-            </button>
+            <div className="flex items-center gap-4">
+              {/* Filter Toggle Button */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-50 focus:border-amber-500 focus:outline-none"
+              >
+                <Funnel size={20} weight="duotone" className={showFilters ? 'text-amber-500' : 'text-gray-500'} />
+                <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
+              </button>
+              <button
+                onClick={() => navigate('/admin/finance/transactions/add')}
+                className="flex items-center gap-1 rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
+              >
+                <Plus size={20} weight="bold" />
+                <span>Add Transaction</span>
+              </button>
+            </div>
           </div>
 
           {/* Filter Panel */}
@@ -258,7 +226,10 @@ const TransactionList = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {/* Transaction Type Filter */}
                 <div>
-                  <label htmlFor="transaction_type" className="mb-1 block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="transaction_type"
+                    className="mb-1 block text-sm font-medium text-gray-700"
+                  >
                     Transaction Type
                   </label>
                   <select
@@ -276,7 +247,10 @@ const TransactionList = () => {
 
                 {/* Category Filter */}
                 <div>
-                  <label htmlFor="category" className="mb-1 block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="category"
+                    className="mb-1 block text-sm font-medium text-gray-700"
+                  >
                     Category
                   </label>
                   <select
@@ -297,7 +271,10 @@ const TransactionList = () => {
 
                 {/* Date Range Filters */}
                 <div>
-                  <label htmlFor="startDate" className="mb-1 block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="startDate"
+                    className="mb-1 block text-sm font-medium text-gray-700"
+                  >
                     From Date
                   </label>
                   <input
@@ -310,7 +287,10 @@ const TransactionList = () => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="endDate" className="mb-1 block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="endDate"
+                    className="mb-1 block text-sm font-medium text-gray-700"
+                  >
                     To Date
                   </label>
                   <input
@@ -325,7 +305,10 @@ const TransactionList = () => {
 
                 {/* Amount Range Filters */}
                 <div>
-                  <label htmlFor="minAmount" className="mb-1 block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="minAmount"
+                    className="mb-1 block text-sm font-medium text-gray-700"
+                  >
                     Min Amount
                   </label>
                   <input
@@ -339,7 +322,10 @@ const TransactionList = () => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="maxAmount" className="mb-1 block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="maxAmount"
+                    className="mb-1 block text-sm font-medium text-gray-700"
+                  >
                     Max Amount
                   </label>
                   <input
@@ -354,50 +340,58 @@ const TransactionList = () => {
                 </div>
 
                 {/* Buyer Filter - Only show if transaction type is Income */}
-                {(filters.transaction_type === 'Income' || filters.transaction_type === '') && (
-                  <div>
-                    <label htmlFor="buyer_id" className="mb-1 block text-sm font-medium text-gray-700">
-                      Buyer
-                    </label>
-                    <select
-                      id="buyer_id"
-                      name="buyer_id"
-                      value={filters.buyer_id}
-                      onChange={handleFilterChange}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
-                    >
-                      <option value="">All Buyers</option>
-                      {buyers.map((buyer) => (
-                        <option key={buyer.buyer_id} value={buyer.buyer_id}>
-                          {buyer.first_name} {buyer.last_name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+                {(filters.transaction_type === 'Income' ||
+                  filters.transaction_type === '') && (
+                    <div>
+                      <label
+                        htmlFor="buyer_id"
+                        className="mb-1 block text-sm font-medium text-gray-700"
+                      >
+                        Buyer
+                      </label>
+                      <select
+                        id="buyer_id"
+                        name="buyer_id"
+                        value={filters.buyer_id}
+                        onChange={handleFilterChange}
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
+                      >
+                        <option value="">All Buyers</option>
+                        {buyers.map((buyer) => (
+                          <option key={buyer.buyer_id} value={buyer.buyer_id}>
+                            {buyer.first_name} {buyer.last_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                 {/* Seller Filter - Only show if transaction type is Expense */}
-                {(filters.transaction_type === 'Expense' || filters.transaction_type === '') && (
-                  <div>
-                    <label htmlFor="seller_id" className="mb-1 block text-sm font-medium text-gray-700">
-                      Seller
-                    </label>
-                    <select
-                      id="seller_id"
-                      name="seller_id"
-                      value={filters.seller_id}
-                      onChange={handleFilterChange}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
-                    >
-                      <option value="">All Sellers</option>
-                      {sellers.map((seller) => (
-                        <option key={seller.seller_id} value={seller.seller_id}>
-                          {seller.first_name} {seller.last_name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+                {(filters.transaction_type === 'Expense' ||
+                  filters.transaction_type === '') && (
+                    <div>
+                      <label
+                        htmlFor="seller_id"
+                        className="mb-1 block text-sm font-medium text-gray-700"
+                      >
+                        Seller
+                      </label>
+                      <select
+                        id="seller_id"
+                        name="seller_id"
+                        value={filters.seller_id}
+                        onChange={handleFilterChange}
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
+                      >
+                        <option value="">All Sellers</option>
+                        {sellers.map((seller) => (
+                          <option key={seller.seller_id} value={seller.seller_id}>
+                            {seller.first_name} {seller.last_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
               </div>
 
               {/* Filter Actions */}
@@ -427,7 +421,6 @@ const TransactionList = () => {
                   setError(null);
                   setCurrentPage(1);
                   resetFilters();
-                  setSearchQuery('');
                 }}
                 className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
               >
@@ -436,12 +429,13 @@ const TransactionList = () => {
             </div>
           ) : transactions && transactions.length === 0 ? (
             <div className="flex h-64 flex-col items-center justify-center text-center">
-              <p className="mb-4 text-lg text-gray-600">No transactions found</p>
-              {Object.values(filters).some(value => value) || searchQuery ? (
+              <p className="mb-4 text-lg text-gray-600">
+                No transactions found
+              </p>
+              {Object.values(filters).some((value) => value) ? (
                 <button
                   onClick={() => {
                     resetFilters();
-                    setSearchQuery('');
                     setCurrentPage(1);
                   }}
                   className="mb-4 inline-flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
@@ -458,92 +452,73 @@ const TransactionList = () => {
               </button>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-gray-200">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="h-[calc(100vh-329px)] overflow-auto rounded-lg border border-gray-200 shadow-sm">
+              <table className="w-full text-left text-sm text-gray-500">
+                <thead className="sticky top-0 bg-gray-50 text-xs uppercase text-gray-700">
                   <tr>
                     <th
                       scope="col"
-                      className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 md:px-6"
-                      onClick={() => handleSort('transaction_id')}
-                    >
-                      <div className="flex items-center gap-1">
-                        <span className="hidden sm:inline">ID</span>
-                        <span className="sm:hidden">#</span>
-                        {sortBy === 'transaction_id' && (
-                          sortDirection === 'asc' ?
-                            <ArrowUp size={14} weight="bold" /> :
-                            <ArrowDown size={14} weight="bold" />
-                        )}
-                      </div>
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 md:px-6"
+                      className="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 md:px-4 cursor-pointer hover:text-amber-500"
                       onClick={() => handleSort('transaction_date')}
                     >
                       <div className="flex items-center gap-1">
                         <span>Date</span>
-                        {sortBy === 'transaction_date' && (
-                          sortDirection === 'asc' ?
-                            <ArrowUp size={14} weight="bold" /> :
-                            <ArrowDown size={14} weight="bold" />
-                        )}
+                        {sortBy === 'transaction_date' &&
+                          (sortDirection === 'asc' ? (
+                            <SortAscending size={14} weight="bold" />
+                          ) : (
+                            <SortDescending size={14} weight="bold" />
+                          ))}
                       </div>
                     </th>
                     <th
                       scope="col"
-                      className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 md:px-6"
-                      onClick={() => handleSort('transaction_type')}
+                      className="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 md:px-4"
                     >
                       <div className="flex items-center gap-1">
                         <span>Type</span>
-                        {sortBy === 'transaction_type' && (
-                          sortDirection === 'asc' ?
-                            <ArrowUp size={14} weight="bold" /> :
-                            <ArrowDown size={14} weight="bold" />
-                        )}
                       </div>
                     </th>
                     <th
                       scope="col"
-                      className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 md:table-cell md:px-6"
-                      onClick={() => handleSort('category')}                  >
+                      className="hidden px-2 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 md:table-cell md:px-4"
+                    >
                       <div className="flex items-center gap-1">
                         <span>Category</span>
-                        {sortBy === 'category' && (
-                          sortDirection === 'asc' ?
-                            <ArrowUp size={14} weight="bold" /> :
-                            <ArrowDown size={14} weight="bold" />
-                        )}
                       </div>
                     </th>
                     <th
                       scope="col"
-                      className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 md:table-cell md:px-6"
+                      className="hidden px-2 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 md:table-cell md:px-4"
                     >
                       <span>Description</span>
                     </th>
                     <th
                       scope="col"
-                      className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 lg:table-cell md:px-6"
+                      className="hidden px-2 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 md:px-4 lg:table-cell"
                     >
                       <span>Related Party</span>
                     </th>
                     <th
                       scope="col"
-                      className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 md:px-6"
+                      className="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 md:px-4 cursor-pointer hover:text-amber-500"
                       onClick={() => handleSort('amount')}
-                    >                    <div className="flex items-center gap-1">
+                    >
+                      {' '}
+                      <div className="flex items-center gap-1">
                         <span>Amount</span>
-                        {sortBy === 'amount' && (
-                          sortDirection === 'asc' ?
-                            <ArrowUp size={14} weight="bold" /> :
-                            <ArrowDown size={14} weight="bold" />
-                        )}
+                        {sortBy === 'amount' &&
+                          (sortDirection === 'asc' ? (
+                            <SortAscending size={14} weight="bold" />
+                          ) : (
+                            <SortDescending size={14} weight="bold" />
+                          ))}
                       </div>
                     </th>
-                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 md:px-6">
+                    <th
+                      scope="col"
+                      className="px-2 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 md:px-4"
+                    >
                       Actions
                     </th>
                   </tr>
@@ -552,54 +527,67 @@ const TransactionList = () => {
                   {currentTransactions.map((transaction) => (
                     <tr
                       key={transaction.transaction_id}
-                      className="hover:bg-gray-50 cursor-pointer"
-                      onClick={() => navigate(`/admin/finance/transactions/${transaction.transaction_id}`)}
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() =>
+                        navigate(
+                          `/admin/finance/transactions/${transaction.transaction_id}`
+                        )
+                      }
                     >
-                      <td className="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900 md:px-6">
-                        {transaction.transaction_id || 'N/A'}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-500 md:px-6">
+                      <td className="whitespace-nowrap px-2 py-4 text-sm text-gray-500 md:px-4">
                         {formatDate(transaction.transaction_date)}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-4 md:px-6">
-                        <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${transaction.transaction_type === 'Income'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                          }`}>
+                      <td className="whitespace-nowrap px-2 py-4 md:px-4">
+                        <span
+                          className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${transaction.transaction_type === 'Income'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                            }`}
+                        >
                           {transaction.transaction_type || 'Unknown'}
                         </span>
                       </td>
-                      <td className="hidden whitespace-nowrap px-4 py-4 text-sm text-gray-500 md:table-cell md:px-6">
+                      <td className="hidden whitespace-nowrap px-2 py-4 text-sm text-gray-500 md:table-cell md:px-4">
                         <div className="flex items-center gap-1">
                           {getCategoryIcon(transaction.category || 'Other')}
                           <span>{transaction.category || 'Other'}</span>
                         </div>
                       </td>
-                      <td className="hidden px-4 py-4 text-sm text-gray-500 md:table-cell md:px-6">
+                      <td className="hidden px-2 py-4 text-sm text-gray-500 md:table-cell md:px-4">
                         <div className="max-w-xs truncate">
                           {transaction.notes || 'No description'}
                         </div>
                       </td>
-                      <td className="hidden whitespace-nowrap px-4 py-4 text-sm text-gray-500 lg:table-cell md:px-6">
+                      <td className="hidden whitespace-nowrap px-2 py-4 text-sm text-gray-500 md:px-4 lg:table-cell">
                         {transaction.transaction_type === 'Income'
                           ? transaction.buyer_name || 'N/A'
                           : transaction.seller_name || 'N/A'}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-4 text-sm md:px-6">
-                        <span className={`font-medium ${transaction.transaction_type === 'Income'
-                          ? 'text-green-600'
-                          : 'text-red-600'
-                          }`}>
-                          {transaction.transaction_type === 'Income' ? '+' : '-'}
-                          LKR {parseFloat(transaction.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      <td className="whitespace-nowrap px-2 py-4 text-sm md:px-4">
+                        <span
+                          className={`font-medium ${transaction.transaction_type === 'Income'
+                            ? 'text-green-600'
+                            : 'text-red-600'
+                            }`}
+                        >
+                          {transaction.transaction_type === 'Income'
+                            ? '+'
+                            : '-'}
+                          LKR{' '}
+                          {parseFloat(transaction.amount || 0).toLocaleString(
+                            'en-US',
+                            { minimumFractionDigits: 2 }
+                          )}
                         </span>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-4 text-right text-sm font-medium md:px-6">
+                      <td className="whitespace-nowrap px-2 py-4 text-right text-sm font-medium md:px-4">
                         <div className="flex justify-end space-x-2">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/admin/finance/transactions/${transaction.transaction_id}`);
+                              navigate(
+                                `/admin/finance/transactions/${transaction.transaction_id}`
+                              );
                             }}
                             className="text-amber-600 hover:text-amber-900"
                             title="View Details"
@@ -609,7 +597,9 @@ const TransactionList = () => {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/admin/finance/transactions/edit/${transaction.transaction_id}`);
+                              navigate(
+                                `/admin/finance/transactions/edit/${transaction.transaction_id}`
+                              );
                             }}
                             className="text-blue-600 hover:text-blue-900"
                             title="Edit"
@@ -634,23 +624,23 @@ const TransactionList = () => {
               </table>
             </div>
           )}
-          
-          {/* Pagination */}
-          {!loading && transactions.length > 0 && (
-            <div className="border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={transactions.length}
-                itemsPerPage={transactionsPerPage}
-                currentPageFirstItemIndex={indexOfFirstTransaction}
-                currentPageLastItemIndex={indexOfLastTransaction - 1}
-                onPageChange={setCurrentPage}
-                itemName="transactions"
-              />
-            </div>
-          )}
         </div>
+
+        {/* Pagination */}
+        {!loading && transactions.length > 0 && (
+          <div className="border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={transactions.length}
+              itemsPerPage={transactionsPerPage}
+              currentPageFirstItemIndex={indexOfFirstTransaction}
+              currentPageLastItemIndex={indexOfLastTransaction - 1}
+              onPageChange={setCurrentPage}
+              itemName="transactions"
+            />
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

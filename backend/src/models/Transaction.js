@@ -3,26 +3,26 @@ const db = require('../config/database');
 class Transaction {
     // Create a new transaction
     static async create(transactionData) {
-        const { 
-            transaction_type, 
+        const {
+            transaction_type,
             category,
-            inventory_id, 
-            buyer_id, 
-            seller_id, 
-            amount, 
+            inventory_id,
+            buyer_id,
+            seller_id,
+            amount,
             notes,
             chicken_record_id,
             chick_record_id,
             egg_record_id
         } = transactionData;
-        
+
         const query = `
             INSERT INTO Transactions (
                 transaction_type, category, inventory_id, buyer_id, seller_id, amount, notes,
                 chicken_record_id, chick_record_id, egg_record_id
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
-        
+
         const [result] = await db.execute(query, [
             transaction_type,
             category || null,
@@ -35,10 +35,10 @@ class Transaction {
             chick_record_id || null,
             egg_record_id || null
         ]);
-        
+
         return { transaction_id: result.insertId, ...transactionData };
     }
-    
+
     // Find transaction by ID
     static async findById(id) {
         const query = `
@@ -58,11 +58,11 @@ class Transaction {
             LEFT JOIN Egg_Records er ON t.egg_record_id = er.egg_record_id
             WHERE t.transaction_id = ?
         `;
-        
+
         const [rows] = await db.execute(query, [id]);
         return rows[0];
     }
-    
+
     // Get all transactions
     static async findAll() {
         const query = `
@@ -82,11 +82,11 @@ class Transaction {
             LEFT JOIN Egg_Records er ON t.egg_record_id = er.egg_record_id
             ORDER BY t.transaction_date DESC
         `;
-        
+
         const [rows] = await db.execute(query);
         return rows;
     }
-
+    
     // Get transactions with filters
     static async findWithFilters(filters) {
         let query = `
@@ -106,24 +106,24 @@ class Transaction {
             LEFT JOIN Egg_Records er ON t.egg_record_id = er.egg_record_id
             WHERE 1=1
         `;
-        
+
         const params = [];
 
         if (filters.transaction_type) {
             query += ' AND t.transaction_type = ?';
             params.push(filters.transaction_type);
         }
-        
+
         if (filters.category) {
             query += ' AND t.category = ?';
             params.push(filters.category);
         }
-        
+
         if (filters.buyer_id) {
             query += ' AND t.buyer_id = ?';
             params.push(filters.buyer_id);
         }
-        
+
         if (filters.seller_id) {
             query += ' AND t.seller_id = ?';
             params.push(filters.seller_id);
@@ -133,22 +133,22 @@ class Transaction {
             query += ' AND t.inventory_id = ?';
             params.push(filters.inventory_id);
         }
-        
+
         if (filters.chicken_record_id) {
             query += ' AND t.chicken_record_id = ?';
             params.push(filters.chicken_record_id);
         }
-        
+
         if (filters.chick_record_id) {
             query += ' AND t.chick_record_id = ?';
             params.push(filters.chick_record_id);
         }
-        
+
         if (filters.egg_record_id) {
             query += ' AND t.egg_record_id = ?';
             params.push(filters.egg_record_id);
         }
-        
+
         if (filters.startDate) {
             query += ' AND t.transaction_date >= ?';
             params.push(filters.startDate);
@@ -168,27 +168,38 @@ class Transaction {
             params.push(filters.maxAmount);
         }
 
-        query += ' ORDER BY t.transaction_date DESC';
-        
+        // Handle sorting
+        const sortBy = filters.sortBy || 'transaction_date';
+        const sortDir = filters.sortDir || 'desc';
+
+        // Only allow sorting by valid columns to prevent SQL injection
+        const validSortColumns = ['transaction_date', 'amount'];
+        const sortColumn = validSortColumns.includes(sortBy) ? sortBy : 'transaction_date';
+
+        // Validate sort direction
+        const sortDirection = sortDir.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+
+        query += ` ORDER BY t.${sortColumn} ${sortDirection}`;
+
         const [rows] = await db.execute(query, params);
         return rows;
     }
-    
+
     // Update transaction
     static async update(id, transactionData) {
-        const { 
-            transaction_type, 
+        const {
+            transaction_type,
             category,
-            inventory_id, 
-            buyer_id, 
-            seller_id, 
-            amount, 
+            inventory_id,
+            buyer_id,
+            seller_id,
+            amount,
             notes,
             chicken_record_id,
             chick_record_id,
             egg_record_id
         } = transactionData;
-        
+
         const query = `
             UPDATE Transactions 
             SET transaction_type = ?, 
@@ -203,7 +214,7 @@ class Transaction {
                 egg_record_id = ?
             WHERE transaction_id = ?
         `;
-        
+
         await db.execute(query, [
             transaction_type,
             category || null,
@@ -217,10 +228,10 @@ class Transaction {
             egg_record_id || null,
             id
         ]);
-        
+
         return { transaction_id: id, ...transactionData };
     }
-    
+
     // Delete transaction
     static async delete(id) {
         const query = 'DELETE FROM Transactions WHERE transaction_id = ?';
@@ -231,8 +242,8 @@ class Transaction {
     // Get financial summary for dashboard
     static async getFinancialSummary(period = 'month') {
         let dateFilter;
-        
-        switch(period) {
+
+        switch (period) {
             case 'week':
                 dateFilter = 'AND transaction_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 WEEK)';
                 break;
@@ -257,7 +268,7 @@ class Transaction {
             FROM Transactions
             WHERE 1=1 ${dateFilter}
         `;
-        
+
         const [rows] = await db.execute(query);
         return rows[0];
     }

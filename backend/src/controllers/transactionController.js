@@ -19,13 +19,15 @@ exports.getAllTransactions = async (req, res) => {
       startDate, 
       endDate,
       minAmount,
-      maxAmount
+      maxAmount,
+      sortBy,
+      sortDir
     } = req.query;
     
     let transactions;
     if (transaction_type || category || buyer_id || seller_id || inventory_id || 
         chicken_record_id || chick_record_id || egg_record_id || 
-        startDate || endDate || minAmount || maxAmount) {
+        startDate || endDate || minAmount || maxAmount || sortBy || sortDir) {
       // Use filters
       transactions = await Transaction.findWithFilters({
         transaction_type,
@@ -39,7 +41,9 @@ exports.getAllTransactions = async (req, res) => {
         startDate,
         endDate,
         minAmount,
-        maxAmount
+        maxAmount,
+        sortBy,
+        sortDir
       });
     } else {
       // Get all
