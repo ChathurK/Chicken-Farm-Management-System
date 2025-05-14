@@ -163,24 +163,13 @@ class Transaction {
             query += ' AND t.amount >= ?';
             params.push(filters.minAmount);
         }
-
         if (filters.maxAmount) {
             query += ' AND t.amount <= ?';
             params.push(filters.maxAmount);
         }
 
         query += ' ORDER BY t.transaction_date DESC';
-
-        if (filters.limit && !isNaN(filters.limit)) {
-            // Ensure limit is a number and add it to the query
-            query += ' LIMIT ?';
-            params.push(parseInt(filters.limit));
-        } else {
-            // Use default value of 5 if limit is not provided or invalid
-            query += ' LIMIT ?';
-            params.push(5);
-        }
-
+        
         const [rows] = await db.execute(query, params);
         return rows;
     }

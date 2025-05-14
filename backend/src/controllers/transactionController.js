@@ -6,7 +6,7 @@ const { validationResult } = require('express-validator');
 // @access  Private
 exports.getAllTransactions = async (req, res) => {
   try {
-    // Check if filters are provided
+    // Check if filters are provided    
     const { 
       transaction_type, 
       category,
@@ -19,14 +19,13 @@ exports.getAllTransactions = async (req, res) => {
       startDate, 
       endDate,
       minAmount,
-      maxAmount,
-      limit
+      maxAmount
     } = req.query;
     
     let transactions;
     if (transaction_type || category || buyer_id || seller_id || inventory_id || 
         chicken_record_id || chick_record_id || egg_record_id || 
-        startDate || endDate || minAmount || maxAmount || limit) {
+        startDate || endDate || minAmount || maxAmount) {
       // Use filters
       transactions = await Transaction.findWithFilters({
         transaction_type,
@@ -40,8 +39,7 @@ exports.getAllTransactions = async (req, res) => {
         startDate,
         endDate,
         minAmount,
-        maxAmount,
-        limit
+        maxAmount
       });
     } else {
       // Get all

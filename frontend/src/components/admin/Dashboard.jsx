@@ -28,11 +28,10 @@ const RecentActivity = () => {
     const fetchRecentTransactions = async () => {
       try {
         setLoading(true);
-        // Get the 5 most recent transactions
-        const response = await api.get('/api/transactions', {
-          params: { limit: 5 },
-        });
-        setTransactions(response.data);
+        // Get transactions (we'll limit them on the client side)
+        const response = await api.get('/api/transactions');
+        // Take only the 5 most recent transactions
+        setTransactions(response.data.slice(0, 5));
         setLoading(false);
       } catch (err) {
         setError('Failed to load recent activity');
@@ -111,7 +110,7 @@ const RecentActivity = () => {
               className={`font-semibold ${transaction.transaction_type === 'Income' ? 'text-green-600' : 'text-red-600'}`}
             >
               {transaction.transaction_type === 'Income' ? '+' : '-'}$
-              {transaction.amount.toFixed(2)}
+              {parseFloat(transaction.amount).toFixed(2)}
             </span>
           </div>
         </div>
