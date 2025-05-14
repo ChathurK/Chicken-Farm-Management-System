@@ -194,13 +194,11 @@ class Order {
         await db.execute(query, [status, id]);
         return this.findById(id);
     }
-
     // Get order items
     static async getOrderItems(orderId) {
         const query = `
-            SELECT oi.*, l.type
+            SELECT oi.*
             FROM Order_Items oi
-            JOIN Livestock l ON oi.livestock_id = l.livestock_id
             WHERE oi.order_id = ?
         `;
         const [items] = await db.execute(query, [orderId]);
@@ -213,29 +211,28 @@ class Order {
         const [items] = await db.execute(query, [itemId]);
         return items.length > 0 ? items[0] : null;
     }
-
     // Add order item
     static async addOrderItem(itemData) {
         const {
             order_id,
-            livestock_id,
             product_type,
             quantity,
             unit_price,
+            total_price
         } = itemData;
 
         const query = `
             INSERT INTO Order_Items 
-            (order_id, livestock_id, product_type, quantity, unit_price) 
+            (order_id, product_type, quantity, unit_price, total_price) 
             VALUES (?, ?, ?, ?, ?)
         `;
 
         const [result] = await db.execute(query, [
             order_id,
-            livestock_id,
             product_type,
             quantity,
-            unit_price
+            unit_price,
+            total_price
         ]);
 
         return this.getOrderItemById(result.insertId);
@@ -243,15 +240,15 @@ class Order {
 
     // Update order item
     static async updateOrderItem(itemId, itemData) {
-        const { quantity, unit_price } = itemData;
+        const { quantity, unit_price, total_price } = itemData;
 
         const query = `
             UPDATE Order_Items 
-            SET quantity = ?, unit_price = ?
+            SET quantity = ?, unit_price = ?, total_price = ?
             WHERE order_item_id = ?
         `;
 
-        await db.execute(query, [quantity, unit_price, itemId]);
+        await db.execute(query, [quantity, unit_price, total_price, itemId]);
         return this.getOrderItemById(itemId);
     }
 
@@ -268,19 +265,11 @@ class Order {
         await connection.beginTransaction();
 
         try {
-            // Get the order items to restore inventory
+        // Get the order items to restore inventory
             const [items] = await connection.execute(
                 'SELECT * FROM Order_Items WHERE order_id = ?',
                 [id]
             );
-
-            // Restore livestock quantities
-            for (const item of items) {
-                await connection.execute(
-                    'UPDATE Livestock SET total_quantity = total_quantity + ? WHERE livestock_id = ?',
-                    [item.quantity, item.livestock_id]
-                );
-            }
 
             // Delete the order (Order_Items will be deleted due to CASCADE)
             await connection.execute('DELETE FROM Orders WHERE order_id = ?', [id]);

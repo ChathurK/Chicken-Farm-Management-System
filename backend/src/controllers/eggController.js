@@ -1,5 +1,4 @@
 const Egg = require('../models/Egg');
-const Livestock = require('../models/Livestock');
 const db = require('../config/database');
 const { validationResult } = require('express-validator');
 
@@ -8,7 +7,7 @@ const { validationResult } = require('express-validator');
 // @access  Private
 exports.getAllEggs = async (req, res) => {
   try {
-    const query = 'SELECT er.*, l.type AS livestock_type, l.status FROM Egg_Records er JOIN Livestock l ON er.livestock_id = l.livestock_id';
+    const query = 'SELECT er.* FROM Egg_Records er';
     const [eggs] = await db.execute(query);
     res.json(eggs);
   } catch (err) {
@@ -42,19 +41,11 @@ exports.createEgg = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-
+    
     const { laid_date, expiration_date, quantity, size, color, notes } = req.body;
     
-    // First create a livestock entry
-    const livestockId = await Livestock.create({ 
-      type: 'Egg', 
-      total_quantity: quantity,
-      status: 'Available'
-    });
-
-    // Then create the egg record
+    // Create the egg record
     const eggId = await Egg.create({ 
-      livestock_id: livestockId,
       laid_date, 
       expiration_date, 
       quantity, 
@@ -64,8 +55,7 @@ exports.createEgg = async (req, res) => {
     });
     
     res.status(201).json({ 
-      egg_record_id: eggId,
-      livestock_id: livestockId
+      egg_record_id: eggId
     });
   } catch (err) {
     console.error(err.message);
@@ -90,8 +80,7 @@ exports.updateEgg = async (req, res) => {
     if (!egg) {
       return res.status(404).json({ msg: 'Egg record not found' });
     }
-    
-    // Update the egg record
+      // Update the egg record
     await Egg.update(req.params.id, {
       laid_date,
       expiration_date,
@@ -100,13 +89,6 @@ exports.updateEgg = async (req, res) => {
       color,
       notes
     });
-    
-    // Update the associated livestock record
-    if (quantity) {
-      await Livestock.update(egg.livestock_id, {
-        total_quantity: quantity
-      });
-    }
     
     res.json({ msg: 'Egg record updated' });
   } catch (err) {
@@ -128,9 +110,6 @@ exports.deleteEgg = async (req, res) => {
     
     // Delete the egg record
     await Egg.delete(req.params.id);
-    
-    // Delete the associated livestock record
-    await Livestock.delete(egg.livestock_id);
     
     res.json({ msg: 'Egg record deleted' });
   } catch (err) {

@@ -1,9 +1,9 @@
 const db = require('../config/database');
 
 class Chick {
-    static async create({ livestock_id, parent_breed, hatched_date, quantity, notes }) {
-        const query = `INSERT INTO Chick_Records (livestock_id, parent_breed, hatched_date, quantity, notes) VALUES (?, ?, ?, ?, ?)`;
-        const [result] = await db.execute(query, [livestock_id, parent_breed, hatched_date, quantity, notes]);
+    static async create({ parent_breed, hatched_date, quantity, notes }) {
+        const query = `INSERT INTO Chick_Records (parent_breed, hatched_date, quantity, notes) VALUES (?, ?, ?, ?)`;
+        const [result] = await db.execute(query, [parent_breed, hatched_date, quantity, notes]);
         return result.insertId;
     }
 

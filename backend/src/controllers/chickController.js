@@ -1,5 +1,4 @@
 const Chick = require('../models/Chick');
-const Livestock = require('../models/Livestock');
 const db = require('../config/database');
 const { validationResult } = require('express-validator');
 
@@ -8,7 +7,7 @@ const { validationResult } = require('express-validator');
 // @access  Private
 exports.getAllChicks = async (req, res) => {
   try {
-    const query = 'SELECT cr.*, l.type AS livestock_type, l.status FROM Chick_Records cr JOIN Livestock l ON cr.livestock_id = l.livestock_id';
+    const query = 'SELECT cr.* FROM Chick_Records cr';
     const [chicks] = await db.execute(query);
     res.json(chicks);
   } catch (err) {
@@ -45,16 +44,8 @@ exports.createChick = async (req, res) => {
 
     const { parent_breed, hatched_date, quantity, notes } = req.body;
     
-    // First create a livestock entry
-    const livestockId = await Livestock.create({ 
-      type: 'Chick', 
-      total_quantity: quantity,
-      status: 'Available'
-    });
-
-    // Then create the chick record
+    // Create the chick record
     const chickId = await Chick.create({ 
-      livestock_id: livestockId,
       parent_breed, 
       hatched_date, 
       quantity, 
@@ -62,8 +53,7 @@ exports.createChick = async (req, res) => {
     });
     
     res.status(201).json({ 
-      chick_record_id: chickId,
-      livestock_id: livestockId
+      chick_record_id: chickId
     });
   } catch (err) {
     console.error(err.message);
@@ -97,13 +87,6 @@ exports.updateChick = async (req, res) => {
       notes
     });
     
-    // Update the associated livestock record
-    if (quantity) {
-      await Livestock.update(chick.livestock_id, {
-        total_quantity: quantity
-      });
-    }
-    
     res.json({ msg: 'Chick record updated' });
   } catch (err) {
     console.error(err.message);
@@ -124,9 +107,6 @@ exports.deleteChick = async (req, res) => {
     
     // Delete the chick record
     await Chick.delete(req.params.id);
-    
-    // Delete the associated livestock record
-    await Livestock.delete(chick.livestock_id);
     
     res.json({ msg: 'Chick record deleted' });
   } catch (err) {
