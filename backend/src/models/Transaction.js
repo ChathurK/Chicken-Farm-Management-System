@@ -147,7 +147,9 @@ class Transaction {
         if (filters.egg_record_id) {
             query += ' AND t.egg_record_id = ?';
             params.push(filters.egg_record_id);
-        }        if (filters.startDate) {
+        }
+        
+        if (filters.startDate) {
             query += ' AND t.transaction_date >= ?';
             params.push(filters.startDate);
         }
@@ -169,9 +171,14 @@ class Transaction {
 
         query += ' ORDER BY t.transaction_date DESC';
 
-        if (filters.limit) {
+        if (filters.limit && !isNaN(filters.limit)) {
+            // Ensure limit is a number and add it to the query
             query += ' LIMIT ?';
             params.push(parseInt(filters.limit));
+        } else {
+            // Use default value of 5 if limit is not provided or invalid
+            query += ' LIMIT ?';
+            params.push(5);
         }
 
         const [rows] = await db.execute(query, params);

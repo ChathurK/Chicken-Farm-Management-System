@@ -7,7 +7,7 @@ const { validationResult } = require('express-validator');
 // @access  Private
 exports.getAllEggs = async (req, res) => {
   try {
-    const query = 'SELECT er.* FROM Egg_Records er';
+    const query = 'SELECT * FROM Egg_Records';
     const [eggs] = await db.execute(query);
     res.json(eggs);
   } catch (err) {
