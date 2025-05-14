@@ -1,51 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Pencil, Trash, Coins , Clock, ChatText, UserCircle, ShoppingBag, ArrowUp, ArrowDown } from '@phosphor-icons/react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Pencil, Trash, Calendar, CurrencyDollar, ChatText, UserCircle, ShoppingBag, Bird, Egg, Tag, Receipt, ClockClockwise, CircleWavyCheck } from '@phosphor-icons/react';
 import DashboardLayout from '../DashboardLayout';
 import api from '../../../utils/api';
 
 const TransactionDetails = () => {
-  const { id } = useParams();
   const navigate = useNavigate();
-
+  const { id } = useParams();
+  
   const [transaction, setTransaction] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-
+  
   useEffect(() => {
-    const fetchTransactionDetails = async () => {
+    const fetchTransaction = async () => {
       try {
         setLoading(true);
         const response = await api.get(`/api/transactions/${id}`);
         setTransaction(response.data);
         setLoading(false);
       } catch (err) {
-        if (err.response?.status === 404) {
-          setTransaction(false);
-        } else {
-          setError('Failed to load transaction details. Please try again.');
-        }
+        setError('Error loading transaction. Please try again.');
         setLoading(false);
         console.error('Error fetching transaction details:', err);
       }
     };
-
-    fetchTransactionDetails();
+    
+    fetchTransaction();
   }, [id]);
 
   const handleDelete = async () => {
-    try {
-      await api.delete(`/api/transactions/${id}`);
-      navigate('/admin/finance/transactions');
-    } catch (err) {
-      setError(
-        err.response?.data?.msg ||
-          'An error occurred while deleting the transaction.'
-      );
-      console.error('Error deleting transaction:', err);
-    } finally {
-      setShowDeleteModal(false);
+    if (window.confirm('Are you sure you want to delete this transaction?')) {
+      try {
+        await api.delete(`/api/transactions/${id}`);
+        navigate('/admin/finance/transactions');
+      } catch (err) {
+        setError('Error deleting transaction. Please try again.');
+        console.error('Error deleting transaction:', err);
+      }
     }
   };
 
@@ -55,258 +47,293 @@ const TransactionDetails = () => {
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'LKR',
+      currency: 'INR',
+      minimumFractionDigits: 2
     }).format(amount);
   };
 
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="flex h-64 items-center justify-center">
-          <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-amber-500"></div>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  const formatDateTime = (dateString) => {
+    const options = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
 
-  if (error) {
-    return (
-      <DashboardLayout>
-        <div className="mb-4 rounded-lg bg-red-100 px-4 py-3 text-red-700">
-          <p>{error}</p>
-          <button
-            onClick={() => navigate('/admin/finance/transactions')}
-            className="mt-2 text-red-700 underline hover:text-red-800"
-          >
-            Return to Transactions List
-          </button>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  const getTransactionTypeColor = (type) => {
+    return type === 'Income' ? 'text-green-600' : 'text-red-600';
+  };
 
-  if (!transaction) {
-    return (
-      <DashboardLayout>
-        <div className="py-8 text-center">
-          <p className="text-gray-500">Transaction not found.</p>
-          <button
-            onClick={() => navigate('/admin/finance/transactions')}
-            className="mt-2 text-amber-500 hover:text-amber-600"
-          >
-            Return to Transactions List
-          </button>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
+  const getCategoryIcon = (category) => {
+    switch (category) {
+      case 'Chicken Sale':
+      case 'Chicken Purchase':
+        return <Bird size={24} weight="duotone" className="text-amber-500" />;
+      case 'Chick Sale':
+      case 'Chick Purchase':
+        return <Bird size={24} weight="duotone" className="text-amber-500" />;
+      case 'Egg Sale':
+      case 'Egg Purchase':
+        return <Egg size={24} weight="duotone" className="text-amber-500" />;
+      case 'Inventory Purchase':
+        return <ShoppingBag size={24} weight="duotone" className="text-amber-500" />;
+      default:
+        return <Tag size={24} weight="duotone" className="text-amber-500" />;
+    }
+  };
+  
   return (
     <DashboardLayout>
-      <div className="rounded-lg bg-white p-6 shadow">
-        {/* Header with back button and actions */}
-        <div className="mb-6 flex flex-wrap items-center justify-between">
-          <div className="mb-2 flex items-center sm:mb-0">
-            <button
-              onClick={() => navigate('/admin/finance/transactions')}
-              className="mr-4 text-gray-600 hover:text-amber-500"
-            >
-              <ArrowLeft size={24} weight="duotone" />
-            </button>
-            <h1 className="text-2xl font-bold">Transaction Details</h1>
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => navigate(`/admin/finance/transactions/edit/${id}`)}
-              className="flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
-            >
-              <Pencil size={18} weight="bold" />
-              Edit
-            </button>
-            <button
-              onClick={() => setShowDeleteModal(true)}
-              className="flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
-            >
-              <Trash size={18} weight="bold" />
-              Delete
-            </button>
-          </div>
-        </div>
-
-        {/* Transaction Type Badge */}
-        <div className="mb-6">
-          <span
-            className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
-              transaction.transaction_type === 'Income'
-                ? 'bg-green-100 text-green-800'
-                : 'bg-red-100 text-red-800'
-            }`}
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center">
+          <button
+            onClick={() => navigate('/admin/finance/transactions')}
+            className="mr-4 text-gray-600 hover:text-amber-500"
           >
-            {transaction.transaction_type === 'Income' ? (
-              <ArrowUp size={16} className="mr-1" />
-            ) : (
-              <ArrowDown size={16} className="mr-1" />
-            )}
-            {transaction.transaction_type.charAt(0).toUpperCase() +
-              transaction.transaction_type.slice(1)}
-          </span>
+            <ArrowLeft size={24} weight="duotone" />
+          </button>
+          <h1 className="text-2xl font-bold">Transaction Details</h1>
         </div>
-
-        {/* Transaction details card */}
-        <div className="mb-8 rounded-lg bg-gray-50 p-6">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="flex items-start gap-3">
-              <Coins
-                size={24}
-                weight="duotone"
-                className="mt-0.5 text-amber-500"
-              />
-              <div>
-                <h3 className="text-sm text-gray-500">Amount</h3>
-                <p
-                  className={`text-lg font-medium ${
-                    transaction.transaction_type === 'Income'
-                      ? 'text-green-600'
-                      : 'text-red-600'
-                  }`}
-                >
-                  {formatCurrency(transaction.amount)}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <Clock
-                size={24}
-                weight="duotone"
-                className="mt-0.5 text-amber-500"
-              />
-              <div>
-                <h3 className="text-sm text-gray-500">Transaction Date</h3>
-                <p className="font-medium text-gray-800">
-                  {formatDate(transaction.transaction_date)}
-                </p>
-              </div>
-            </div>
-
-            {transaction.buyer_name && (
-              <div className="flex items-start gap-3">
-                <UserCircle
-                  size={24}
-                  weight="duotone"
-                  className="mt-0.5 text-amber-500"
-                />
-                <div>
-                  <h3 className="text-sm text-gray-500">Buyer</h3>
-                  <p className="font-medium text-gray-800">
-                    {transaction.buyer_name}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {transaction.seller_name && (
-              <div className="flex items-start gap-3">
-                <UserCircle
-                  size={24}
-                  weight="duotone"
-                  className="mt-0.5 text-amber-500"
-                />
-                <div>
-                  <h3 className="text-sm text-gray-500">Seller</h3>
-                  <p className="font-medium text-gray-800">
-                    {transaction.seller_name}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {transaction.item_name && (
-              <div className="flex items-start gap-3">
-                <ShoppingBag
-                  size={24}
-                  weight="duotone"
-                  className="mt-0.5 text-amber-500"
-                />
-                <div>
-                  <h3 className="text-sm text-gray-500">Inventory Item</h3>
-                  <p className="font-medium text-gray-800">
-                    {transaction.item_name}
-                    {transaction.category && (
-                      <span className="ml-1 text-gray-500">
-                        ({transaction.category})
-                      </span>
-                    )}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-start gap-3 md:col-span-2">
-              <ChatText
-                size={24}
-                weight="duotone"
-                className="mt-0.5 text-amber-500"
-              />
-              <div>
-                <h3 className="text-sm text-gray-500">Description</h3>
-                <p className="font-medium text-gray-800">
-                  {transaction.description || 'No description provided'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Metadata */}
-        <div className="mt-8 border-t border-gray-200 pt-6">
-          <h3 className="mb-3 text-sm font-medium text-gray-500">
-            Transaction Information
-          </h3>
-          <div className="grid grid-cols-1 gap-2 text-sm text-gray-600 md:grid-cols-2">
-            <div>Transaction ID: {transaction.transaction_id}</div>
-            <div>
-              Created:{' '}
-              {formatDate(
-                transaction.created_at || transaction.transaction_date
-              )}
-            </div>
-            {transaction.updated_at && (
-              <div>Last Updated: {formatDate(transaction.updated_at)}</div>
-            )}
-          </div>
+        <div className="flex space-x-3">
+          <button
+            onClick={() => navigate(`/admin/finance/transactions/edit/${id}`)}
+            className="inline-flex items-center rounded-md border border-transparent bg-amber-100 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+          >
+            <Pencil size={18} className="mr-2" />
+            Edit
+          </button>
+          <button
+            onClick={handleDelete}
+            className="inline-flex items-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          >
+            <Trash size={18} className="mr-2" />
+            Delete
+          </button>
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
-            <h3 className="mb-4 text-lg font-medium text-gray-900">
-              Confirm Deletion
-            </h3>
-            <p className="mb-6 text-gray-700">
-              Are you sure you want to delete this transaction? This action
-              cannot be undone.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                className="rounded-md bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600"
-              >
-                Delete
-              </button>
+      {loading ? (
+        <div className="flex h-64 items-center justify-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-amber-500"></div>
+        </div>
+      ) : error ? (
+        <div className="rounded-lg bg-red-50 p-4 text-red-800">
+          <p>{error}</p>
+        </div>
+      ) : transaction ? (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Main Transaction Information */}
+          <div className="lg:col-span-2">
+            <div className="rounded-lg bg-white p-6 shadow">
+              <div className="mb-6 flex items-center justify-between border-b border-gray-200 pb-4">
+                <div className="flex items-center">
+                  <div className={`mr-3 rounded-full p-2 ${
+                    transaction.transaction_type === 'Income' ? 'bg-green-100' : 'bg-red-100'
+                  }`}>
+                    <CurrencyDollar size={24} weight="duotone" className={getTransactionTypeColor(transaction.transaction_type)} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">
+                      Transaction #{transaction.transaction_id}
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      {transaction.transaction_type} - {transaction.category}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <span className={`text-2xl font-bold ${getTransactionTypeColor(transaction.transaction_type)}`}>
+                    {transaction.transaction_type === 'Income' ? '+' : '-'}
+                    {formatCurrency(transaction.amount)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-start">
+                  <Calendar size={20} className="mr-2 mt-1 text-gray-500" />
+                  <div>
+                    <p className="font-medium text-gray-700">Transaction Date</p>
+                    <p>{formatDate(transaction.transaction_date)}</p>
+                  </div>
+                </div>
+
+                {/* Transaction Category */}
+                <div className="flex items-start">
+                  {getCategoryIcon(transaction.category)}
+                  <div className="ml-2">
+                    <p className="font-medium text-gray-700">Category</p>
+                    <p>{transaction.category}</p>
+                  </div>
+                </div>
+
+                {/* Buyer/Seller Information */}
+                {transaction.transaction_type === 'Income' && transaction.buyer_name && (
+                  <div className="flex items-start">
+                    <UserCircle size={20} className="mr-2 mt-1 text-gray-500" />
+                    <div>
+                      <p className="font-medium text-gray-700">Buyer</p>
+                      <p>{transaction.buyer_name}</p>
+                    </div>
+                  </div>
+                )}
+
+                {transaction.transaction_type === 'Expense' && transaction.seller_name && (
+                  <div className="flex items-start">
+                    <UserCircle size={20} className="mr-2 mt-1 text-gray-500" />
+                    <div>
+                      <p className="font-medium text-gray-700">Seller</p>
+                      <p>{transaction.seller_name}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Inventory Information */}
+                {transaction.inventory_id && (
+                  <div className="flex items-start">
+                    <ShoppingBag size={20} className="mr-2 mt-1 text-gray-500" />
+                    <div>
+                      <p className="font-medium text-gray-700">Inventory Item</p>
+                      <p>{transaction.item_name} ({transaction.inventory_category})</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Notes */}
+                <div className="flex items-start">
+                  <ChatText size={20} className="mr-2 mt-1 text-gray-500" />
+                  <div>
+                    <p className="font-medium text-gray-700">Description</p>
+                    <p className="whitespace-pre-wrap">{transaction.notes || 'No description provided'}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+
+          {/* Side Information */}
+          <div className="space-y-6">
+            {/* Transaction Status */}
+            <div className="rounded-lg bg-white p-6 shadow">
+              <h2 className="mb-4 text-lg font-semibold">Transaction Status</h2>
+              <div className="flex items-center space-x-2 rounded-lg bg-green-50 p-3 text-green-700">
+                <CircleWavyCheck size={20} weight="duotone" />
+                <span>Completed</span>
+              </div>
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Created</span>
+                  <span className="text-sm font-medium">{formatDateTime(transaction.created_at)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Last Updated</span>
+                  <span className="text-sm font-medium">{formatDateTime(transaction.updated_at)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Livestock Details - Only show for livestock-related transactions */}
+            {(transaction.chicken_record_id || transaction.chick_record_id || transaction.egg_record_id) && (
+              <div className="rounded-lg bg-white p-6 shadow">
+                <h2 className="mb-4 text-lg font-semibold">Livestock Details</h2>
+                <div className="space-y-4">
+                  {/* Chicken Details */}
+                  {transaction.chicken_record_id && (
+                    <>
+                      <div className="flex items-start">
+                        <Bird size={20} className="mr-2 mt-1 text-gray-500" />
+                        <div>
+                          <p className="font-medium text-gray-700">Chicken Type</p>
+                          <p>{transaction.chicken_type}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start">
+                        <Tag size={20} className="mr-2 mt-1 text-gray-500" />
+                        <div>
+                          <p className="font-medium text-gray-700">Breed</p>
+                          <p>{transaction.chicken_breed}</p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Chick Details */}
+                  {transaction.chick_record_id && (
+                    <>
+                      <div className="flex items-start">
+                        <Bird size={20} className="mr-2 mt-1 text-gray-500" />
+                        <div>
+                          <p className="font-medium text-gray-700">Chick Parent Breed</p>
+                          <p>{transaction.chick_parent_breed}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start">
+                        <Calendar size={20} className="mr-2 mt-1 text-gray-500" />
+                        <div>
+                          <p className="font-medium text-gray-700">Hatched Date</p>
+                          <p>{transaction.hatched_date ? formatDate(transaction.hatched_date) : 'Not specified'}</p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Egg Details */}
+                  {transaction.egg_record_id && (
+                    <>
+                      <div className="flex items-start">
+                        <Egg size={20} className="mr-2 mt-1 text-gray-500" />
+                        <div>
+                          <p className="font-medium text-gray-700">Egg Size</p>
+                          <p>{transaction.egg_size}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start">
+                        <Tag size={20} className="mr-2 mt-1 text-gray-500" />
+                        <div>
+                          <p className="font-medium text-gray-700">Egg Color</p>
+                          <p>{transaction.egg_color}</p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Related Actions */}
+            <div className="rounded-lg bg-white p-6 shadow">
+              <h2 className="mb-4 text-lg font-semibold">Related Actions</h2>
+              <div className="space-y-2">
+                <button 
+                  onClick={() => navigate('/admin/finance/reports')} 
+                  className="flex w-full items-center justify-between rounded-lg border border-gray-300 p-3 text-left hover:bg-amber-50"
+                >
+                  <div className="flex items-center">
+                    <Receipt size={20} className="mr-2 text-amber-500" />
+                    <span>View Financial Reports</span>
+                  </div>
+                </button>
+                <button 
+                  onClick={() => navigate('/admin/finance/transactions')} 
+                  className="flex w-full items-center justify-between rounded-lg border border-gray-300 p-3 text-left hover:bg-amber-50"
+                >
+                  <div className="flex items-center">
+                    <ClockClockwise size={20} className="mr-2 text-amber-500" />
+                    <span>Transaction History</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-lg bg-yellow-50 p-4 text-yellow-800">
+          <p>Transaction not found.</p>
         </div>
       )}
     </DashboardLayout>
