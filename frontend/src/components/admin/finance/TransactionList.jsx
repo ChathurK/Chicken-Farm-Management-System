@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MagnifyingGlass, Funnel, ArrowUp, ArrowDown, Trash, Eye, Pencil, CurrencyDollar, ArrowsHorizontal, CaretRight, CaretLeft, Bird, Egg } from '@phosphor-icons/react';
+import { Plus, MagnifyingGlass, Funnel, ArrowUp, ArrowDown, Trash, Eye, Pencil, Coin, Barn, Bird, Egg } from '@phosphor-icons/react';
 import DashboardLayout from '../DashboardLayout';
+import Pagination from '../../shared/Pagination';
 import api from '../../../utils/api';
 
 const TransactionList = () => {
@@ -12,8 +13,7 @@ const TransactionList = () => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [perPage] = useState(10);
+  const transactionsPerPage = 10;
 
   // Filtering and sorting state
   const [filters, setFilters] = useState({
@@ -58,18 +58,12 @@ const TransactionList = () => {
         Object.entries(filters).forEach(([key, value]) => {
           if (value) queryParams.append(key, value);
         });
-
         // Add search query if exists
         if (searchQuery) queryParams.append('search', searchQuery);
 
-        // Add sorting        queryParams.append('sortBy', sortBy);
+        // Add sorting
+        queryParams.append('sortBy', sortBy);
         queryParams.append('sortDir', sortDirection);
-
-        // Add pagination (handled on the frontend)
-        const limit = perPage;
-
-        // If paginating, calculate the offset (for frontend pagination only)
-        const offset = (currentPage - 1) * perPage;
 
         console.log(`Fetching transactions with params: ${queryParams.toString()}`);
 
@@ -86,15 +80,6 @@ const TransactionList = () => {
 
         // Update state with the fetched transactions
         setTransactions(transactionsData);
-
-        // Set pagination based on response
-        if (transactionsData.length < perPage) {
-          // If we got fewer results than the page size, we're on the last page
-          setTotalPages(currentPage);
-        } else {
-          // Otherwise, there might be more pages
-          setTotalPages(currentPage + 1);
-        }
 
         // Fetch buyers and sellers for filters
         try {
@@ -123,7 +108,7 @@ const TransactionList = () => {
     };
 
     fetchData();
-  }, [filters, searchQuery, sortBy, sortDirection, currentPage, perPage]);
+  }, [filters, searchQuery, sortBy, sortDirection, currentPage]);
 
   // Handle filter changes
   const handleFilterChange = (e) => {
@@ -181,9 +166,9 @@ const TransactionList = () => {
       case 'Egg Purchase':
         return <Egg size={20} weight="duotone" className="text-amber-500" />;
       case 'Inventory Purchase':
-        return <ArrowsHorizontal size={20} weight="duotone" className="text-amber-500" />;
+        return <Barn size={20} weight="duotone" className="text-amber-500" />;
       default:
-        return <CurrencyDollar size={20} weight="duotone" className="text-amber-500" />;
+        return <Coin size={20} weight="duotone" className="text-amber-500" />;
     }
   };
 
@@ -199,7 +184,6 @@ const TransactionList = () => {
       }
     }
   };
-
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -213,12 +197,11 @@ const TransactionList = () => {
     }
   };
 
-  // Handle pagination
-  const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
+  // Pagination
+  const indexOfLastTransaction = currentPage * transactionsPerPage;
+  const indexOfFirstTransaction = indexOfLastTransaction - transactionsPerPage;
+  const currentTransactions = transactions.slice(indexOfFirstTransaction, indexOfLastTransaction);
+  const totalPages = Math.ceil(transactions.length / transactionsPerPage);
 
   return (
     <DashboardLayout>
@@ -566,7 +549,7 @@ const TransactionList = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
-                  {transactions.map((transaction) => (
+                  {currentTransactions.map((transaction) => (
                     <tr
                       key={transaction.transaction_id}
                       className="hover:bg-gray-50 cursor-pointer"
@@ -576,11 +559,12 @@ const TransactionList = () => {
                         {transaction.transaction_id || 'N/A'}
                       </td>
                       <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-500 md:px-6">
-                        {formatDate(transaction.transaction_date)}                    </td>
+                        {formatDate(transaction.transaction_date)}
+                      </td>
                       <td className="whitespace-nowrap px-4 py-4 md:px-6">
                         <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${transaction.transaction_type === 'Income'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
                           }`}>
                           {transaction.transaction_type || 'Unknown'}
                         </span>
@@ -599,14 +583,15 @@ const TransactionList = () => {
                       <td className="hidden whitespace-nowrap px-4 py-4 text-sm text-gray-500 lg:table-cell md:px-6">
                         {transaction.transaction_type === 'Income'
                           ? transaction.buyer_name || 'N/A'
-                          : transaction.seller_name || 'N/A'}                    </td>
+                          : transaction.seller_name || 'N/A'}
+                      </td>
                       <td className="whitespace-nowrap px-4 py-4 text-sm md:px-6">
                         <span className={`font-medium ${transaction.transaction_type === 'Income'
-                            ? 'text-green-600'
-                            : 'text-red-600'
+                          ? 'text-green-600'
+                          : 'text-red-600'
                           }`}>
                           {transaction.transaction_type === 'Income' ? '+' : '-'}
-                          ₹{parseFloat(transaction.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          LKR {parseFloat(transaction.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-4 py-4 text-right text-sm font-medium md:px-6">
@@ -619,7 +604,8 @@ const TransactionList = () => {
                             className="text-amber-600 hover:text-amber-900"
                             title="View Details"
                           >
-                            <Eye size={20} weight="duotone" />                        </button>
+                            <Eye size={20} weight="duotone" />
+                          </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -648,124 +634,20 @@ const TransactionList = () => {
               </table>
             </div>
           )}
-
+          
           {/* Pagination */}
           {!loading && transactions.length > 0 && (
-            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-              <div className="flex flex-1 justify-between sm:hidden">
-                <button
-                  onClick={() => goToPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 ${currentPage === 1
-                      ? 'cursor-not-allowed opacity-50'
-                      : 'hover:bg-gray-50'
-                    }`}
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => goToPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 ${currentPage === totalPages
-                      ? 'cursor-not-allowed opacity-50'
-                      : 'hover:bg-gray-50'
-                    }`}
-                >
-                  Next
-                </button>
-              </div>
-              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">
-                    {transactions.length > 0 ? (
-                      <>
-                        Showing <span className="font-medium">{Math.min((currentPage - 1) * perPage + 1, transactions.length)}</span> to{' '}
-                        <span className="font-medium">{Math.min(currentPage * perPage, transactions.length)}</span>{' '}
-                        {totalPages > 1 && (
-                          <>of approximately <span className="font-medium">{perPage * totalPages}</span></>
-                        )}
-                        {' '}results
-                      </>
-                    ) : (
-                      'No transactions found'
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                    <button
-                      onClick={() => goToPage(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className={`relative inline-flex items-center rounded-l-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 ${currentPage === 1
-                          ? 'cursor-not-allowed opacity-50'
-                          : 'hover:bg-gray-50'
-                        }`}
-                    >
-                      <span className="sr-only">Previous</span>
-                      <CaretLeft size={18} weight="bold" />
-                    </button>
-
-                    {/* Page Numbers */}
-                    {totalPages > 0 && [...Array(totalPages).keys()].map((page) => {
-                      const pageNumber = page + 1;
-                      const showPage =
-                        pageNumber === 1 ||
-                        pageNumber === totalPages ||
-                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1);
-
-                      // Show ellipsis for skipped pages
-                      if (!showPage && pageNumber === currentPage - 2) {
-                        return (
-                          <span
-                            key={`ellipsis-prev`}
-                            className="relative inline-flex items-center border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700"
-                          >
-                            ...
-                          </span>
-                        );
-                      }
-
-                      if (!showPage && pageNumber === currentPage + 2) {
-                        return (
-                          <span
-                            key={`ellipsis-next`}
-                            className="relative inline-flex items-center border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700"
-                          >
-                            ...
-                          </span>
-                        );
-                      }
-
-                      if (!showPage) return null;
-
-                      return (
-                        <button
-                          key={pageNumber}
-                          onClick={() => goToPage(pageNumber)}
-                          className={`relative inline-flex items-center border ${pageNumber === currentPage
-                              ? 'z-10 border-amber-500 bg-amber-50 text-amber-600'
-                              : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50'
-                            } px-4 py-2 text-sm font-medium`}
-                        >
-                          {pageNumber}
-                        </button>
-                      );
-                    })}
-
-                    <button
-                      onClick={() => goToPage(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className={`relative inline-flex items-center rounded-r-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 ${currentPage === totalPages
-                          ? 'cursor-not-allowed opacity-50'
-                          : 'hover:bg-gray-50'
-                        }`}
-                    >
-                      <span className="sr-only">Next</span>
-                      <CaretRight size={18} weight="bold" />
-                    </button>
-                  </nav>
-                </div>
-              </div>
+            <div className="border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={transactions.length}
+                itemsPerPage={transactionsPerPage}
+                currentPageFirstItemIndex={indexOfFirstTransaction}
+                currentPageLastItemIndex={indexOfLastTransaction - 1}
+                onPageChange={setCurrentPage}
+                itemName="transactions"
+              />
             </div>
           )}
         </div>
