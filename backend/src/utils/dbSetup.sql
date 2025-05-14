@@ -61,9 +61,9 @@ CREATE TABLE Chicken_Records (
     type ENUM('Layer', 'Broiler', 'Breeder') NOT NULL,
     breed VARCHAR(50) NOT NULL,
     quantity INT NOT NULL,
-    age_weeks INT,
-    acquisition_date DATE NOT NULL,
-    notes TEXT,
+    age_weeks INT DEFAULT NULL,
+    acquisition_date DEFAULT NULL,
+    notes TEXT DEFAULT NULL, -- This is not necessary
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (livestock_id) REFERENCES Livestock(livestock_id) ON DELETE CASCADE
@@ -76,7 +76,7 @@ CREATE TABLE Chick_Records (
     parent_breed VARCHAR(50),
     hatched_date DATE NOT NULL,
     quantity INT NOT NULL,
-    notes TEXT,
+    notes TEXT DEFAULT NULL, -- This is not necessary
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (livestock_id) REFERENCES Livestock(livestock_id) ON DELETE CASCADE
@@ -90,8 +90,8 @@ CREATE TABLE Egg_Records (
     expiration_date DATE NOT NULL,
     quantity INT NOT NULL,
     size ENUM('Small', 'Medium', 'Large', 'Extra Large') NOT NULL,
-    color ENUM('White', 'Brown', 'Other') NOT NULL,
-    notes TEXT,
+    color ENUM('White', 'Brown', 'Other') NOT NULL, -- Other is not necessary
+    notes TEXT DEFAULT NULL, -- This is not necessary
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (livestock_id) REFERENCES Livestock(livestock_id) ON DELETE CASCADE,

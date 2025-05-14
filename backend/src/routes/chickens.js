@@ -27,7 +27,7 @@ router.post(
     check('type', 'Type is required').not().isEmpty(),
     check('breed', 'Breed is required').not().isEmpty(),
     check('quantity', 'Quantity is required').isInt({ min: 1 }),
-    check('acquisition_date', 'Valid acquisition date is required').isDate()
+    // check('acquisition_date', 'Valid acquisition date is required').isDate()
   ],
   chickenController.createChicken
 );
