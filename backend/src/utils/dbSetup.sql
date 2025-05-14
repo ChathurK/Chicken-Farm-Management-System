@@ -57,55 +57,39 @@ CREATE TABLE Sellers (
 -- Chickens table
 CREATE TABLE Chicken_Records (
     chicken_record_id INT AUTO_INCREMENT PRIMARY KEY,
-    livestock_id INT NOT NULL,
     type ENUM('Layer', 'Broiler', 'Breeder') NOT NULL,
     breed VARCHAR(50) NOT NULL,
     quantity INT NOT NULL,
     age_weeks INT DEFAULT NULL,
-    acquisition_date DEFAULT NULL,
-    notes TEXT DEFAULT NULL, -- This is not necessary
+    acquisition_date DATE DEFAULT NULL,
+    notes TEXT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (livestock_id) REFERENCES Livestock(livestock_id) ON DELETE CASCADE
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Chicks table
 CREATE TABLE Chick_Records (
     chick_record_id INT AUTO_INCREMENT PRIMARY KEY,
-    livestock_id INT NOT NULL,
     parent_breed VARCHAR(50),
     hatched_date DATE NOT NULL,
     quantity INT NOT NULL,
-    notes TEXT DEFAULT NULL, -- This is not necessary
+    notes TEXT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (livestock_id) REFERENCES Livestock(livestock_id) ON DELETE CASCADE
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Eggs table
 CREATE TABLE Egg_Records (
     egg_record_id INT AUTO_INCREMENT PRIMARY KEY,
-    livestock_id INT NOT NULL,
     laid_date DATE NOT NULL,
     expiration_date DATE NOT NULL,
     quantity INT NOT NULL,
-    size ENUM('Small', 'Medium', 'Large', 'Extra Large') NOT NULL,
-    color ENUM('White', 'Brown', 'Other') NOT NULL, -- Other is not necessary
-    notes TEXT DEFAULT NULL, -- This is not necessary
+    size ENUM('Small', 'Medium', 'Large') NOT NULL,
+    color ENUM('White', 'Brown') NOT NULL,
+    notes TEXT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (livestock_id) REFERENCES Livestock(livestock_id) ON DELETE CASCADE,
     CONSTRAINT check_expiration CHECK (expiration_date > laid_date)
-);
-
--- Livestock table
-CREATE TABLE Livestock (
-    livestock_id INT AUTO_INCREMENT PRIMARY KEY,
-    type ENUM('Chicken', 'Chick', 'Egg') NOT NULL,
-    total_quantity INT NOT NULL,
-    status ENUM('Available', 'Reserved', 'Sold') DEFAULT 'Available',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Inventory table
@@ -126,27 +110,35 @@ CREATE TABLE Inventory (
 
 -- Transactions table
 -- Note: inventory_id is related to Transaction to track inventory purchases
--- livestock_id added to track livestock sales/purchases
+-- Now directly connects to chicken, chick, and egg records
 CREATE TABLE Transactions (
     transaction_id INT AUTO_INCREMENT PRIMARY KEY,
+    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     transaction_type ENUM('Income', 'Expense') NOT NULL,
     category ENUM(
-        'Livestock Purchase',
-        'Livestock Sale',
+        'Chicken Purchase',
+        'Chicken Sale',
+        'Chick Purchase',
+        'Chick Sale',
+        'Egg Purchase',
+        'Egg Sale',
         'Inventory Purchase',
         'Other'
     ) NOT NULL,
-    inventory_id INT,
-    livestock_id INT,
     buyer_id INT,
     seller_id INT,
     amount DECIMAL(12, 2) NOT NULL,
-    description TEXT,
-    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    notes TEXT,
+    inventory_id INT,
+    chicken_record_id INT,
+    chick_record_id INT,
+    egg_record_id INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (inventory_id) REFERENCES Inventory(inventory_id),
-    FOREIGN KEY (livestock_id) REFERENCES Livestock(livestock_id),
+    FOREIGN KEY (chicken_record_id) REFERENCES Chicken_Records(chicken_record_id),
+    FOREIGN KEY (chick_record_id) REFERENCES Chick_Records(chick_record_id),
+    FOREIGN KEY (egg_record_id) REFERENCES Egg_Records(egg_record_id),
     FOREIGN KEY (buyer_id) REFERENCES Buyers(buyer_id),
     FOREIGN KEY (seller_id) REFERENCES Sellers(seller_id)
 );
@@ -168,13 +160,22 @@ CREATE TABLE Orders (
 CREATE TABLE Order_Items (
     order_item_id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT NOT NULL,
-    livestock_id INT NOT NULL,
     product_type ENUM('Chicken', 'Chick', 'Egg') NOT NULL,
     quantity INT NOT NULL,
     unit_price DECIMAL(10, 2) NOT NULL,
-    total_price DECIMAL(12, 2) GENERATED ALWAYS AS (quantity * unit_price) STORED,
+    total_price DECIMAL(12, 2) NOT NULL,
+    chicken_record_id INT,
+    chick_record_id INT,
+    egg_record_id INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES Orders(order_id) ON DELETE CASCADE,
-    FOREIGN KEY (livestock_id) REFERENCES Livestock(livestock_id)
+    FOREIGN KEY (chicken_record_id) REFERENCES Chicken_Records(chicken_record_id),
+    FOREIGN KEY (chick_record_id) REFERENCES Chick_Records(chick_record_id),
+    FOREIGN KEY (egg_record_id) REFERENCES Egg_Records(egg_record_id),
+    CONSTRAINT check_one_product_type CHECK (
+        (chicken_record_id IS NOT NULL AND chick_record_id IS NULL AND egg_record_id IS NULL AND product_type = 'Chicken') OR
+        (chicken_record_id IS NULL AND chick_record_id IS NOT NULL AND egg_record_id IS NULL AND product_type = 'Chick') OR
+        (chicken_record_id IS NULL AND chick_record_id IS NULL AND egg_record_id IS NOT NULL AND product_type = 'Egg')
+    )
 );
