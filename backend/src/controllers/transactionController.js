@@ -9,9 +9,13 @@ exports.getAllTransactions = async (req, res) => {
     // Check if filters are provided
     const { 
       transaction_type, 
+      category,
       buyer_id, 
       seller_id, 
       inventory_id, 
+      chicken_record_id,
+      chick_record_id,
+      egg_record_id,
       startDate, 
       endDate,
       minAmount,
@@ -20,13 +24,19 @@ exports.getAllTransactions = async (req, res) => {
     } = req.query;
     
     let transactions;
-    if (transaction_type || buyer_id || seller_id || inventory_id || startDate || endDate || minAmount || maxAmount || limit) {
+    if (transaction_type || category || buyer_id || seller_id || inventory_id || 
+        chicken_record_id || chick_record_id || egg_record_id || 
+        startDate || endDate || minAmount || maxAmount || limit) {
       // Use filters
       transactions = await Transaction.findWithFilters({
         transaction_type,
+        category,
         buyer_id,
         seller_id,
         inventory_id,
+        chicken_record_id,
+        chick_record_id,
+        egg_record_id,
         startDate,
         endDate,
         minAmount,
@@ -88,21 +98,29 @@ exports.createTransaction = async (req, res) => {
 
     const { 
       transaction_type, 
+      category,
       inventory_id, 
       buyer_id, 
       seller_id, 
       amount, 
-      description 
+      notes,
+      chicken_record_id,
+      chick_record_id,
+      egg_record_id
     } = req.body;
 
     // Create transaction
     const transaction = await Transaction.create({
       transaction_type, 
+      category,
       inventory_id, 
       buyer_id, 
       seller_id, 
       amount, 
-      description
+      notes,
+      chicken_record_id,
+      chick_record_id,
+      egg_record_id
     });
 
     res.status(201).json(transaction);
@@ -131,21 +149,29 @@ exports.updateTransaction = async (req, res) => {
 
     const { 
       transaction_type, 
+      category,
       inventory_id, 
       buyer_id, 
       seller_id, 
       amount, 
-      description 
+      notes,
+      chicken_record_id,
+      chick_record_id,
+      egg_record_id
     } = req.body;
 
     // Update transaction
     transaction = await Transaction.update(req.params.id, {
       transaction_type, 
+      category,
       inventory_id, 
       buyer_id, 
       seller_id, 
       amount, 
-      description
+      notes,
+      chicken_record_id,
+      chick_record_id,
+      egg_record_id
     });
 
     res.json(transaction);

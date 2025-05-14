@@ -5,26 +5,35 @@ class Transaction {
     static async create(transactionData) {
         const { 
             transaction_type, 
+            category,
             inventory_id, 
             buyer_id, 
             seller_id, 
             amount, 
-            description 
+            notes,
+            chicken_record_id,
+            chick_record_id,
+            egg_record_id
         } = transactionData;
         
         const query = `
             INSERT INTO Transactions (
-                transaction_type, inventory_id, buyer_id, seller_id, amount, description
-            ) VALUES (?, ?, ?, ?, ?, ?)
+                transaction_type, category, inventory_id, buyer_id, seller_id, amount, notes,
+                chicken_record_id, chick_record_id, egg_record_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         
         const [result] = await db.execute(query, [
             transaction_type,
+            category || null,
             inventory_id || null,
             buyer_id || null,
             seller_id || null,
             amount,
-            description || null
+            notes || null,
+            chicken_record_id || null,
+            chick_record_id || null,
+            egg_record_id || null
         ]);
         
         return { transaction_id: result.insertId, ...transactionData };
@@ -34,13 +43,19 @@ class Transaction {
     static async findById(id) {
         const query = `
             SELECT t.*, 
-                   i.item_name, i.category,
+                   i.item_name, i.category as inventory_category,
                    CONCAT(b.first_name, ' ', b.last_name) as buyer_name,
-                   CONCAT(s.first_name, ' ', s.last_name) as seller_name
+                   CONCAT(s.first_name, ' ', s.last_name) as seller_name,
+                   cr.type as chicken_type, cr.breed as chicken_breed,
+                   chr.parent_breed as chick_parent_breed, chr.hatched_date,
+                   er.size as egg_size, er.color as egg_color
             FROM Transactions t
             LEFT JOIN Inventory i ON t.inventory_id = i.inventory_id
             LEFT JOIN Buyers b ON t.buyer_id = b.buyer_id
             LEFT JOIN Sellers s ON t.seller_id = s.seller_id
+            LEFT JOIN Chicken_Records cr ON t.chicken_record_id = cr.chicken_record_id
+            LEFT JOIN Chick_Records chr ON t.chick_record_id = chr.chick_record_id
+            LEFT JOIN Egg_Records er ON t.egg_record_id = er.egg_record_id
             WHERE t.transaction_id = ?
         `;
         
@@ -52,13 +67,19 @@ class Transaction {
     static async findAll() {
         const query = `
             SELECT t.*, 
-                   i.item_name, i.category,
+                   i.item_name, i.category as inventory_category,
                    CONCAT(b.first_name, ' ', b.last_name) as buyer_name,
-                   CONCAT(s.first_name, ' ', s.last_name) as seller_name
+                   CONCAT(s.first_name, ' ', s.last_name) as seller_name,
+                   cr.type as chicken_type, cr.breed as chicken_breed,
+                   chr.parent_breed as chick_parent_breed,
+                   er.size as egg_size, er.color as egg_color
             FROM Transactions t
             LEFT JOIN Inventory i ON t.inventory_id = i.inventory_id
             LEFT JOIN Buyers b ON t.buyer_id = b.buyer_id
             LEFT JOIN Sellers s ON t.seller_id = s.seller_id
+            LEFT JOIN Chicken_Records cr ON t.chicken_record_id = cr.chicken_record_id
+            LEFT JOIN Chick_Records chr ON t.chick_record_id = chr.chick_record_id
+            LEFT JOIN Egg_Records er ON t.egg_record_id = er.egg_record_id
             ORDER BY t.transaction_date DESC
         `;
         
@@ -70,13 +91,19 @@ class Transaction {
     static async findWithFilters(filters) {
         let query = `
             SELECT t.*, 
-                   i.item_name, i.category,
+                   i.item_name, i.category as inventory_category,
                    CONCAT(b.first_name, ' ', b.last_name) as buyer_name,
-                   CONCAT(s.first_name, ' ', s.last_name) as seller_name
+                   CONCAT(s.first_name, ' ', s.last_name) as seller_name,
+                   cr.type as chicken_type, cr.breed as chicken_breed,
+                   chr.parent_breed as chick_parent_breed,
+                   er.size as egg_size, er.color as egg_color
             FROM Transactions t
             LEFT JOIN Inventory i ON t.inventory_id = i.inventory_id
             LEFT JOIN Buyers b ON t.buyer_id = b.buyer_id
             LEFT JOIN Sellers s ON t.seller_id = s.seller_id
+            LEFT JOIN Chicken_Records cr ON t.chicken_record_id = cr.chicken_record_id
+            LEFT JOIN Chick_Records chr ON t.chick_record_id = chr.chick_record_id
+            LEFT JOIN Egg_Records er ON t.egg_record_id = er.egg_record_id
             WHERE 1=1
         `;
         
@@ -85,6 +112,11 @@ class Transaction {
         if (filters.transaction_type) {
             query += ' AND t.transaction_type = ?';
             params.push(filters.transaction_type);
+        }
+        
+        if (filters.category) {
+            query += ' AND t.category = ?';
+            params.push(filters.category);
         }
         
         if (filters.buyer_id) {
@@ -101,8 +133,21 @@ class Transaction {
             query += ' AND t.inventory_id = ?';
             params.push(filters.inventory_id);
         }
-
-        if (filters.startDate) {
+        
+        if (filters.chicken_record_id) {
+            query += ' AND t.chicken_record_id = ?';
+            params.push(filters.chicken_record_id);
+        }
+        
+        if (filters.chick_record_id) {
+            query += ' AND t.chick_record_id = ?';
+            params.push(filters.chick_record_id);
+        }
+        
+        if (filters.egg_record_id) {
+            query += ' AND t.egg_record_id = ?';
+            params.push(filters.egg_record_id);
+        }        if (filters.startDate) {
             query += ' AND t.transaction_date >= ?';
             params.push(filters.startDate);
         }
@@ -137,31 +182,43 @@ class Transaction {
     static async update(id, transactionData) {
         const { 
             transaction_type, 
+            category,
             inventory_id, 
             buyer_id, 
             seller_id, 
             amount, 
-            description 
+            notes,
+            chicken_record_id,
+            chick_record_id,
+            egg_record_id
         } = transactionData;
         
         const query = `
             UPDATE Transactions 
             SET transaction_type = ?, 
+                category = ?,
                 inventory_id = ?, 
                 buyer_id = ?, 
                 seller_id = ?, 
                 amount = ?, 
-                description = ? 
+                notes = ?,
+                chicken_record_id = ?,
+                chick_record_id = ?,
+                egg_record_id = ?
             WHERE transaction_id = ?
         `;
         
         await db.execute(query, [
             transaction_type,
+            category || null,
             inventory_id || null,
             buyer_id || null,
             seller_id || null,
             amount,
-            description || null,
+            notes || null,
+            chicken_record_id || null,
+            chick_record_id || null,
+            egg_record_id || null,
             id
         ]);
         

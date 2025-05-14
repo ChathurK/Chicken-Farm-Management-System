@@ -31,6 +31,11 @@ router.post(
   [
     check('transaction_type', 'Transaction type is required').not().isEmpty(),
     check('transaction_type', 'Transaction type must be either Income or Expense').isIn(['Income', 'Expense']),
+    check('category', 'Category is required').not().isEmpty(),
+    check('category', 'Invalid transaction category').isIn([
+      'Chicken Purchase', 'Chicken Sale', 'Chick Purchase', 'Chick Sale',
+      'Egg Purchase', 'Egg Sale', 'Inventory Purchase', 'Other'
+    ]),
     check('amount', 'Amount must be a positive number').isNumeric().toFloat().custom(value => value > 0)
   ],
   transactionController.createTransaction
@@ -44,6 +49,10 @@ router.put(
   [
     adminMiddleware,
     check('transaction_type', 'Transaction type must be either Income or Expense').optional().isIn(['Income', 'Expense']),
+    check('category', 'Invalid transaction category').optional().isIn([
+      'Chicken Purchase', 'Chicken Sale', 'Chick Purchase', 'Chick Sale',
+      'Egg Purchase', 'Egg Sale', 'Inventory Purchase', 'Other'
+    ]),
     check('amount', 'Amount must be a positive number').optional().isNumeric().toFloat().custom(value => value > 0)
   ],
   transactionController.updateTransaction
