@@ -14,7 +14,7 @@ const TransactionForm = () => {
     transaction_type: '',
     category: '',
     amount: '',
-    description: 'Test data',
+    notes: '',
     buyer_id: '',
     seller_id: '',
     inventory_id: '',
@@ -73,7 +73,6 @@ const TransactionForm = () => {
       try {
         setLoading(true);
 
-
         // Create an array of promises for concurrent API calls
         const dataPromises = [
           api.get('/api/buyers'),
@@ -84,19 +83,16 @@ const TransactionForm = () => {
           api.get('/api/eggs'),
         ];
 
-        try {
-          // Execute all promises concurrently
-          const responses = await Promise.all(dataPromises);
-          console.log('All API calls succeeded:', responses);
-        } catch (error) {
-          console.error('One or more API calls failed:', error);
-        } finally {
-          throw new Error('API call failed', error);
-        }
-
         // Add transaction data promise for edit mode
         if (isEditMode) {
           dataPromises.push(api.get(`/api/transactions/${id}`));
+        }
+
+        const responses = await Promise.all(dataPromises);
+        console.log('All API calls succeeded:', responses);
+
+        // Log transaction data fetch if applicable
+        if (isEditMode) {
           console.log('Fetching transaction data for edit mode with ID:', id, 'is success:', responses);
         }
 
@@ -116,6 +112,15 @@ const TransactionForm = () => {
         // Extract unique breeds for the chicken breed dropdown
         const uniqueBreeds = [...new Set(chickenRes.data.map(chicken => chicken.breed))];
         setChickenBreeds(uniqueBreeds);
+
+        // Handle transaction data in edit mode
+        if (isEditMode && responses.length > 6) {
+          const transactionData = responses[6].data;
+          // Set form data with the transaction data
+          setFormData({
+            ...transactionData,
+          });
+        }
 
         setLoading(false);
       } catch (err) {
@@ -387,8 +392,8 @@ const TransactionForm = () => {
       errors.amount = 'Amount must be greater than zero';
     }
 
-    // if (!formData.description) {
-    //   errors.description = 'Description is required';
+    // if (!formData.notes) {
+    //   errors.notes = 'notes is required';
     // }
 
     // For income transactions, require buyer_id
@@ -641,7 +646,7 @@ const TransactionForm = () => {
         transaction_type: apiData.transaction_type,
         category: apiData.category,
         amount: apiData.amount,
-        notes: apiData.description, // Map description field to notes
+        notes: apiData.notes,
         buyer_id: apiData.buyer_id || null,
         seller_id: apiData.seller_id || null,
         inventory_id: apiData.inventory_id || null,
@@ -820,8 +825,8 @@ const TransactionForm = () => {
                       value={formData.category}
                       onChange={handleChange}
                       className={`block w-full cursor-pointer rounded-md border ${formErrors.category
-                          ? 'border-red-300'
-                          : 'border-gray-300'
+                        ? 'border-red-300'
+                        : 'border-gray-300'
                         } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none`}
                     >
                       <option value="">Select a Category</option>
@@ -926,8 +931,8 @@ const TransactionForm = () => {
                         value={formData.buyer_id}
                         onChange={handleChange}
                         className={`block w-full cursor-pointer rounded-md border ${formErrors.buyer_id
-                            ? 'border-red-300'
-                            : 'border-gray-300'
+                          ? 'border-red-300'
+                          : 'border-gray-300'
                           } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none`}
                       >
                         <option value="">Select a Buyer</option>
@@ -938,8 +943,8 @@ const TransactionForm = () => {
                         ))}
                         <option value="new">+ Add New Buyer</option>
                       </select>
-                      </div>
-                      {/* If buyer_id is 'new', the handleChange function already sets showNewBuyerForm to true */}
+                    </div>
+                    {/* If buyer_id is 'new', the handleChange function already sets showNewBuyerForm to true */}
                     {formErrors.buyer_id && (
                       <p className="mt-1 text-sm text-red-600">
                         {formErrors.buyer_id}
@@ -966,8 +971,8 @@ const TransactionForm = () => {
                         value={formData.seller_id}
                         onChange={handleChange}
                         className={`block w-full cursor-pointer rounded-md border ${formErrors.seller_id
-                            ? 'border-red-300'
-                            : 'border-gray-300'
+                          ? 'border-red-300'
+                          : 'border-gray-300'
                           } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none`}
                       >
                         <option value="">Select a Seller</option>
@@ -978,8 +983,8 @@ const TransactionForm = () => {
                         ))}
                         <option value="new">+ Add New Seller</option>
                       </select>
-                      </div>
-                      {/* If seller_id is 'new', the handleChange function already sets showNewSellerForm to true */}
+                    </div>
+                    {/* If seller_id is 'new', the handleChange function already sets showNewSellerForm to true */}
                     {formErrors.seller_id && (
                       <p className="mt-1 text-sm text-red-600">
                         {formErrors.seller_id}
@@ -1057,8 +1062,8 @@ const TransactionForm = () => {
                         )}
                       </div>
                     </>
-                    )}
-                  {' '}
+                  )}
+                {' '}
 
                 {/* Livestock Sale Section - only for income transactions with livestock sale categories */}
                 {formData.transaction_type === 'Income' &&
@@ -1103,8 +1108,8 @@ const TransactionForm = () => {
                               formData.category === 'Egg Sale'
                             }
                             className={`block w-full rounded-md border ${formErrors.livestock_type
-                                ? 'border-red-300'
-                                : 'border-gray-300'
+                              ? 'border-red-300'
+                              : 'border-gray-300'
                               } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none focus:ring-amber-500 ${formData.category === 'Chicken Sale' || formData.category === 'Chick Sale' || formData.category === 'Egg Sale' ? 'bg-gray-100' : ''}`}
                           >
                             <option value="">Select Livestock Type</option>
@@ -1136,8 +1141,8 @@ const TransactionForm = () => {
                               value={formData.chicken_type}
                               onChange={handleChange}
                               className={`block w-full rounded-md border ${formErrors.chicken_type
-                                  ? 'border-red-300'
-                                  : 'border-gray-300'
+                                ? 'border-red-300'
+                                : 'border-gray-300'
                                 } px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                             >
                               <option value="">Select Type</option>
@@ -1167,8 +1172,8 @@ const TransactionForm = () => {
                               value={formData.breed}
                               onChange={handleChange}
                               className={`block w-full rounded-md border ${formErrors.breed
-                                  ? 'border-red-300'
-                                  : 'border-gray-300'
+                                ? 'border-red-300'
+                                : 'border-gray-300'
                                 } px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                             >
                               <option value="">Select Breed</option>
@@ -1201,8 +1206,8 @@ const TransactionForm = () => {
                             value={formData.parent_breed}
                             onChange={handleChange}
                             className={`block w-full rounded-md border ${formErrors.parent_breed
-                                ? 'border-red-300'
-                                : 'border-gray-300'
+                              ? 'border-red-300'
+                              : 'border-gray-300'
                               } px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                           >
                             <option value="">Select Parent Breed</option>
@@ -1235,8 +1240,8 @@ const TransactionForm = () => {
                               value={formData.size}
                               onChange={handleChange}
                               className={`block w-full rounded-md border ${formErrors.size
-                                  ? 'border-red-300'
-                                  : 'border-gray-300'
+                                ? 'border-red-300'
+                                : 'border-gray-300'
                                 } px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                             >
                               <option value="">Select Size</option>
@@ -1266,8 +1271,8 @@ const TransactionForm = () => {
                               value={formData.color}
                               onChange={handleChange}
                               className={`block w-full rounded-md border ${formErrors.color
-                                  ? 'border-red-300'
-                                  : 'border-gray-300'
+                                ? 'border-red-300'
+                                : 'border-gray-300'
                                 } px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                             >
                               <option value="">Select Color</option>
@@ -1304,8 +1309,8 @@ const TransactionForm = () => {
                               value={formData.quantity}
                               onChange={handleChange}
                               className={`block w-full rounded-md border ${formErrors.quantity
-                                  ? 'border-red-300'
-                                  : 'border-gray-300'
+                                ? 'border-red-300'
+                                : 'border-gray-300'
                                 } px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                               placeholder="Enter quantity"
                             />
@@ -1380,7 +1385,7 @@ const TransactionForm = () => {
                 {/* Notes */}
                 <div className="sm:col-span-2">
                   <label
-                    htmlFor="description"
+                    htmlFor="notes"
                     className="mb-1 block text-sm font-medium text-gray-700"
                   >
                     Notes <span className="text-red-500">*</span>
@@ -1390,21 +1395,21 @@ const TransactionForm = () => {
                       <ChatText size={20} className="text-gray-500" />
                     </div>
                     <textarea
-                      id="description"
-                      name="description"
-                      value={formData.description}
+                      id="notes"
+                      name="notes"
+                      value={formData.notes}
                       onChange={handleChange}
                       rows="3"
-                      className={`block w-full rounded-md border ${formErrors.description
-                          ? 'border-red-300'
-                          : 'border-gray-300'
+                      className={`block w-full rounded-md border ${formErrors.notes
+                        ? 'border-red-300'
+                        : 'border-gray-300'
                         } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                       placeholder="Add notes about the transaction..."
                     ></textarea>
                   </div>
-                  {formErrors.description && (
+                  {formErrors.notes && (
                     <p className="mt-1 text-sm text-red-600">
-                      {formErrors.description}
+                      {formErrors.notes}
                     </p>
                   )}
                 </div>
@@ -1577,15 +1582,15 @@ const TransactionForm = () => {
 
       {/* Buyer or Seller Modals */}
       {showNewBuyerForm && (
-        <ContactModal 
+        <ContactModal
           type="buyer"
           onClose={() => setShowNewBuyerForm(false)}
           onSave={handleAddNewBuyer}
         />
       )}
-      
+
       {showNewSellerForm && (
-        <ContactModal 
+        <ContactModal
           type="seller"
           onClose={() => setShowNewSellerForm(false)}
           onSave={handleAddNewSeller}

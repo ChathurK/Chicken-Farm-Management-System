@@ -102,7 +102,7 @@ const SellerTransactionHistory = ({ sellerId }) => {
               <th scope="col" className="px-4 py-3">Category</th>
               <th scope="col" className="px-4 py-3">Item</th>
               <th scope="col" className="px-4 py-3">Amount</th>
-              <th scope="col" className="px-4 py-3">Description</th>
+              <th scope="col" className="px-4 py-3">Notes</th>
             </tr>
           </thead>
           <tbody>
@@ -131,7 +131,7 @@ const SellerTransactionHistory = ({ sellerId }) => {
                 <td className="p-4 font-medium">
                   {formatCurrency(transaction.amount)}
                 </td>
-                <td className="p-4">{transaction.description || '-'}</td>
+                <td className="p-4">{transaction.notes || '-'}</td>
               </tr>
             ))}
           </tbody>
