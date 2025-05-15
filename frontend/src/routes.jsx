@@ -20,7 +20,7 @@ import {
   TransactionForm,
   TransactionDetails,
   FinancialReports,
-} from './components/admin/finance';
+} from './components/admin/finance/index';
 // Other admin components
 import Buyers from './components/admin/buyers/Buyers';
 import BuyerForm from './components/admin/buyers/BuyerForm';
@@ -46,30 +46,32 @@ const routes = [
     children: [
       { path: '/admin/dashboard', element: <AdminDashboard /> },
       { path: '/admin/calendar', element: <Calendar /> },
+      // Orders routes
       { path: '/admin/orders', element: <Orders /> },
       { path: '/admin/orders/new', element: <OrderForm /> },
       { path: '/admin/orders/edit/:id', element: <OrderForm /> },
       { path: '/admin/orders/:id', element: <OrderDetails /> },
       { path: '/admin/orders/:id/add-item', element: <OrderItemForm /> },
-      {
-        path: '/admin/orders/:id/edit-item/:itemId',
-        element: <OrderItemForm />,
-      },
+      { path: '/admin/orders/:id/edit-item/:itemId', element: <OrderItemForm /> },
       // Finance routes
       { path: '/admin/finance/transactions', element: <TransactionList /> },
       { path: '/admin/finance/transactions/add', element: <TransactionForm /> },
       { path: '/admin/finance/transactions/edit/:id', element: <TransactionForm /> },
       { path: '/admin/finance/transactions/:id', element: <TransactionDetails /> },
       { path: '/admin/finance/reports', element: <FinancialReports /> },
+      // Buyers routes
       { path: '/admin/buyers', element: <Buyers /> },
       { path: '/admin/buyers/add', element: <BuyerForm /> },
       { path: '/admin/buyers/edit/:id', element: <BuyerForm /> },
       { path: '/admin/buyers/:id', element: <BuyerDetails /> },
+      // Sellers routes
       { path: '/admin/sellers', element: <Sellers /> },
       { path: '/admin/sellers/add', element: <SellerForm /> },
       { path: '/admin/sellers/edit/:id', element: <SellerForm /> },
       { path: '/admin/sellers/:id', element: <SellerDetails /> },
+      // Employees routes
       { path: '/admin/employees', element: <Employees /> },
+
       { path: '/admin/livestock/eggs', element: <Livestock /> },
       { path: '/admin/livestock/chicks', element: <Livestock /> },
       { path: '/admin/livestock/chickens', element: <Livestock /> },
