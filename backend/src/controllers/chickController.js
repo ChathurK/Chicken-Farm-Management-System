@@ -7,6 +7,16 @@ const { validationResult } = require('express-validator');
 // @access  Private
 exports.getAllChicks = async (req, res) => {
   try {
+    // Check if we have parent_breed filter
+    const { parent_breed } = req.query;
+    
+    if (parent_breed) {
+      // Use the new method to filter by parent_breed
+      const chicks = await Chick.findByParentBreed(parent_breed);
+      return res.json(chicks);
+    }
+    
+    // If no filters, get all chicks
     const query = 'SELECT * FROM Chick_Records';
     const [chicks] = await db.execute(query);
     res.json(chicks);

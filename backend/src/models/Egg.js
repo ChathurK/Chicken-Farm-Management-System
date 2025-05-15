@@ -13,6 +13,24 @@ class Egg {
         return rows[0];
     }
 
+    static async findBySizeAndColor(size, color) {
+        let query = `SELECT * FROM Egg_Records WHERE 1=1`;
+        const params = [];
+        
+        if (size) {
+            query += ` AND size = ?`;
+            params.push(size);
+        }
+        
+        if (color) {
+            query += ` AND color = ?`;
+            params.push(color);
+        }
+        
+        const [rows] = await db.execute(query, params);
+        return rows;
+    }
+
     static async update(id, { laid_date, expiration_date, quantity, size, color, notes }) {
         const query = `UPDATE Egg_Records SET laid_date = ?, expiration_date = ?, quantity = ?, size = ?, color = ?, notes = ? WHERE egg_record_id = ?`;
         await db.execute(query, [laid_date, expiration_date, quantity, size, color, notes, id]);

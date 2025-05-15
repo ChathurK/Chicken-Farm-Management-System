@@ -13,6 +13,19 @@ class Chick {
         return rows[0];
     }
 
+    static async findByParentBreed(parent_breed) {
+        let query = `SELECT * FROM Chick_Records WHERE 1=1`;
+        const params = [];
+        
+        if (parent_breed) {
+            query += ` AND parent_breed = ?`;
+            params.push(parent_breed);
+        }
+        
+        const [rows] = await db.execute(query, params);
+        return rows;
+    }
+
     static async update(id, { parent_breed, hatched_date, quantity, notes }) {
         const query = `UPDATE Chick_Records SET parent_breed = ?, hatched_date = ?, quantity = ?, notes = ? WHERE chick_record_id = ?`;
         await db.execute(query, [parent_breed, hatched_date, quantity, notes, id]);

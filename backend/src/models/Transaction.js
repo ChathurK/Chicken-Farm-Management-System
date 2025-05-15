@@ -13,14 +13,15 @@ class Transaction {
             notes,
             chicken_record_id,
             chick_record_id,
-            egg_record_id
+            egg_record_id,
+            transaction_date
         } = transactionData;
 
         const query = `
             INSERT INTO Transactions (
                 transaction_type, category, inventory_id, buyer_id, seller_id, amount, notes,
-                chicken_record_id, chick_record_id, egg_record_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                chicken_record_id, chick_record_id, egg_record_id, transaction_date
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         const [result] = await db.execute(query, [
@@ -33,7 +34,8 @@ class Transaction {
             notes || null,
             chicken_record_id || null,
             chick_record_id || null,
-            egg_record_id || null
+            egg_record_id || null,
+            transaction_date || new Date().toISOString().split('T')[0]
         ]);
 
         return { transaction_id: result.insertId, ...transactionData };
@@ -184,7 +186,7 @@ class Transaction {
         const [rows] = await db.execute(query, params);
         return rows;
     }
-
+    
     // Update transaction
     static async update(id, transactionData) {
         const {
@@ -197,7 +199,8 @@ class Transaction {
             notes,
             chicken_record_id,
             chick_record_id,
-            egg_record_id
+            egg_record_id,
+            transaction_date
         } = transactionData;
 
         const query = `
@@ -211,7 +214,8 @@ class Transaction {
                 notes = ?,
                 chicken_record_id = ?,
                 chick_record_id = ?,
-                egg_record_id = ?
+                egg_record_id = ?,
+                transaction_date = ?
             WHERE transaction_id = ?
         `;
 
@@ -226,6 +230,7 @@ class Transaction {
             chicken_record_id || null,
             chick_record_id || null,
             egg_record_id || null,
+            transaction_date || new Date().toISOString().split('T')[0],
             id
         ]);
 

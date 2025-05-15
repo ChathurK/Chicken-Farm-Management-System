@@ -98,31 +98,33 @@ exports.createTransaction = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { 
-      transaction_type, 
+    const {
+      transaction_type,
       category,
-      inventory_id, 
-      buyer_id, 
-      seller_id, 
-      amount, 
+      inventory_id,
+      buyer_id,
+      seller_id,
+      amount,
       notes,
       chicken_record_id,
       chick_record_id,
-      egg_record_id
+      egg_record_id,
+      transaction_date
     } = req.body;
 
     // Create transaction
     const transaction = await Transaction.create({
-      transaction_type, 
+      transaction_type,
       category,
-      inventory_id, 
-      buyer_id, 
-      seller_id, 
-      amount, 
+      inventory_id,
+      buyer_id,
+      seller_id,
+      amount,
       notes,
       chicken_record_id,
       chick_record_id,
-      egg_record_id
+      egg_record_id,
+      transaction_date: transaction_date || new Date().toISOString().split('T')[0]
     });
 
     res.status(201).json(transaction);
@@ -159,7 +161,8 @@ exports.updateTransaction = async (req, res) => {
       notes,
       chicken_record_id,
       chick_record_id,
-      egg_record_id
+      egg_record_id,
+      transaction_date
     } = req.body;
 
     // Update transaction
@@ -173,7 +176,8 @@ exports.updateTransaction = async (req, res) => {
       notes,
       chicken_record_id,
       chick_record_id,
-      egg_record_id
+      egg_record_id,
+      transaction_date
     });
 
     res.json(transaction);

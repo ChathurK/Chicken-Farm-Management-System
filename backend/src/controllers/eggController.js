@@ -7,6 +7,16 @@ const { validationResult } = require('express-validator');
 // @access  Private
 exports.getAllEggs = async (req, res) => {
   try {
+    // Check if we have size and color filters
+    const { size, color } = req.query;
+    
+    if (size || color) {
+      // Use the new method to filter by size and color
+      const eggs = await Egg.findBySizeAndColor(size, color);
+      return res.json(eggs);
+    }
+    
+    // If no filters, get all eggs
     const query = 'SELECT * FROM Egg_Records';
     const [eggs] = await db.execute(query);
     res.json(eggs);
