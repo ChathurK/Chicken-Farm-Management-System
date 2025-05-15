@@ -4,140 +4,7 @@ import { ArrowLeft, FloppyDisk, CurrencyDollar, CalendarDots, ChatText, UserCirc
 import DashboardLayout from '../DashboardLayout';
 import api from '../../../utils/api';
 
-// New Buyer Modal Component
-const NewBuyerModal = ({ onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    contact_number: '',
-    email: '',
-    address: '',
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('This is a sample error message');
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      const response = await api.post('/api/buyers', formData);
-      onSave(response.data);
-      setLoading(false);
-    } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to create buyer');
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
-        <h3 className="mb-4 text-lg font-medium text-gray-900">Add New Buyer</h3>
-
-        {error && (
-          <div className="mb-4 rounded-lg bg-red-100 px-4 py-3 text-red-700">
-            <p>{error}</p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="mb-1 block text-sm font-medium text-gray-700">First Name <span className="text-red-500">*</span></label>
-            <input
-              type="text"
-              name="first_name"
-              value={formData.first_name}
-              onChange={handleChange}
-              required
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="mb-1 block text-sm font-medium text-gray-700">Last Name <span className="text-red-500">*</span></label>
-            <input
-              type="text"
-              name="last_name"
-              value={formData.last_name}
-              onChange={handleChange}
-              required
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="mb-1 block text-sm font-medium text-gray-700">Contact Number <span className="text-red-500">*</span></label>
-            <input
-              type="text"
-              name="contact_number"
-              value={formData.contact_number}
-              onChange={handleChange}
-              required
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="mb-1 block text-sm font-medium text-gray-700">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="mb-1 block text-sm font-medium text-gray-700">Address</label>
-            <textarea
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              rows="2"
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
-            ></textarea>
-          </div>
-
-          <div className="mt-6 flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex items-center gap-2 rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 disabled:opacity-70"
-            >
-              {loading ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Plus size={18} weight='bold' />
-                  Add Buyer
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
+import ContactModal from '../../shared/ContactModal';
 
 const TransactionForm = () => {
   const navigate = useNavigate();
@@ -166,7 +33,6 @@ const TransactionForm = () => {
     egg_record_id: '',
     quantity: '',
   });
-
   // Status states
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -180,6 +46,7 @@ const TransactionForm = () => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [showNewBuyerForm, setShowNewBuyerForm] = useState(false);
+  const [showNewSellerForm, setShowNewSellerForm] = useState(false);
   const [availableQuantity, setAvailableQuantity] = useState(0);
   // Options for dropdowns
   const [buyers, setBuyers] = useState([]);
@@ -470,6 +337,13 @@ const TransactionForm = () => {
         ...prev,
         [name]: value
       }));
+    } else if (name === 'seller_id' && value === 'new') {
+      // Set flag to show new seller form
+      setShowNewSellerForm(true);
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
     } else {
       setFormData(prev => ({
         ...prev,
@@ -488,6 +362,13 @@ const TransactionForm = () => {
     setBuyers(prev => [...prev, newBuyer]);
     setFormData(prev => ({ ...prev, buyer_id: newBuyer.buyer_id }));
     setShowNewBuyerForm(false);
+  };
+
+  // Add new seller handler
+  const handleAddNewSeller = (newSeller) => {
+    setSellers(prev => [...prev, newSeller]);
+    setFormData(prev => ({ ...prev, seller_id: newSeller.seller_id }));
+    setShowNewSellerForm(false);
   };
 
   // Form validation
@@ -1057,13 +938,8 @@ const TransactionForm = () => {
                         ))}
                         <option value="new">+ Add New Buyer</option>
                       </select>
-                    </div>
-                    {formData.buyer_id === 'new' && (
-                      <button
-                        type="button"
-                        onClick={() => setShowNewBuyerForm(true)}
-                      ></button>
-                    )}
+                      </div>
+                      {/* If buyer_id is 'new', the handleChange function already sets showNewBuyerForm to true */}
                     {formErrors.buyer_id && (
                       <p className="mt-1 text-sm text-red-600">
                         {formErrors.buyer_id}
@@ -1102,14 +978,8 @@ const TransactionForm = () => {
                         ))}
                         <option value="new">+ Add New Seller</option>
                       </select>
-                    </div>
-                    {formData.seller_id === 'new' && (
-                      <button
-                        type="button"
-                        onClick={() => setShowNewSellerForm(true)}
-                      >
-                      </button>
-                    )}
+                      </div>
+                      {/* If seller_id is 'new', the handleChange function already sets showNewSellerForm to true */}
                     {formErrors.seller_id && (
                       <p className="mt-1 text-sm text-red-600">
                         {formErrors.seller_id}
@@ -1705,14 +1575,20 @@ const TransactionForm = () => {
         )}
       </div>
 
-      {/* New Buyer Modal */}
+      {/* Buyer or Seller Modals */}
       {showNewBuyerForm && (
-        <NewBuyerModal
-          onClose={() => {
-            setShowNewBuyerForm(false);
-            setFormData((prev) => ({ ...prev, buyer_id: '' }));
-          }}
+        <ContactModal 
+          type="buyer"
+          onClose={() => setShowNewBuyerForm(false)}
           onSave={handleAddNewBuyer}
+        />
+      )}
+      
+      {showNewSellerForm && (
+        <ContactModal 
+          type="seller"
+          onClose={() => setShowNewSellerForm(false)}
+          onSave={handleAddNewSeller}
         />
       )}
     </DashboardLayout>
