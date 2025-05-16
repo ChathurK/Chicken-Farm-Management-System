@@ -91,16 +91,30 @@ exports.updateChicken = async (req, res) => {
       return res.status(404).json({ msg: 'Chicken record not found' });
     }
     
-    // Update the chicken record
-    await Chicken.update(req.params.id, {
-      type,
-      breed,
-      quantity,
-      age_weeks,
-      acquisition_date,
-      notes
-    });
+    // Create update object with proper date handling
+    const updateData = {};
+    if (type) updateData.type = type;
+    if (breed) updateData.breed = breed;
+    if (quantity !== undefined) updateData.quantity = quantity;
+    if (age_weeks !== undefined) updateData.age_weeks = age_weeks;
+    if (notes) updateData.notes = notes;
     
+    // Handle acquisition_date specifically
+    if (acquisition_date !== undefined) {
+      // If it's a valid date string, use it
+      const date = new Date(acquisition_date);
+      if (!isNaN(date.getTime())) {
+        // Format as YYYY-MM-DD for MySQL
+        updateData.acquisition_date = date.toISOString().split("T")[0];
+      } else if (acquisition_date === null) {
+        // If explicitly null, use null
+        updateData.acquisition_date = null;
+      }
+      // Otherwise, don't include it (keep existing value)
+    }
+    // Update the chicken record in the database
+    await Chicken.update(req.params.id, updateData);
+
     res.json({ msg: 'Chicken record updated' });
   } catch (err) {
     console.error(err.message);

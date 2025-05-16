@@ -41,7 +41,7 @@ router.put(
   [
     check('laid_date', 'Valid laid date is required').optional().isDate(),
     check('expiration_date', 'Valid expiration date is required').optional().isDate(),
-    check('quantity', 'Quantity must be a positive number').optional().isInt({ min: 1 }),
+    check('quantity', 'Quantity must be a positive number').optional().isInt({ min: 0 }),
     check('size', 'Invalid size').optional().isIn(['Small', 'Medium', 'Large', 'Extra Large']),
     check('color', 'Invalid color').optional().isIn(['White', 'Brown', 'Other'])
   ],

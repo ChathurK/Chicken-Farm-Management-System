@@ -36,12 +36,21 @@ router.post(
 // @desc    Update chicken record
 // @access  Private
 router.put(
-  '/:id',
+  "/:id",
   [
-    check('type', 'Type is required').optional(),
-    check('breed', 'Breed is required').optional(),
-    check('quantity', 'Quantity must be a positive number').optional().isInt({ min: 1 }),
-    check('acquisition_date', 'Valid acquisition date is required').optional().isDate()
+    check("type", "Type is required").optional(),
+    check("breed", "Breed is required").optional(),
+    check("quantity", "Quantity must be a positive number")
+      .optional()
+      .isInt({ min: 1 }),
+    // Use custom validation for the date
+    check("acquisition_date", "Valid acquisition date is required")
+      .optional()
+      .custom((value) => {
+        // Accept ISO date strings and convert them
+        const date = new Date(value);
+        return !isNaN(date.getTime()); // Return true if it's a valid date
+      }),
   ],
   chickenController.updateChicken
 );

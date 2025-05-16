@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Pencil, Trash, Calendar, CurrencyDollar, ChatText, UserCircle, ShoppingBag, Bird, Egg, Tag, Receipt, ClockClockwise, CircleWavyCheck } from '@phosphor-icons/react';
+import { ArrowLeft, Pencil, Trash, CalendarDots, ArrowsDownUp, ChatText, UserCircle, ShoppingBag, Bird, Egg, Tag, Receipt, ClockClockwise, CircleWavyCheck } from '@phosphor-icons/react';
 import DashboardLayout from '../DashboardLayout';
 import api from '../../../utils/api';
 
@@ -47,9 +47,9 @@ const TransactionDetails = () => {
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'INR',
+      currency: 'LKR',
       minimumFractionDigits: 2
     }).format(amount);
   };
@@ -102,14 +102,14 @@ const TransactionDetails = () => {
         <div className="flex space-x-3">
           <button
             onClick={() => navigate(`/admin/finance/transactions/edit/${id}`)}
-            className="inline-flex items-center rounded-md border border-transparent bg-amber-100 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+            className="inline-flex items-center rounded-md border border-transparent bg-amber-100 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-200 focus:outline-none focus:ring-1 focus:ring-amber-500"
           >
             <Pencil size={18} className="mr-2" />
             Edit
           </button>
           <button
             onClick={handleDelete}
-            className="inline-flex items-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            className="inline-flex items-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-1 focus:ring-red-500"
           >
             <Trash size={18} className="mr-2" />
             Delete
@@ -135,7 +135,7 @@ const TransactionDetails = () => {
                   <div className={`mr-3 rounded-full p-2 ${
                     transaction.transaction_type === 'Income' ? 'bg-green-100' : 'bg-red-100'
                   }`}>
-                    <CurrencyDollar size={24} weight="duotone" className={getTransactionTypeColor(transaction.transaction_type)} />
+                    <ArrowsDownUp size={24} weight="bold" className={getTransactionTypeColor(transaction.transaction_type)} />
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold">
@@ -156,7 +156,7 @@ const TransactionDetails = () => {
 
               <div className="space-y-4">
                 <div className="flex items-start">
-                  <Calendar size={20} className="mr-2 mt-1 text-gray-500" />
+                  <CalendarDots size={20} className="mr-2 mt-1 text-gray-500" />
                   <div>
                     <p className="font-medium text-gray-700">Transaction Date</p>
                     <p>{formatDate(transaction.transaction_date)}</p>
@@ -273,7 +273,7 @@ const TransactionDetails = () => {
                         </div>
                       </div>
                       <div className="flex items-start">
-                        <Calendar size={20} className="mr-2 mt-1 text-gray-500" />
+                        <CalendarDots size={20} className="mr-2 mt-1 text-gray-500" />
                         <div>
                           <p className="font-medium text-gray-700">Hatched Date</p>
                           <p>{transaction.hatched_date ? formatDate(transaction.hatched_date) : 'Not specified'}</p>

@@ -9,8 +9,11 @@ import ContactModal from '../../shared/ContactModal';
 const TransactionForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const isEditMode = !!id;  // Form state
+  const isEditMode = !!id;
+
+  // Form state
   const [formData, setFormData] = useState({
+    // Common transaction fields
     transaction_type: '',
     category: '',
     amount: '',
@@ -19,20 +22,32 @@ const TransactionForm = () => {
     seller_id: '',
     inventory_id: '',
     transaction_date: new Date().toISOString().split('T')[0],
-    livestock_type: '',
+
+    // Record identifiers
+    chicken_record_id: null,
+    chick_record_id: null,
+    egg_record_id: null,
+
+    // Sale quantities
+    chicken_quantity: '',
+    chick_quantity: '',
+    egg_quantity: '',
+
     // Chicken specific fields
     chicken_type: '',
-    breed: '',
-    chicken_record_id: '',
+    chicken_breed: '',
+
     // Chick specific fields
-    parent_breed: '',
-    chick_record_id: '',
+    chick_parent_breed: '',
+
     // Egg specific fields
-    size: '',
-    color: '',
-    egg_record_id: '',
-    quantity: '',
+    egg_size: '',
+    egg_color: '',
+
+    // Inventory specific fields
+    inventory_quantity: '',
   });
+
   // Status states
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -42,12 +57,17 @@ const TransactionForm = () => {
     title: '',
     details: '',
     category: '',
-    id: null
+    id: null,
   });
   const [formErrors, setFormErrors] = useState({});
   const [showNewBuyerForm, setShowNewBuyerForm] = useState(false);
   const [showNewSellerForm, setShowNewSellerForm] = useState(false);
-  const [availableQuantity, setAvailableQuantity] = useState(0);
+
+  // State for available quantities
+  const [availableChickenQuantity, setAvailableChickenQuantity] = useState(0);
+  const [availableChickQuantity, setAvailableChickQuantity] = useState(0);
+  const [availableEggQuantity, setAvailableEggQuantity] = useState(0);
+
   // Options for dropdowns
   const [buyers, setBuyers] = useState([]);
   const [sellers, setSellers] = useState([]);
@@ -64,7 +84,7 @@ const TransactionForm = () => {
     'Egg Sale',
     'Egg Purchase',
     'Inventory Purchase',
-    'Other'
+    'Other',
   ]);
 
   // Load transaction data if in edit mode
@@ -93,7 +113,12 @@ const TransactionForm = () => {
 
         // Log transaction data fetch if applicable
         if (isEditMode) {
-          console.log('Fetching transaction data for edit mode with ID:', id, 'is success:', responses);
+          console.log(
+            'Fetching transaction data for edit mode with ID:',
+            id,
+            'is success:',
+            responses
+          );
         }
 
         // Extract response data
@@ -110,16 +135,77 @@ const TransactionForm = () => {
         setInventoryItems(inventoryRes.data);
 
         // Extract unique breeds for the chicken breed dropdown
-        const uniqueBreeds = [...new Set(chickenRes.data.map(chicken => chicken.breed))];
+        const uniqueBreeds = [
+          ...new Set(chickenRes.data.map((chicken) => chicken.breed)),
+        ];
         setChickenBreeds(uniqueBreeds);
 
         // Handle transaction data in edit mode
         if (isEditMode && responses.length > 6) {
           const transactionData = responses[6].data;
-          // Set form data with the transaction data
-          setFormData({
-            ...transactionData,
-          });
+
+          // Initial transaction data
+          const initialData = {
+            transaction_type: transactionData.transaction_type || '',
+            category: transactionData.category || '',
+            amount: transactionData.amount || '',
+            notes: transactionData.notes || '',
+            buyer_id: transactionData.buyer_id || '',
+            seller_id: transactionData.seller_id || '',
+            inventory_id: transactionData.inventory_id || '',
+            transaction_date:
+              transactionData.transaction_date ||
+              new Date().toISOString().split('T')[0],
+            chicken_record_id: transactionData.chicken_record_id || null,
+            chick_record_id: transactionData.chick_record_id || null,
+            egg_record_id: transactionData.egg_record_id || null,
+            chicken_quantity: '',
+            chick_quantity: '',
+            egg_quantity: '',
+            inventory_quantity: '',
+          };
+
+          // Fetch related data based on record IDs
+          if (transactionData.chicken_record_id) {
+            try {
+              const chickenRecordRes = await api.get(
+                `/api/chickens/${transactionData.chicken_record_id}`
+              );
+              const chickenRecord = chickenRecordRes.data;
+              initialData.chicken_type = chickenRecord.type || '';
+              initialData.chicken_breed = chickenRecord.breed || '';
+            } catch (err) {
+              console.error('Error fetching chicken record:', err);
+            }
+          }
+
+          if (transactionData.chick_record_id) {
+            try {
+              const chickRecordRes = await api.get(
+                `/api/chicks/${transactionData.chick_record_id}`
+              );
+              const chickRecord = chickRecordRes.data;
+              initialData.chick_parent_breed = chickRecord.parent_breed || '';
+            } catch (err) {
+              console.error('Error fetching chick record:', err);
+            }
+          }
+
+          if (transactionData.egg_record_id) {
+            try {
+              const eggRecordRes = await api.get(
+                `/api/eggs/${transactionData.egg_record_id}`
+              );
+              const eggRecord = eggRecordRes.data;
+              initialData.egg_size = eggRecord.size || '';
+              initialData.egg_color = eggRecord.color || '';
+            } catch (err) {
+              console.error('Error fetching egg record:', err);
+            }
+          }
+
+          // Set form data with all collected information
+          setFormData(initialData);
         }
 
         setLoading(false);
@@ -133,224 +219,186 @@ const TransactionForm = () => {
     fetchData();
   }, [id, isEditMode]);
 
-  // Fetch available quantity when livestock type changes
+  // Fetch available chicken quantity when chicken attributes change
   useEffect(() => {
-    fetchAvailableQuantity(formData);
-  }, [
-    formData.livestock_type,
-    formData.chicken_type,
-    formData.breed,
-    formData.parent_breed,
-    formData.size,
-    formData.color
-  ]);
+    if (formData.category === 'Chicken Sale') {
+      fetchAvailableChickenQuantity();
+    }
+  }, [formData.chicken_type, formData.chicken_breed]);
 
-  // Helper function to fetch available quantity
-  const fetchAvailableQuantity = async (data) => {
+  // Fetch available chick quantity when chick attributes change
+  useEffect(() => {
+    if (formData.category === 'Chick Sale') {
+      fetchAvailableChickQuantity();
+    }
+  }, [formData.chick_parent_breed]);
+
+  // Fetch available egg quantity when egg attributes change
+  useEffect(() => {
+    if (formData.category === 'Egg Sale') {
+      fetchAvailableEggQuantity();
+    }
+  }, [formData.egg_size, formData.egg_color]);
+
+  // Fetch available chicken quantity when chicken attributes change
+  const fetchAvailableChickenQuantity = async () => {
+    if (!formData.chicken_type || !formData.chicken_breed) return;
+
     try {
-      if (!data.livestock_type) return;
+      const res = await api.get('/api/chickens', {
+        params: {
+          type: formData.chicken_type,
+          breed: formData.chicken_breed,
+        },
+      });
 
-      if (data.livestock_type === 'Chicken') {
-        if (!data.chicken_type || !data.breed) return;
-
-        const res = await api.get('/api/chickens', {
-          params: {
-            type: data.chicken_type,
-            breed: data.breed
-          }
-        });
-
-        if (res.data.length > 0) {
-          const total = res.data.reduce((sum, item) => sum + item.quantity, 0);
-          setAvailableQuantity(total);
-        } else {
-          setAvailableQuantity(0);
-        }
-      } else if (data.livestock_type === 'Chick') {
-        if (!data.parent_breed) return;
-
-        const res = await api.get('/api/chicks', {
-          params: {
-            parent_breed: data.parent_breed
-          }
-        });
-
-        if (res.data.length > 0) {
-          const total = res.data.reduce((sum, item) => sum + item.quantity, 0);
-          setAvailableQuantity(total);
-        } else {
-          setAvailableQuantity(0);
-        }
-      } else if (data.livestock_type === 'Egg') {
-        if (!data.size || !data.color) return;
-
-        const res = await api.get('/api/eggs', {
-          params: {
-            size: data.size,
-            color: data.color
-          }
-        });
-
-        if (res.data.length > 0) {
-          const total = res.data.reduce((sum, item) => sum + item.quantity, 0);
-          setAvailableQuantity(total);
-        } else {
-          setAvailableQuantity(0);
-        }
+      if (res.data.length > 0) {
+        const total = res.data.reduce((sum, item) => sum + item.quantity, 0);
+        setAvailableChickenQuantity(total);
+      } else {
+        setAvailableChickenQuantity(0);
       }
     } catch (err) {
-      console.error('Error fetching available quantity:', err);
+      console.error('Error fetching available chicken quantity:', err);
+      setAvailableChickenQuantity(0);
+    }
+  };
+
+  // Fetch available chick quantity
+  const fetchAvailableChickQuantity = async () => {
+    if (!formData.chick_parent_breed) return;
+
+    try {
+      const res = await api.get('/api/chicks', {
+        params: {
+          parent_breed: formData.chick_parent_breed,
+        },
+      });
+
+      if (res.data.length > 0) {
+        const total = res.data.reduce((sum, item) => sum + item.quantity, 0);
+        setAvailableChickQuantity(total);
+      } else {
+        setAvailableChickQuantity(0);
+      }
+    } catch (err) {
+      console.error('Error fetching available chick quantity:', err);
+      setAvailableChickQuantity(0);
+    }
+  };
+
+  // Fetch available egg quantity
+  const fetchAvailableEggQuantity = async () => {
+    if (!formData.egg_size || !formData.egg_color) return;
+
+    try {
+      const res = await api.get('/api/eggs', {
+        params: {
+          size: formData.egg_size,
+          color: formData.egg_color,
+        },
+      });
+
+      if (res.data.length > 0) {
+        const total = res.data.reduce((sum, item) => sum + item.quantity, 0);
+        setAvailableEggQuantity(total);
+      } else {
+        setAvailableEggQuantity(0);
+      }
+    } catch (err) {
+      console.error('Error fetching available egg quantity:', err);
+      setAvailableEggQuantity(0);
     }
   };
 
   // Handle input changes
   const handleChange = (e) => {
     setError(null); // Clear error when user types
-    const { name, value } = e.target;    // Special handling for different form fields
+    const { name, value } = e.target;
+
+    // Special handling for transaction type
     if (name === 'transaction_type') {
-      // Set appropriate default category based on transaction type
-      let defaultCategory = '';
-      let livestockType = '';
-
-      if (value === 'Income') {
-        defaultCategory = ''; // Default for income
-        livestockType = '';
-      } else if (value === 'Expense') {
-        defaultCategory = ''; // Default for expense
-      }
-
-      setFormData(prev => ({
-        ...prev,
-        [name]: value,
-        category: defaultCategory,
-        buyer_id: value === 'Income' ? prev.buyer_id : '',
-        seller_id: value === 'Expense' ? prev.seller_id : '',
-        // Reset livestock-related fields if transaction type changes
-        livestock_type: value === 'Income' ? livestockType : '',
+      const resetFields = {
+        category: '',
+        chicken_record_id: null,
+        chick_record_id: null,
+        egg_record_id: null,
         chicken_type: '',
-        breed: '',
-        parent_breed: '',
-        size: '',
-        color: '',
-        quantity: '',
-        chicken_record_id: '',
-        chick_record_id: '',
-        egg_record_id: '',
-      }));
+        chicken_breed: '',
+        chicken_quantity: '',
+        chick_parent_breed: '',
+        chick_quantity: '',
+        egg_size: '',
+        egg_color: '',
+        egg_quantity: '',
+        inventory_id: '',
+        inventory_quantity: '',
+      };
 
-      // Trigger a check for available quantity if appropriate
-      if (value === 'Income' && livestockType) {
-        setTimeout(() => {
-          fetchAvailableQuantity({
-            ...formData,
-            transaction_type: value,
-            category: defaultCategory,
-            livestock_type: livestockType
-          });
-        }, 0);
-      }
-    } else if (name === 'category') {
-      // Handle category change
-      let resetFields = {};
-      let additionalFields = {};
-
-      // Reset livestock-related fields if not a livestock sale
-      if (!['Chicken Sale', 'Chick Sale', 'Egg Sale'].includes(value)) {
-        resetFields = {
-          livestock_type: '',
-          chicken_type: '',
-          breed: '',
-          parent_breed: '',
-          size: '',
-          color: '',
-          quantity: '',
-          chicken_record_id: '',
-          chick_record_id: '',
-          egg_record_id: ''
-        };
+      // Reset appropriate fields based on transaction type
+      if (value === 'Income') {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: value,
+          ...resetFields,
+          seller_id: '',
+        }));
+      } else if (value === 'Expense') {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: value,
+          ...resetFields,
+          buyer_id: '',
+        }));
       } else {
-        // Set appropriate livestock type based on category
-        let livestockType = '';
-        if (value === 'Chicken Sale') {
-          livestockType = 'Chicken';
-        } else if (value === 'Chick Sale') {
-          livestockType = 'Chick';
-        } else if (value === 'Egg Sale') {
-          livestockType = 'Egg';
-        }
-
-        // if (livestockType) {
-        //   additionalFields = { 
-        //     livestock_type: livestockType,
-        //     batch_number: generateBatchNumber(livestockType)
-        //   };
-        // }
+        setFormData((prev) => ({
+          ...prev,
+          [name]: value,
+          ...resetFields,
+        }));
       }
+    }
+    // Special handling for category
+    else if (name === 'category') {
+      // Reset all product-specific fields
+      const resetFields = {
+        chicken_record_id: null,
+        chick_record_id: null,
+        egg_record_id: null,
+        chicken_type: '',
+        chicken_breed: '',
+        chicken_quantity: '',
+        chick_parent_breed: '',
+        chick_quantity: '',
+        egg_size: '',
+        egg_color: '',
+        egg_quantity: '',
+        inventory_quantity: '',
+      };
 
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [name]: value,
         ...resetFields,
-        ...additionalFields
       }));
-    } else if (name === 'livestock_type') {
-      // Reset type-specific fields when livestock type changes
-      setFormData(prev => ({
-        ...prev,
-        [name]: value,
-        chicken_type: '',
-        breed: '',
-        parent_breed: '',
-        size: '',
-        color: '',
-        quantity: '',
-        chicken_record_id: '',
-        chick_record_id: '',
-        egg_record_id: ''
-      }));
-
-      setAvailableQuantity(0);
-    } else if (
-      name === 'chicken_type' ||
-      name === 'breed' ||
-      name === 'parent_breed' ||
-      name === 'size' ||
-      name === 'color'
-    ) {
-      // Reset quantity when attributes change
-      setFormData(prev => ({
-        ...prev,
-        [name]: value,
-        quantity: ''
-      }));
-
-      // If we have all required fields for available quantity check, trigger it immediately
-      setTimeout(() => {
-        const updatedFormData = { ...formData, [name]: value };
-        if (
-          (updatedFormData.livestock_type === 'Chicken' && updatedFormData.chicken_type && updatedFormData.breed) ||
-          (updatedFormData.livestock_type === 'Chick' && updatedFormData.parent_breed) ||
-          (updatedFormData.livestock_type === 'Egg' && updatedFormData.size && updatedFormData.color)
-        ) {
-          fetchAvailableQuantity(updatedFormData);
-        }
-      }, 0);
-    } else if (name === 'buyer_id' && value === 'new') {
-      // Set flag to show new buyer form
+    }
+    // Special handling for buyer_id and seller_id
+    else if (name === 'buyer_id' && value === 'new') {
       setShowNewBuyerForm(true);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     } else if (name === 'seller_id' && value === 'new') {
-      // Set flag to show new seller form
       setShowNewSellerForm(true);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
-    } else {
-      setFormData(prev => ({
+    }
+    // Default handling for other fields
+    else {
+      setFormData((prev) => ({
         ...prev,
         [name]: value,
       }));
@@ -358,21 +406,21 @@ const TransactionForm = () => {
 
     // Clear field-specific error when user types in that field
     if (formErrors[name]) {
-      setFormErrors(prev => ({ ...prev, [name]: '' }));
+      setFormErrors((prev) => ({ ...prev, [name]: '' }));
     }
   };
 
   // Add new buyer handler
   const handleAddNewBuyer = (newBuyer) => {
-    setBuyers(prev => [...prev, newBuyer]);
-    setFormData(prev => ({ ...prev, buyer_id: newBuyer.buyer_id }));
+    setBuyers((prev) => [...prev, newBuyer]);
+    setFormData((prev) => ({ ...prev, buyer_id: newBuyer.buyer_id }));
     setShowNewBuyerForm(false);
   };
 
   // Add new seller handler
   const handleAddNewSeller = (newSeller) => {
-    setSellers(prev => [...prev, newSeller]);
-    setFormData(prev => ({ ...prev, seller_id: newSeller.seller_id }));
+    setSellers((prev) => [...prev, newSeller]);
+    setFormData((prev) => ({ ...prev, seller_id: newSeller.seller_id }));
     setShowNewSellerForm(false);
   };
 
@@ -380,6 +428,7 @@ const TransactionForm = () => {
   const validateForm = () => {
     const errors = {};
 
+    // Common validations
     if (!formData.transaction_type) {
       errors.transaction_type = 'Transaction type is required';
     }
@@ -392,10 +441,6 @@ const TransactionForm = () => {
       errors.amount = 'Amount must be greater than zero';
     }
 
-    // if (!formData.notes) {
-    //   errors.notes = 'notes is required';
-    // }
-
     // For income transactions, require buyer_id
     if (formData.transaction_type === 'Income' && !formData.buyer_id) {
       errors.buyer_id = 'Buyer is required for income transactions';
@@ -406,49 +451,54 @@ const TransactionForm = () => {
       errors.seller_id = 'Seller is required for expense transactions';
     }
 
-    // For Livestock Sale transactions, validate livestock fields
-    if (formData.category === 'Chicken Sale' ||
-      formData.category === 'Chick Sale' ||
-      formData.category === 'Egg Sale') {
-      if (!formData.livestock_type) {
-        errors.livestock_type = 'Livestock type is required';
-      } else {
-        if (formData.livestock_type === 'Chicken') {
-          if (!formData.chicken_type) {
-            errors.chicken_type = 'Chicken type is required';
-          }
-          if (!formData.breed) {
-            errors.breed = 'Breed is required';
-          }
-        } else if (formData.livestock_type === 'Chick') {
-          if (!formData.parent_breed) {
-            errors.parent_breed = 'Parent breed is required';
-          }
-        } else if (formData.livestock_type === 'Egg') {
-          if (!formData.size) {
-            errors.size = 'Egg size is required';
-          }
-          if (!formData.color) {
-            errors.color = 'Egg color is required';
-          }
-        }
-
-        if (!formData.quantity || parseInt(formData.quantity) <= 0) {
-          errors.quantity = 'Quantity must be greater than zero';
-        } else if (parseInt(formData.quantity) > availableQuantity) {
-          errors.quantity = `Quantity cannot exceed available quantity (${availableQuantity})`;
-        }
+    // Category-specific validations
+    if (formData.category === 'Chicken Sale') {
+      if (!formData.chicken_type) {
+        errors.chicken_type = 'Chicken type is required';
       }
-    }
-
-    // For Inventory Purchase transactions, validate inventory fields
-    if (formData.transaction_type === 'Expense' && formData.category === 'Inventory Purchase') {
+      if (!formData.chicken_breed) {
+        errors.chicken_breed = 'Breed is required';
+      }
+      if (
+        !formData.chicken_quantity ||
+        parseInt(formData.chicken_quantity) <= 0
+      ) {
+        errors.chicken_quantity = 'Quantity must be greater than zero';
+      } else if (
+        parseInt(formData.chicken_quantity) > availableChickenQuantity
+      ) {
+        errors.chicken_quantity = `Quantity cannot exceed available quantity (${availableChickenQuantity})`;
+      }
+    } else if (formData.category === 'Chick Sale') {
+      if (!formData.chick_parent_breed) {
+        errors.chick_parent_breed = 'Parent breed is required';
+      }
+      if (!formData.chick_quantity || parseInt(formData.chick_quantity) <= 0) {
+        errors.chick_quantity = 'Quantity must be greater than zero';
+      } else if (parseInt(formData.chick_quantity) > availableChickQuantity) {
+        errors.chick_quantity = `Quantity cannot exceed available quantity (${availableChickQuantity})`;
+      }
+    } else if (formData.category === 'Egg Sale') {
+      if (!formData.egg_size) {
+        errors.egg_size = 'Egg size is required';
+      }
+      if (!formData.egg_color) {
+        errors.egg_color = 'Egg color is required';
+      }
+      if (!formData.egg_quantity || parseInt(formData.egg_quantity) <= 0) {
+        errors.egg_quantity = 'Quantity must be greater than zero';
+      } else if (parseInt(formData.egg_quantity) > availableEggQuantity) {
+        errors.egg_quantity = `Quantity cannot exceed available quantity (${availableEggQuantity})`;
+      }
+    } else if (formData.category === 'Inventory Purchase') {
       if (!formData.inventory_id) {
         errors.inventory_id = 'Inventory item is required';
       }
-
-      if (!formData.quantity || parseInt(formData.quantity) <= 0) {
-        errors.quantity = 'Quantity must be greater than zero';
+      if (
+        !formData.inventory_quantity ||
+        parseInt(formData.inventory_quantity) <= 0
+      ) {
+        errors.inventory_quantity = 'Quantity must be greater than zero';
       }
     }
 
@@ -456,12 +506,279 @@ const TransactionForm = () => {
     return Object.keys(errors).length === 0;
   };
 
+  // Handle chicken sale transactions
+  const handleChickenSale = async () => {
+    if (parseInt(formData.chicken_quantity) > availableChickenQuantity) {
+      setError(
+        `Cannot sell more than the available quantity (${availableChickenQuantity})`
+      );
+      setSubmitting(false);
+      throw new Error('Insufficient quantity');
+    }
+
+    // Format today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
+
+    // Find existing chicken records
+    const chickenRes = await api.get('/api/chickens', {
+      params: {
+        type: formData.chicken_type,
+        breed: formData.chicken_breed,
+      },
+    });
+
+    let chickenRecordId = null;
+
+    if (chickenRes.data.length > 0) {
+      // Update existing chicken record
+      const existingChicken = chickenRes.data[0];
+      chickenRecordId = existingChicken.chicken_record_id;
+
+      const newQuantity =
+        existingChicken.quantity - parseInt(formData.chicken_quantity);
+      if (newQuantity < 0) {
+        setError(
+          `Cannot sell more than the available quantity (${existingChicken.quantity})`
+        );
+        setSubmitting(false);
+        throw new Error('Insufficient quantity');
+      }
+
+      // Format the existing acquisition_date properly if it exists
+      let formattedAcquisitionDate = today; // Default to today
+      if (existingChicken.acquisition_date) {
+        // Convert the date to YYYY-MM-DD format
+        const date = new Date(existingChicken.acquisition_date);
+        if (!isNaN(date.getTime())) {
+          // Check if date is valid
+          formattedAcquisitionDate = date.toISOString().split('T')[0];
+        }
+      }
+
+      // Create update data object
+      const updateData = {
+        type: formData.chicken_type,
+        breed: formData.chicken_breed,
+        quantity: newQuantity,
+        age_weeks: existingChicken.age_weeks || null,
+        // Keep the original acquisition_date if it exists, otherwise use today's date
+        acquisition_date:
+          existingChicken.acquisition_date || formattedAcquisitionDate,
+        notes: existingChicken.notes
+          ? `${existingChicken.notes}; Sold ${formData.chicken_quantity} on ${today}`
+          : `Sold ${formData.chicken_quantity} on ${today}`,
+      };
+
+      try {
+        console.log('Sending data to server:', updateData);
+        await api.put(
+          `/api/chickens/${existingChicken.chicken_record_id}`,
+          updateData
+        );
+      } catch (err) {
+        console.error('Error details', err.response?.data);
+        throw err;
+      }
+    } else {
+      // Create new chicken record with all required fields
+      const newChickenData = {
+        type: formData.chicken_type,
+        breed: formData.chicken_breed,
+        quantity: formData.chicken_quantity,
+        age_weeks: null, // Include null instead of undefined
+        acquisition_date: today,
+        notes: `Sold ${formData.chicken_quantity} on ${today}`,
+      };
+
+      console.log('Sending data to server:', newChickenData);
+      try {
+        const newChickenRes = await api.post('/api/chickens', newChickenData);
+        chickenRecordId = newChickenRes.data.chicken_record_id;
+      } catch (err) {
+        console.error('Error details:', err.response?.data);
+        throw err;
+      }
+    }
+
+    // Update form data with record ID
+    setFormData((prev) => ({ ...prev, chicken_record_id: chickenRecordId }));
+    return chickenRecordId;
+  };
+
+  // Handle chick sale transactions
+  const handleChickSale = async () => {
+    if (parseInt(formData.chick_quantity) > availableChickQuantity) {
+      setError(
+        `Cannot sell more than the available quantity (${availableChickQuantity})`
+      );
+      setSubmitting(false);
+      throw new Error('Insufficient quantity');
+    }
+
+    const chickData = {
+      parent_breed: formData.chick_parent_breed,
+      hatched_date: new Date().toISOString().split('T')[0], // Default to today
+      quantity: formData.chick_quantity,
+    };
+
+    // Find existing chick records
+    const chicksRes = await api.get('/api/chicks', {
+      params: {
+        parent_breed: formData.chick_parent_breed,
+      },
+    });
+
+    let chickRecordId = null;
+
+    if (chicksRes.data.length > 0) {
+      // Update existing chick record
+      const existingChick = chicksRes.data[0];
+      chickRecordId = existingChick.chick_record_id;
+
+      const newQuantity =
+        existingChick.quantity - parseInt(formData.chick_quantity);
+      if (newQuantity < 0) {
+        setError(
+          `Cannot sell more than the available quantity (${existingChick.quantity})`
+        );
+        setSubmitting(false);
+        throw new Error('Insufficient quantity');
+      }
+
+      await api.put(`/api/chicks/${existingChick.chick_record_id}`, {
+        ...chickData,
+        quantity: newQuantity,
+        notes: existingChick.notes
+          ? `${existingChick.notes}; Sold ${formData.chick_quantity} on ${new Date().toISOString().split('T')[0]}`
+          : `Sold ${formData.chick_quantity} on ${new Date().toISOString().split('T')[0]}`,
+      });
+    } else {
+      // Create new chick record
+      const newChickRes = await api.post('/api/chicks', {
+        ...chickData,
+        status: 'Sold',
+      });
+      chickRecordId = newChickRes.data.chick_record_id;
+    }
+
+    // Update form data with record ID
+    setFormData((prev) => ({ ...prev, chick_record_id: chickRecordId }));
+    return chickRecordId;
+  };
+
+  // Handle egg sale transactions
+  const handleEggSale = async () => {
+    if (parseInt(formData.egg_quantity) > availableEggQuantity) {
+      setError(
+        `Cannot sell more than the available quantity (${availableEggQuantity})`
+      );
+      setSubmitting(false);
+      throw new Error('Insufficient quantity');
+    }
+
+    const eggData = {
+      size: formData.egg_size,
+      color: formData.egg_color,
+      laid_date: new Date().toISOString().split('T')[0], // Default to today
+      expiration_date: new Date(new Date().setDate(new Date().getDate() + 30))
+        .toISOString()
+        .split('T')[0], // Default to 30 days from now
+      quantity: formData.egg_quantity,
+    };
+
+    // Find existing egg records
+    const eggsRes = await api.get('/api/eggs', {
+      params: {
+        size: formData.egg_size,
+        color: formData.egg_color,
+      },
+    });
+
+    let eggRecordId = null;
+
+    if (eggsRes.data.length > 0) {
+      // Update existing egg record
+      const existingEgg = eggsRes.data[0];
+      eggRecordId = existingEgg.egg_record_id;
+
+      const newQuantity =
+        existingEgg.quantity - parseInt(formData.egg_quantity);
+      if (newQuantity < 0) {
+        setError(
+          `Cannot sell more than the available quantity (${existingEgg.quantity})`
+        );
+        setSubmitting(false);
+        throw new Error('Insufficient quantity');
+      }
+
+      await api.put(`/api/eggs/${existingEgg.egg_record_id}`, {
+        ...eggData,
+        quantity: newQuantity,
+        notes: existingEgg.notes
+          ? `${existingEgg.notes}; Sold ${formData.egg_quantity} on ${new Date().toISOString().split('T')[0]}`
+          : `Sold ${formData.egg_quantity} on ${new Date().toISOString().split('T')[0]}`,
+      });
+    } else {
+      // Create new egg record
+      const newEggRes = await api.post('/api/eggs', {
+        ...eggData,
+        status: 'Sold',
+      });
+      eggRecordId = newEggRes.data.egg_record_id;
+    }
+
+    // Update form data with record ID
+    setFormData((prev) => ({ ...prev, egg_record_id: eggRecordId }));
+    return eggRecordId;
+  };
+
+  // Handle inventory purchase transactions
+  const handleInventoryPurchase = async () => {
+    if (!formData.inventory_id) {
+      setError('Inventory item is required');
+      setSubmitting(false);
+      throw new Error('Missing inventory item');
+    }
+
+    try {
+      // Get the current inventory item
+      const inventoryRes = await api.get(
+        `/api/inventory/${formData.inventory_id}`
+      );
+      const inventoryItem = inventoryRes.data;
+
+      if (inventoryItem) {
+        // Update the inventory quantity - for purchases, we add to the quantity
+        const newQuantity = inventoryItem.quantity
+          ? parseInt(inventoryItem.quantity) +
+          parseInt(formData.inventory_quantity || 1)
+          : parseInt(formData.inventory_quantity || 1);
+
+        await api.put(`/api/inventory/${formData.inventory_id}`, {
+          ...inventoryItem,
+          quantity: newQuantity,
+          last_restocked: new Date().toISOString().split('T')[0],
+          notes: inventoryItem.notes
+            ? `${inventoryItem.notes}; Purchased ${formData.inventory_quantity || 1} on ${new Date().toISOString().split('T')[0]}`
+            : `Purchased ${formData.inventory_quantity || 1} on ${new Date().toISOString().split('T')[0]}`,
+        });
+      }
+
+      return formData.inventory_id;
+    } catch (err) {
+      console.error('Error updating inventory:', err);
+      setError('Error updating inventory. Please try again.');
+      setSubmitting(false);
+      throw err;
+    }
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) {
-      // Scroll to the first error field
+      // Scroll to first error field
       const firstErrorField = Object.keys(formErrors)[0];
       const element = document.querySelector(`[name="${firstErrorField}"]`);
       if (element) {
@@ -473,187 +790,30 @@ const TransactionForm = () => {
     try {
       setSubmitting(true);
 
-      // Prepare data for API
-      const apiData = { ...formData };
-      // For Livestock Sale transactions, create or update livestock records
-      if ((apiData.category === 'Chicken Sale' ||
-        apiData.category === 'Chick Sale' ||
-        apiData.category === 'Egg Sale') &&
-        apiData.livestock_type && parseInt(apiData.quantity) > 0) {
-        // Validate that we have enough quantity available
-        if (parseInt(apiData.quantity) > availableQuantity) {
-          setError(`Cannot sell more than the available quantity (${availableQuantity})`);
-          setSubmitting(false);
-          return;
-        }
-        // Create specific records based on livestock type
-        if (apiData.livestock_type === 'Chicken') {
-          const chickenData = {
-            type: apiData.chicken_type,
-            breed: apiData.breed,
-            quantity: apiData.quantity
-          };
-
-          // Find existing chicken records with the same attributes
-          const chickenRes = await api.get('/api/chickens', {
-            params: {
-              type: apiData.chicken_type,
-              breed: apiData.breed
-            }
-          });
-          if (chickenRes.data.length > 0) {
-            // Update existing chicken record
-            const existingChicken = chickenRes.data[0];
-            apiData.chicken_record_id = existingChicken.chicken_record_id;
-
-            // Deduct quantity from existing record
-            const newQuantity = existingChicken.quantity - parseInt(apiData.quantity);
-            if (newQuantity < 0) {
-              setError(`Cannot sell more than the available quantity (${existingChicken.quantity})`);
-              setSubmitting(false);
-              return;
-            }
-
-            await api.put(`/api/chickens/${existingChicken.chicken_record_id}`, {
-              ...chickenData,
-              quantity: newQuantity,
-              notes: existingChicken.notes ? `${existingChicken.notes}; Sold ${apiData.quantity} on ${new Date().toISOString().split('T')[0]}` : `Sold ${apiData.quantity} on ${new Date().toISOString().split('T')[0]}`
-            });
-          } else {
-            // Create new chicken record
-            const newChickenRes = await api.post('/api/chickens', {
-              ...chickenData,
-              status: 'Sold'
-            });
-            apiData.chicken_record_id = newChickenRes.data.chicken_record_id;
-          }
-        } else if (apiData.livestock_type === 'Chick') {
-          const chickData = {
-            parent_breed: apiData.parent_breed,
-            hatched_date: new Date().toISOString().split('T')[0], // Default to today
-            quantity: apiData.quantity
-          };
-
-          // Find existing chick records with the same attributes
-          const chicksRes = await api.get('/api/chicks', {
-            params: {
-              parent_breed: apiData.parent_breed
-            }
-          });
-
-          if (chicksRes.data.length > 0) {
-            // Update existing chick record
-            const existingChick = chicksRes.data[0];
-            apiData.chick_record_id = existingChick.chick_record_id;
-
-            // Deduct quantity from existing record
-            const newQuantity = existingChick.quantity - parseInt(apiData.quantity);
-            if (newQuantity < 0) {
-              setError(`Cannot sell more than the available quantity (${existingChick.quantity})`);
-              setSubmitting(false);
-              return;
-            }
-
-            await api.put(`/api/chicks/${existingChick.chick_record_id}`, {
-              ...chickData,
-              quantity: newQuantity,
-              notes: existingChick.notes ? `${existingChick.notes}; Sold ${apiData.quantity} on ${new Date().toISOString().split('T')[0]}` : `Sold ${apiData.quantity} on ${new Date().toISOString().split('T')[0]}`
-            });
-          } else {
-            // Create new chick record
-            const newChickRes = await api.post('/api/chicks', {
-              ...chickData,
-              status: 'Sold'
-            });
-            apiData.chick_record_id = newChickRes.data.chick_record_id;
-          }
-        } else if (apiData.livestock_type === 'Egg') {
-          const eggData = {
-            size: apiData.size,
-            color: apiData.color,
-            laid_date: new Date().toISOString().split('T')[0], // Default to today
-            expiration_date: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0], // Default to 30 days from now
-            quantity: apiData.quantity
-          };
-
-          // Find existing egg records with the same attributes
-          const eggsRes = await api.get('/api/eggs', {
-            params: {
-              size: apiData.size,
-              color: apiData.color
-            }
-          });
-
-          if (eggsRes.data.length > 0) {
-            // Update existing egg record
-            const existingEgg = eggsRes.data[0];
-            apiData.egg_record_id = existingEgg.egg_record_id;
-
-            // Deduct quantity from existing record
-            const newQuantity = existingEgg.quantity - parseInt(apiData.quantity);
-            if (newQuantity < 0) {
-              setError(`Cannot sell more than the available quantity (${existingEgg.quantity})`);
-              setSubmitting(false);
-              return;
-            }
-
-            await api.put(`/api/eggs/${existingEgg.egg_record_id}`, {
-              ...eggData,
-              quantity: newQuantity,
-              notes: existingEgg.notes ? `${existingEgg.notes}; Sold ${apiData.quantity} on ${new Date().toISOString().split('T')[0]}` : `Sold ${apiData.quantity} on ${new Date().toISOString().split('T')[0]}`
-            });
-          } else {
-            // Create new egg record
-            const newEggRes = await api.post('/api/eggs', {
-              ...eggData,
-              status: 'Sold'
-            });
-            apiData.egg_record_id = newEggRes.data.egg_record_id;
-          }
-        }
+      // Handle each transaction category
+      if (formData.category === 'Chicken Sale') {
+        await handleChickenSale();
+      } else if (formData.category === 'Chick Sale') {
+        await handleChickSale();
+      } else if (formData.category === 'Egg Sale') {
+        await handleEggSale();
+      } else if (formData.category === 'Inventory Purchase') {
+        await handleInventoryPurchase();
       }
 
-      // After handling livestock records, handle inventory purchases
-      if (apiData.transaction_type === 'Expense' && apiData.category === 'Inventory Purchase' && apiData.inventory_id) {
-        try {
-          // Get the current inventory item
-          const inventoryRes = await api.get(`/api/inventory/${apiData.inventory_id}`);
-          const inventoryItem = inventoryRes.data;
-
-          if (inventoryItem) {
-            // Update the inventory quantity - for purchases, we add to the quantity
-            const newQuantity = inventoryItem.quantity
-              ? parseInt(inventoryItem.quantity) + (parseInt(apiData.quantity) || 1)
-              : (parseInt(apiData.quantity) || 1);
-
-            await api.put(`/api/inventory/${apiData.inventory_id}`, {
-              ...inventoryItem,
-              quantity: newQuantity,
-              last_restocked: new Date().toISOString().split('T')[0],
-              notes: inventoryItem.notes
-                ? `${inventoryItem.notes}; Purchased ${apiData.quantity || 1} on ${new Date().toISOString().split('T')[0]}`
-                : `Purchased ${apiData.quantity || 1} on ${new Date().toISOString().split('T')[0]}`
-            });
-          }
-        } catch (err) {
-          console.error('Error updating inventory quantity:', err);
-          // Don't block the transaction if this fails
-        }
-      }
-
-      // Remove fields that shouldn't be sent to the transaction API
+      // Prepare transaction data
       const transactionData = {
-        transaction_type: apiData.transaction_type,
-        category: apiData.category,
-        amount: apiData.amount,
-        notes: apiData.notes,
-        buyer_id: apiData.buyer_id || null,
-        seller_id: apiData.seller_id || null,
-        inventory_id: apiData.inventory_id || null,
-        transaction_date: apiData.transaction_date,
-        chicken_record_id: apiData.chicken_record_id || null,
-        chick_record_id: apiData.chick_record_id || null,
-        egg_record_id: apiData.egg_record_id || null
+        transaction_type: formData.transaction_type,
+        category: formData.category,
+        amount: formData.amount,
+        notes: formData.notes,
+        buyer_id: formData.buyer_id || null,
+        seller_id: formData.seller_id || null,
+        inventory_id: formData.inventory_id || null,
+        transaction_date: formData.transaction_date,
+        chicken_record_id: formData.chicken_record_id || null,
+        chick_record_id: formData.chick_record_id || null,
+        egg_record_id: formData.egg_record_id || null,
       };
 
       // Convert empty strings to null
@@ -672,7 +832,7 @@ const TransactionForm = () => {
         setSuccessMessage({
           title: 'Transaction updated successfully!',
           details: `${formData.transaction_type} transaction for ${formatCurrency(formData.amount)} has been updated.`,
-          category: formData.category
+          category: formData.category,
         });
 
         // After a delay, navigate back to transaction list
@@ -688,7 +848,7 @@ const TransactionForm = () => {
           title: 'Transaction created successfully!',
           details: `${formData.transaction_type} transaction for ${formatCurrency(formData.amount)} has been recorded.`,
           category: formData.category,
-          id: response.data.transaction_id
+          id: response.data.transaction_id,
         });
 
         // After a delay, navigate back to transaction list
@@ -697,7 +857,9 @@ const TransactionForm = () => {
         }, 2000);
       }
     } catch (err) {
-      setError(err.response?.data?.msg || 'An error occurred. Please try again.');
+      setError(
+        err.response?.data?.msg || 'An error occurred. Please try again.'
+      );
       setSubmitting(false);
       console.error('Error saving transaction:', err);
     }
@@ -708,7 +870,7 @@ const TransactionForm = () => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'LKR',
-      minimumFractionDigits: 2
+      minimumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -825,8 +987,8 @@ const TransactionForm = () => {
                       value={formData.category}
                       onChange={handleChange}
                       className={`block w-full cursor-pointer rounded-md border ${formErrors.category
-                        ? 'border-red-300'
-                        : 'border-gray-300'
+                          ? 'border-red-300'
+                          : 'border-gray-300'
                         } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none`}
                     >
                       <option value="">Select a Category</option>
@@ -931,8 +1093,8 @@ const TransactionForm = () => {
                         value={formData.buyer_id}
                         onChange={handleChange}
                         className={`block w-full cursor-pointer rounded-md border ${formErrors.buyer_id
-                          ? 'border-red-300'
-                          : 'border-gray-300'
+                            ? 'border-red-300'
+                            : 'border-gray-300'
                           } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none`}
                       >
                         <option value="">Select a Buyer</option>
@@ -944,7 +1106,6 @@ const TransactionForm = () => {
                         <option value="new">+ Add New Buyer</option>
                       </select>
                     </div>
-                    {/* If buyer_id is 'new', the handleChange function already sets showNewBuyerForm to true */}
                     {formErrors.buyer_id && (
                       <p className="mt-1 text-sm text-red-600">
                         {formErrors.buyer_id}
@@ -971,20 +1132,22 @@ const TransactionForm = () => {
                         value={formData.seller_id}
                         onChange={handleChange}
                         className={`block w-full cursor-pointer rounded-md border ${formErrors.seller_id
-                          ? 'border-red-300'
-                          : 'border-gray-300'
+                            ? 'border-red-300'
+                            : 'border-gray-300'
                           } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none`}
                       >
                         <option value="">Select a Seller</option>
                         {sellers.map((seller) => (
-                          <option key={seller.seller_id} value={seller.seller_id}>
+                          <option
+                            key={seller.seller_id}
+                            value={seller.seller_id}
+                          >
                             {seller.first_name} {seller.last_name}
                           </option>
                         ))}
                         <option value="new">+ Add New Seller</option>
                       </select>
                     </div>
-                    {/* If seller_id is 'new', the handleChange function already sets showNewSellerForm to true */}
                     {formErrors.seller_id && (
                       <p className="mt-1 text-sm text-red-600">
                         {formErrors.seller_id}
@@ -993,7 +1156,7 @@ const TransactionForm = () => {
                   </div>
                 )}
 
-                {/* Inventory Item - optional for expense transactions */}
+                {/* Inventory Purchase Fields */}
                 {formData.transaction_type === 'Expense' &&
                   formData.category === 'Inventory Purchase' && (
                     <>
@@ -1038,7 +1201,7 @@ const TransactionForm = () => {
 
                       <div>
                         <label
-                          htmlFor="quantity"
+                          htmlFor="inventory_quantity"
                           className="mb-1 block text-sm font-medium text-gray-700"
                         >
                           Quantity to Purchase{' '}
@@ -1046,349 +1209,348 @@ const TransactionForm = () => {
                         </label>
                         <input
                           type="number"
-                          id="quantity"
-                          name="quantity"
+                          id="inventory_quantity"
+                          name="inventory_quantity"
                           min="1"
                           step="1"
-                          value={formData.quantity}
+                          value={formData.inventory_quantity}
                           onChange={handleChange}
-                          className={`block w-full rounded-md border ${formErrors.quantity ? 'border-red-300' : 'border-gray-300'} px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
+                          className={`block w-full rounded-md border ${formErrors.inventory_quantity ? 'border-red-300' : 'border-gray-300'} px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                           placeholder="Enter quantity"
                         />
-                        {formErrors.quantity && (
+                        {formErrors.inventory_quantity && (
                           <p className="mt-1 text-sm text-red-600">
-                            {formErrors.quantity}
+                            {formErrors.inventory_quantity}
                           </p>
                         )}
                       </div>
                     </>
                   )}
-                {' '}
 
-                {/* Livestock Sale Section - only for income transactions with livestock sale categories */}
+                {/* Chicken Sale Fields */}
                 {formData.transaction_type === 'Income' &&
-                  (formData.category === 'Chicken Sale' ||
-                    formData.category === 'Chick Sale' ||
-                    formData.category === 'Egg Sale') && (
+                  formData.category === 'Chicken Sale' && (
                     <>
-                      {/* Divider */}
                       <div className="col-span-full mb-4 mt-2">
                         <h3 className="text-lg font-medium text-gray-700">
-                          Livestock Information
+                          Chicken Information
                         </h3>
                         <div className="mt-2 border-t border-gray-200"></div>
                       </div>
-                      {' '}
-                      {/* Livestock Type */}
+
                       <div>
                         <label
-                          htmlFor="livestock_type"
+                          htmlFor="chicken_type"
                           className="mb-1 block text-sm font-medium text-gray-700"
                         >
-                          Livestock Type <span className="text-red-500">*</span>
+                          Chicken Type <span className="text-red-500">*</span>
                         </label>
-                        <div className="relative">
-                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <Bird size={20} className="text-gray-500" />
-                          </div>
-                          <select
-                            id="livestock_type"
-                            name="livestock_type"
-                            value={formData.livestock_type}
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                handleLivestockTypeChange(e.target.value);
-                              } else {
-                                handleChange(e);
-                              }
-                            }}
-                            disabled={
-                              formData.category === 'Chicken Sale' ||
-                              formData.category === 'Chick Sale' ||
-                              formData.category === 'Egg Sale'
-                            }
-                            className={`block w-full rounded-md border ${formErrors.livestock_type
+                        <select
+                          id="chicken_type"
+                          name="chicken_type"
+                          value={formData.chicken_type}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${formErrors.chicken_type
                               ? 'border-red-300'
                               : 'border-gray-300'
-                              } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none focus:ring-amber-500 ${formData.category === 'Chicken Sale' || formData.category === 'Chick Sale' || formData.category === 'Egg Sale' ? 'bg-gray-100' : ''}`}
-                          >
-                            <option value="">Select Livestock Type</option>
-                            <option value="Chicken">Chicken</option>
-                            <option value="Chick">Chick</option>
-                            <option value="Egg">Egg</option>
-                          </select>
-                        </div>
-                        {formErrors.livestock_type && (
+                            } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                        >
+                          <option value="">Select Type</option>
+                          {chickenTypes.map((type) => (
+                            <option key={type} value={type}>
+                              {type}
+                            </option>
+                          ))}
+                        </select>
+                        {formErrors.chicken_type && (
                           <p className="mt-1 text-sm text-red-600">
-                            {formErrors.livestock_type}
+                            {formErrors.chicken_type}
                           </p>
                         )}
                       </div>
-                      {/* Chicken-specific fields */}
-                      {formData.livestock_type === 'Chicken' && (
-                        <>
-                          <div>
-                            <label
-                              htmlFor="chicken_type"
-                              className="mb-1 block text-sm font-medium text-gray-700"
-                            >
-                              Chicken Type{' '}
-                              <span className="text-red-500">*</span>
-                            </label>
-                            <select
-                              id="chicken_type"
-                              name="chicken_type"
-                              value={formData.chicken_type}
-                              onChange={handleChange}
-                              className={`block w-full rounded-md border ${formErrors.chicken_type
-                                ? 'border-red-300'
-                                : 'border-gray-300'
-                                } px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
-                            >
-                              <option value="">Select Type</option>
-                              {chickenTypes.map((type) => (
-                                <option key={type} value={type}>
-                                  {type}
-                                </option>
-                              ))}
-                            </select>
-                            {formErrors.chicken_type && (
-                              <p className="mt-1 text-sm text-red-600">
-                                {formErrors.chicken_type}
-                              </p>
-                            )}
-                          </div>
 
-                          <div>
-                            <label
-                              htmlFor="breed"
-                              className="mb-1 block text-sm font-medium text-gray-700"
-                            >
-                              Breed <span className="text-red-500">*</span>
-                            </label>
-                            <select
-                              id="breed"
-                              name="breed"
-                              value={formData.breed}
-                              onChange={handleChange}
-                              className={`block w-full rounded-md border ${formErrors.breed
-                                ? 'border-red-300'
-                                : 'border-gray-300'
-                                } px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
-                            >
-                              <option value="">Select Breed</option>
-                              {chickenBreeds.map((breed) => (
-                                <option key={breed} value={breed}>
-                                  {breed}
-                                </option>
-                              ))}
-                            </select>
-                            {formErrors.breed && (
-                              <p className="mt-1 text-sm text-red-600">
-                                {formErrors.breed}
-                              </p>
-                            )}
-                          </div>
-                        </>
-                      )}
-                      {/* Chick-specific fields */}
-                      {formData.livestock_type === 'Chick' && (
-                        <div>
-                          <label
-                            htmlFor="parent_breed"
-                            className="mb-1 block text-sm font-medium text-gray-700"
-                          >
-                            Parent Breed <span className="text-red-500">*</span>
-                          </label>
-                          <select
-                            id="parent_breed"
-                            name="parent_breed"
-                            value={formData.parent_breed}
-                            onChange={handleChange}
-                            className={`block w-full rounded-md border ${formErrors.parent_breed
+                      <div>
+                        <label
+                          htmlFor="chicken_breed"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Breed <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="chicken_breed"
+                          name="chicken_breed"
+                          value={formData.chicken_breed}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${formErrors.chicken_breed
                               ? 'border-red-300'
                               : 'border-gray-300'
-                              } px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
-                          >
-                            <option value="">Select Parent Breed</option>
-                            {chickenBreeds.map((breed) => (
-                              <option key={breed} value={breed}>
-                                {breed}
-                              </option>
-                            ))}
-                          </select>
-                          {formErrors.parent_breed && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {formErrors.parent_breed}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                      {/* Egg-specific fields */}
-                      {formData.livestock_type === 'Egg' && (
-                        <>
-                          <div>
-                            <label
-                              htmlFor="size"
-                              className="mb-1 block text-sm font-medium text-gray-700"
-                            >
-                              Size <span className="text-red-500">*</span>
-                            </label>
-                            <select
-                              id="size"
-                              name="size"
-                              value={formData.size}
-                              onChange={handleChange}
-                              className={`block w-full rounded-md border ${formErrors.size
-                                ? 'border-red-300'
-                                : 'border-gray-300'
-                                } px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
-                            >
-                              <option value="">Select Size</option>
-                              {eggSizes.map((size) => (
-                                <option key={size} value={size}>
-                                  {size}
-                                </option>
-                              ))}
-                            </select>
-                            {formErrors.size && (
-                              <p className="mt-1 text-sm text-red-600">
-                                {formErrors.size}
-                              </p>
-                            )}
-                          </div>
+                            } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                        >
+                          <option value="">Select Breed</option>
+                          {chickenBreeds.map((breed) => (
+                            <option key={breed} value={breed}>
+                              {breed}
+                            </option>
+                          ))}
+                        </select>
+                        {formErrors.chicken_breed && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.chicken_breed}
+                          </p>
+                        )}
+                      </div>
 
-                          <div>
-                            <label
-                              htmlFor="color"
-                              className="mb-1 block text-sm font-medium text-gray-700"
-                            >
-                              Color <span className="text-red-500">*</span>
-                            </label>
-                            <select
-                              id="color"
-                              name="color"
-                              value={formData.color}
-                              onChange={handleChange}
-                              className={`block w-full rounded-md border ${formErrors.color
-                                ? 'border-red-300'
-                                : 'border-gray-300'
-                                } px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
-                            >
-                              <option value="">Select Color</option>
-                              {eggColors.map((color) => (
-                                <option key={color} value={color}>
-                                  {color}
-                                </option>
-                              ))}
-                            </select>
-                            {formErrors.color && (
-                              <p className="mt-1 text-sm text-red-600">
-                                {formErrors.color}
-                              </p>
-                            )}
-                          </div>
-                        </>
-                      )}
-                      {/* Quantity field - common for all livestock types */}
-                      {formData.livestock_type && (
-                        <div className="col-span-full sm:col-span-1">
-                          <label
-                            htmlFor="quantity"
-                            className="mb-1 block text-sm font-medium text-gray-700"
-                          >
-                            Quantity <span className="text-red-500">*</span>
-                          </label>
-                          <div className="relative">
-                            <input
-                              type="number"
-                              id="quantity"
-                              name="quantity"
-                              min="1"
-                              step="1"
-                              value={formData.quantity}
-                              onChange={handleChange}
-                              className={`block w-full rounded-md border ${formErrors.quantity
-                                ? 'border-red-300'
-                                : 'border-gray-300'
-                                } px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
-                              placeholder="Enter quantity"
-                            />
-                          </div>{' '}
-                          {availableQuantity > 0 ? (
-                            <p className="mt-1 flex items-center text-xs">
-                              <span className="rounded bg-green-100 px-2 py-1 font-medium text-green-800">
-                                Available: {availableQuantity}
-                              </span>
-                            </p>
-                          ) : (
-                            formData.livestock_type && (
-                              <p className="mt-1 flex items-center text-xs">
-                                <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
-                                  No stock available
-                                </span>
-                              </p>
-                            )
-                          )}
-                          {formErrors.quantity && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {formErrors.quantity}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                      {/* Batch Tracking - common for all livestock sales */}
-                      {formData.livestock_type && (
-                        <>
-                          <div className="sm:col-span-1">
-                            <label
-                              htmlFor="batch_number"
-                              className="mb-1 block text-sm font-medium text-gray-700"
-                            >
-                              Batch/Lot Number
-                            </label>
-                            <input
-                              type="text"
-                              id="batch_number"
-                              name="batch_number"
-                              value={formData.batch_number}
-                              onChange={handleChange}
-                              className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
-                              placeholder="Batch #"
-                            />
-                            <p className="mt-1 text-xs text-gray-500">
-                              Optional: For tracking purposes
-                            </p>
-                          </div>
-
-                          <div className="sm:col-span-1">
-                            <label
-                              htmlFor="batch_source"
-                              className="mb-1 block text-sm font-medium text-gray-700"
-                            >
-                              Batch Source/Origin
-                            </label>
-                            <input
-                              type="text"
-                              id="batch_source"
-                              name="batch_source"
-                              value={formData.batch_source}
-                              onChange={handleChange}
-                              className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
-                              placeholder="Source location"
-                            />
-                          </div>
-                        </>
-                      )}
+                      <div>
+                        <label
+                          htmlFor="chicken_quantity"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Quantity <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          id="chicken_quantity"
+                          name="chicken_quantity"
+                          min="1"
+                          step="1"
+                          value={formData.chicken_quantity}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${formErrors.chicken_quantity
+                              ? 'border-red-300'
+                              : 'border-gray-300'
+                            } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                          placeholder="Enter quantity"
+                        />
+                        {availableChickenQuantity > 0 ? (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-green-100 px-2 py-1 font-medium text-green-800">
+                              Available: {availableChickenQuantity}
+                            </span>
+                          </p>
+                        ) : (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
+                              No stock available
+                            </span>
+                          </p>
+                        )}
+                        {formErrors.chicken_quantity && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.chicken_quantity}
+                          </p>
+                        )}
+                      </div>
                     </>
-                  )}{' '}
+                  )}
+
+                {/* Chick Sale Fields */}
+                {formData.transaction_type === 'Income' &&
+                  formData.category === 'Chick Sale' && (
+                    <>
+                      <div className="col-span-full mb-4 mt-2">
+                        <h3 className="text-lg font-medium text-gray-700">
+                          Chick Information
+                        </h3>
+                        <div className="mt-2 border-t border-gray-200"></div>
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="chick_parent_breed"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Parent Breed <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="chick_parent_breed"
+                          name="chick_parent_breed"
+                          value={formData.chick_parent_breed}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${formErrors.chick_parent_breed
+                              ? 'border-red-300'
+                              : 'border-gray-300'
+                            } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                        >
+                          <option value="">Select Parent Breed</option>
+                          {chickenBreeds.map((breed) => (
+                            <option key={breed} value={breed}>
+                              {breed}
+                            </option>
+                          ))}
+                        </select>
+                        {formErrors.chick_parent_breed && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.chick_parent_breed}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="chick_quantity"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Quantity <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          id="chick_quantity"
+                          name="chick_quantity"
+                          min="1"
+                          step="1"
+                          value={formData.chick_quantity}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${formErrors.chick_quantity
+                              ? 'border-red-300'
+                              : 'border-gray-300'
+                            } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                          placeholder="Enter quantity"
+                        />
+                        {availableChickQuantity > 0 ? (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-green-100 px-2 py-1 font-medium text-green-800">
+                              Available: {availableChickQuantity}
+                            </span>
+                          </p>
+                        ) : (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
+                              No stock available
+                            </span>
+                          </p>
+                        )}
+                        {formErrors.chick_quantity && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.chick_quantity}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                {/* Egg Sale Fields */}
+                {formData.transaction_type === 'Income' &&
+                  formData.category === 'Egg Sale' && (
+                    <>
+                      <div className="col-span-full mb-4 mt-2">
+                        <h3 className="text-lg font-medium text-gray-700">
+                          Egg Information
+                        </h3>
+                        <div className="mt-2 border-t border-gray-200"></div>
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="egg_size"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Size <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="egg_size"
+                          name="egg_size"
+                          value={formData.egg_size}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${formErrors.egg_size
+                              ? 'border-red-300'
+                              : 'border-gray-300'
+                            } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                        >
+                          <option value="">Select Size</option>
+                          {eggSizes.map((size) => (
+                            <option key={size} value={size}>
+                              {size}
+                            </option>
+                          ))}
+                        </select>
+                        {formErrors.egg_size && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.egg_size}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="egg_color"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Color <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="egg_color"
+                          name="egg_color"
+                          value={formData.egg_color}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${formErrors.egg_color
+                              ? 'border-red-300'
+                              : 'border-gray-300'
+                            } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                        >
+                          <option value="">Select Color</option>
+                          {eggColors.map((color) => (
+                            <option key={color} value={color}>
+                              {color}
+                            </option>
+                          ))}
+                        </select>
+                        {formErrors.egg_color && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.egg_color}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="egg_quantity"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Quantity <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          id="egg_quantity"
+                          name="egg_quantity"
+                          min="1"
+                          step="1"
+                          value={formData.egg_quantity}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${formErrors.egg_quantity
+                              ? 'border-red-300'
+                              : 'border-gray-300'
+                            } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                          placeholder="Enter quantity"
+                        />
+                        {availableEggQuantity > 0 ? (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-green-100 px-2 py-1 font-medium text-green-800">
+                              Available: {availableEggQuantity}
+                            </span>
+                          </p>
+                        ) : (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
+                              No stock available
+                            </span>
+                          </p>
+                        )}
+                        {formErrors.egg_quantity && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.egg_quantity}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
+
                 {/* Notes */}
                 <div className="sm:col-span-2">
                   <label
                     htmlFor="notes"
                     className="mb-1 block text-sm font-medium text-gray-700"
                   >
-                    Notes <span className="text-red-500">*</span>
+                    Notes
                   </label>
                   <div className="relative">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -1400,9 +1562,7 @@ const TransactionForm = () => {
                       value={formData.notes}
                       onChange={handleChange}
                       rows="3"
-                      className={`block w-full rounded-md border ${formErrors.notes
-                        ? 'border-red-300'
-                        : 'border-gray-300'
+                      className={`block w-full rounded-md border ${formErrors.notes ? 'border-red-300' : 'border-gray-300'
                         } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                       placeholder="Add notes about the transaction..."
                     ></textarea>
@@ -1462,38 +1622,58 @@ const TransactionForm = () => {
                         </p>
                       </div>
 
-                      {formData.livestock_type && (
+                      {/* Preview based on transaction category */}
+                      {formData.category === 'Chicken Sale' && (
                         <div className="col-span-2">
                           <p className="text-sm font-medium text-gray-600">
-                            Livestock:
+                            Chicken Details:
                           </p>
                           <p className="text-base font-medium">
-                            {formData.quantity} {formData.livestock_type}
-                            {formData.livestock_type === 'Chicken' &&
-                              formData.chicken_type &&
-                              formData.breed && (
-                                <span>
-                                  {' '}
-                                  ({formData.chicken_type} - {formData.breed})
-                                </span>
-                              )}
-                            {formData.livestock_type === 'Chick' &&
-                              formData.parent_breed && (
-                                <span> ({formData.parent_breed})</span>
-                              )}
-                            {formData.livestock_type === 'Egg' &&
-                              formData.size &&
-                              formData.color && (
-                                <span>
-                                  {' '}
-                                  ({formData.size} - {formData.color})
-                                </span>
-                              )}
-                            {formData.batch_number && (
-                              <span className="ml-2 text-sm text-gray-500">
-                                Batch: {formData.batch_number}
-                              </span>
-                            )}
+                            {formData.chicken_quantity} {formData.chicken_type}{' '}
+                            chicken
+                            {formData.chicken_breed &&
+                              ` (${formData.chicken_breed})`}
+                          </p>
+                        </div>
+                      )}
+
+                      {formData.category === 'Chick Sale' && (
+                        <div className="col-span-2">
+                          <p className="text-sm font-medium text-gray-600">
+                            Chick Details:
+                          </p>
+                          <p className="text-base font-medium">
+                            {formData.chick_quantity} Chicks
+                            {formData.chick_parent_breed &&
+                              ` (${formData.chick_parent_breed})`}
+                          </p>
+                        </div>
+                      )}
+
+                      {formData.category === 'Egg Sale' && (
+                        <div className="col-span-2">
+                          <p className="text-sm font-medium text-gray-600">
+                            Egg Details:
+                          </p>
+                          <p className="text-base font-medium">
+                            {formData.egg_quantity} Eggs
+                            {(formData.egg_size || formData.egg_color) &&
+                              ` (${formData.egg_size}${formData.egg_color ? ` - ${formData.egg_color}` : ''})`}
+                          </p>
+                        </div>
+                      )}
+
+                      {formData.category === 'Inventory Purchase' && (
+                        <div className="col-span-2">
+                          <p className="text-sm font-medium text-gray-600">
+                            Inventory Item:
+                          </p>
+                          <p className="text-base font-medium">
+                            {inventoryItems.find(
+                              (item) =>
+                                item.inventory_id == formData.inventory_id
+                            )?.item_name || ''}
+                            ({formData.inventory_quantity} units)
                           </p>
                         </div>
                       )}
@@ -1599,5 +1779,6 @@ const TransactionForm = () => {
     </DashboardLayout>
   );
 };
+
 
 export default TransactionForm;
