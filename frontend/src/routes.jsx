@@ -71,10 +71,12 @@ const routes = [
       { path: '/admin/sellers/:id', element: <SellerDetails /> },
       // Employees routes
       { path: '/admin/employees', element: <Employees /> },
-
-      { path: '/admin/livestock/eggs', element: <Livestock /> },
-      { path: '/admin/livestock/chicks', element: <Livestock /> },
-      { path: '/admin/livestock/chickens', element: <Livestock /> },
+      // Livestock routes
+      { path: '/admin/livestock/:type', element: <Livestock /> },
+      // { path: '/admin/livestock/eggs', element: <Livestock /> },
+      // { path: '/admin/livestock/chicks', element: <Livestock /> },
+      // { path: '/admin/livestock/chickens', element: <Livestock /> },
+      // Inventory routes
       { path: '/admin/inventory/feed', element: <Inventory /> },
       { path: '/admin/inventory/medications', element: <Inventory /> },
       { path: '/admin/inventory/other', element: <Inventory /> },

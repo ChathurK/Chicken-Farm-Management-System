@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
 import { Tabs } from '../../shared/Tabs';
@@ -13,13 +13,24 @@ const Livestock = () => {
 
   // Determine active tab based on URL
   const getInitialTab = () => {
-    if (location.pathname.includes('/eggs')) return 'eggs';
-    if (location.pathname.includes('/chicks')) return 'chicks';
-    if (location.pathname.includes('/chickens')) return 'chickens';
+    // First check if we have a type parameter from the URL
+    if (type && ['eggs', 'chicks', 'chickens'].includes(type)) {
+      return type;
+    }
+    // Fallback to checking the full path
+    const path = location.pathname;
+    if (path.endsWith('/eggs')) return 'eggs';
+    if (path.endsWith('/chicks')) return 'chicks';
+    if (path.endsWith('/chickens')) return 'chickens';
     return 'eggs'; // Default tab
   };
 
   const [activeTab, setActiveTab] = useState(getInitialTab());
+
+  // Update active tab when location changes
+  useEffect(() => {
+    setActiveTab(getInitialTab());
+  }, [location.pathname]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);

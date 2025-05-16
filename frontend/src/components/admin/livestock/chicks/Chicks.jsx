@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Plus,
-  MagnifyingGlass,
-  Pencil,
-  Trash,
-  SortAscending,
-  SortDescending,
-  CaretLeft,
-  CaretRight,
-  X,
-} from '@phosphor-icons/react';
+import { Plus, MagnifyingGlass, Pencil, Trash, SortAscending, SortDescending, X } from '@phosphor-icons/react';
 import { ConfirmationModal } from '../../buyers/BuyerModal';
 import api from '../../../../utils/api';
 import ChickModal from './ChickModal';
