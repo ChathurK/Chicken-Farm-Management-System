@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Plus, MagnifyingGlass, Pencil, Trash, Eye, SortAscending, SortDescending, CaretLeft, CaretRight, X } from '@phosphor-icons/react';
 import { ConfirmationModal } from '../../buyers/BuyerModal';
 import api from '../../../../utils/api';
@@ -149,10 +149,13 @@ const Eggs = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
       totalPages,
     };
   }, [filteredAndSortedEggs, parentCurrentPage, eggsPerPage]);
-
+  // Ref to store previous pagination string to prevent circular updates
+  const lastPaginationRef = useRef("");
+  
   // Update parent component with pagination data when pagination values change
   useEffect(() => {
-    onPaginationChange({
+    // Create a pagination data object
+    const paginationData = {
       totalItems: filteredAndSortedEggs.length,
       totalPages: paginationValues.totalPages,
       itemsPerPage: eggsPerPage,
@@ -162,8 +165,17 @@ const Eggs = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
         filteredAndSortedEggs.length - 1
       ),
       itemName: 'eggs',
-    });
-  }, [paginationValues, filteredAndSortedEggs.length, onPaginationChange]);
+    };
+    
+    // Use JSON.stringify to compare only when the actual content changes
+    const paginationString = JSON.stringify(paginationData);
+    
+    // Only update if the pagination data actually changed
+    if (lastPaginationRef.current !== paginationString) {
+      lastPaginationRef.current = paginationString;
+      onPaginationChange(paginationData);
+    }
+  }, [filteredAndSortedEggs.length, parentCurrentPage, paginationValues, onPaginationChange, eggsPerPage]);
 
   // Get sort icon
   const getSortIcon = (field) => {
