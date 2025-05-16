@@ -29,7 +29,7 @@ const Pagination = ({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="mt-4 flex items-center justify-between">
+    <div className="mt-4 px-4 flex items-center justify-between">
       {showItemCount && (
         <div className="text-sm text-gray-500">
           Showing {currentPageFirstItemIndex + 1} to{' '}

@@ -4,7 +4,7 @@ import { ConfirmationModal } from '../../buyers/BuyerModal';
 import api from '../../../../utils/api';
 import ChickenModal from './ChickenModal';
 
-const Chickens = () => {
+const Chickens = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
   // State variables
   const [chickens, setChickens] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +14,8 @@ const Chickens = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAddEditModal, setShowAddEditModal] = useState(false);
   const [currentChicken, setCurrentChicken] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  // Use parent's current page state instead of local state
+  // const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({
     field: 'acquisition_date',
     direction: 'desc',
@@ -140,13 +141,25 @@ const Chickens = () => {
   });
 
   // Pagination
-  const indexOfLastChicken = currentPage * chickensPerPage;
+  const indexOfLastChicken = parentCurrentPage * chickensPerPage;
   const indexOfFirstChicken = indexOfLastChicken - chickensPerPage;
   const currentChickens = sortedChickens.slice(
     indexOfFirstChicken,
     indexOfLastChicken
   );
   const totalPages = Math.ceil(sortedChickens.length / chickensPerPage);
+  
+  // Update parent component with pagination data
+  useEffect(() => {
+    onPaginationChange({
+      totalItems: sortedChickens.length,
+      totalPages: totalPages,
+      itemsPerPage: chickensPerPage,
+      currentPageFirstItemIndex: indexOfFirstChicken,
+      currentPageLastItemIndex: indexOfLastChicken - 1,
+      itemName: "chickens"
+    });
+  }, [sortedChickens, parentCurrentPage, chickensPerPage, indexOfFirstChicken, indexOfLastChicken, totalPages, onPaginationChange]);
 
   // Get sort icon
   const getSortIcon = (field) => {
@@ -220,7 +233,7 @@ const Chickens = () => {
       </div>
 
       {/* Chickens Table */}
-      <div className="overflow-auto rounded-lg border border-gray-200 shadow-sm">
+      <div className="h-[calc(100vh-470px)] overflow-auto rounded-lg border border-gray-200 shadow-md">
         <table className="w-full text-left text-sm text-gray-500">
           <thead className="sticky top-0 bg-gray-50 text-xs uppercase text-gray-700">
             <tr>
@@ -274,13 +287,8 @@ const Chickens = () => {
                   {getSortIcon('acquisition_date')}
                 </div>
               </th>
-              <th
-                scope="col"
-                className="px-4 py-3"
-              >
-                <div className="flex items-center">
-                  Notes
-                </div>
+              <th scope="col" className="px-4 py-3">
+                <div className="flex items-center">Notes</div>
               </th>
               <th scope="col" className="px-4 py-3 text-right">
                 Actions
@@ -345,48 +353,6 @@ const Chickens = () => {
           </tbody>
         </table>
       </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            Showing {indexOfFirstChicken + 1} to{' '}
-            {Math.min(indexOfLastChicken, sortedChickens.length)} of{' '}
-            {sortedChickens.length} chickens
-          </div>
-          <div className="flex">
-            {/* Previous Button */}
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className={`flex items-center rounded-l-lg border bg-gray-100 px-3 py-1 text-gray-700 ${
-                currentPage === 1
-                  ? 'cursor-not-allowed opacity-50'
-                  : 'hover:text-amber-500'
-              }`}
-            >
-              <CaretLeft size={14} weight="duotone" />
-              Prev
-            </button>
-
-            {/* Next Button */}
-            <button
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-              className={`flex items-center rounded-r-lg border bg-gray-100 px-3 py-1 text-gray-700 ${
-                currentPage === totalPages
-                  ? 'cursor-not-allowed opacity-50'
-                  : 'hover:text-amber-500'
-              }`}
-            >
-              Next
-              <CaretRight size={14} weight="duotone" />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Delete Confirmation Modal */}
       <ConfirmationModal

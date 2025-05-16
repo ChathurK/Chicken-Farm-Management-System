@@ -408,7 +408,7 @@ const TransactionList = () => {
         </div>
 
         {/* Transactions Table */}
-        <div className="rounded-lg bg-white shadow">
+        <div className="rounded-lg bg-white shadow-md">
           {loading ? (
             <div className="flex h-64 items-center justify-center">
               <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-amber-500"></div>
@@ -452,7 +452,7 @@ const TransactionList = () => {
               </button>
             </div>
           ) : (
-            <div className="h-[calc(100vh-329px)] overflow-auto rounded-lg border border-gray-200 shadow-sm">
+            <div className="h-[calc(100vh-304px)] overflow-auto rounded-lg border border-gray-200">
               <table className="w-full text-left text-sm text-gray-500">
                 <thead className="sticky top-0 bg-gray-50 text-xs uppercase text-gray-700">
                   <tr>
@@ -628,18 +628,16 @@ const TransactionList = () => {
 
         {/* Pagination */}
         {!loading && transactions.length > 0 && (
-          <div className="border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={transactions.length}
-              itemsPerPage={transactionsPerPage}
-              currentPageFirstItemIndex={indexOfFirstTransaction}
-              currentPageLastItemIndex={indexOfLastTransaction - 1}
-              onPageChange={setCurrentPage}
-              itemName="transactions"
-            />
-          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={transactions.length}
+            itemsPerPage={transactionsPerPage}
+            currentPageFirstItemIndex={indexOfFirstTransaction}
+            currentPageLastItemIndex={indexOfLastTransaction - 1}
+            onPageChange={setCurrentPage}
+            itemName="transactions"
+          />
         )}
       </div>
     </DashboardLayout>
