@@ -81,8 +81,8 @@ const EggModal = ({ isOpen, onClose, onSave, egg }) => {
       errors.expiration_date = 'Expiration date must be after laid date';
 
     if (!formData.quantity) errors.quantity = 'Quantity is required';
-    else if (parseInt(formData.quantity) <= 0)
-      errors.quantity = 'Quantity must be a positive number';
+    else if (parseInt(formData.quantity) < 0)
+      errors.quantity = 'Quantity must be 0 or a positive number';
 
     if (!formData.size) errors.size = 'Size is required';
 
@@ -167,7 +167,7 @@ const EggModal = ({ isOpen, onClose, onSave, egg }) => {
               <input
                 type="number"
                 name="quantity"
-                min="1"
+                min="0"
                 value={formData.quantity}
                 onChange={handleChange}
                 className={`w-full rounded-lg border ${

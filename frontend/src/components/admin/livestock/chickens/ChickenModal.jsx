@@ -72,8 +72,8 @@ const ChickenModal = ({ isOpen, onClose, onSave, chicken }) => {
       errors.breed = 'Breed is required';
 
     if (!formData.quantity) errors.quantity = 'Quantity is required';
-    else if (parseInt(formData.quantity) <= 0)
-      errors.quantity = 'Quantity must be a positive number';
+    else if (parseInt(formData.quantity) < 0)
+      errors.quantity = 'Quantity must be 0 or a positive number';
 
     if (formData.age_weeks && parseInt(formData.age_weeks) <= 0)
       errors.age_weeks = 'Age must be a positive number';

@@ -260,15 +260,8 @@ const Eggs = () => {
                   {getSortIcon('color')}
                 </div>
               </th>
-              <th
-                scope="col"
-                className="cursor-pointer px-4 py-3 hover:text-amber-600"
-                onClick={() => handleSort('status')}
-              >
-                <div className="flex items-center">
-                  Status
-                  {getSortIcon('status')}
-                </div>
+              <th scope="col" className="px-4 py-3">
+                Notes
               </th>
               <th scope="col" className="px-4 py-3 text-right">
                 Actions
@@ -299,19 +292,7 @@ const Eggs = () => {
                   <td className="px-4 py-4">{egg.quantity}</td>
                   <td className="px-4 py-4">{egg.size}</td>
                   <td className="px-4 py-4">{egg.color}</td>
-                  <td className="px-4 py-4">
-                    <span
-                      className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                        egg.status === 'Available'
-                          ? 'bg-green-100 text-green-800'
-                          : egg.status === 'Reserved'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {egg.status}
-                    </span>
-                  </td>
+                  <td className="px-4 py-4">{egg.notes || '-'}</td>
                   <td className="flex justify-end gap-2 px-4 py-4">
                     <button
                       onClick={() => handleEditClick(egg)}

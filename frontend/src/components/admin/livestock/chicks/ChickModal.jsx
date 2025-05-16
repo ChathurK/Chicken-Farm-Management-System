@@ -69,8 +69,8 @@ const ChickModal = ({ isOpen, onClose, onSave, chick }) => {
       errors.hatched_date = 'Hatched date is required';
 
     if (!formData.quantity) errors.quantity = 'Quantity is required';
-    else if (parseInt(formData.quantity) <= 0)
-      errors.quantity = 'Quantity must be a positive number';
+    else if (parseInt(formData.quantity) < 0)
+      errors.quantity = 'Quantity must be 0 or a positive number';
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;

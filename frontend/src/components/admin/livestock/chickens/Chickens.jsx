@@ -276,12 +276,10 @@ const Chickens = () => {
               </th>
               <th
                 scope="col"
-                className="cursor-pointer px-4 py-3 hover:text-amber-600"
-                onClick={() => handleSort('status')}
+                className="px-4 py-3"
               >
                 <div className="flex items-center">
-                  Status
-                  {getSortIcon('status')}
+                  Notes
                 </div>
               </th>
               <th scope="col" className="px-4 py-3 text-right">
@@ -315,19 +313,7 @@ const Chickens = () => {
                   <td className="px-4 py-4">
                     {formatDate(chicken.acquisition_date)}
                   </td>
-                  <td className="px-4 py-4">
-                    <span
-                      className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                        chicken.status === 'Available'
-                          ? 'bg-green-100 text-green-800'
-                          : chicken.status === 'Reserved'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {chicken.status}
-                    </span>
-                  </td>
+                  <td className="px-4 py-4">{chicken.notes || '-'}</td>
                   <td className="flex justify-end gap-2 px-4 py-4">
                     <button
                       onClick={() => handleEditClick(chicken)}

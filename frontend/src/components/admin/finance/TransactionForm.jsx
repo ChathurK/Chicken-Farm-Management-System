@@ -713,6 +713,7 @@ const TransactionForm = () => {
 
       await api.put(`/api/eggs/${existingEgg.egg_record_id}`, {
         ...eggData,
+        laid_date: new Date(existingEgg.laid_date).toISOString().split('T')[0],
         quantity: newQuantity,
         notes: existingEgg.notes
           ? `${existingEgg.notes}; Sold ${formData.egg_quantity} on ${new Date().toISOString().split('T')[0]}`

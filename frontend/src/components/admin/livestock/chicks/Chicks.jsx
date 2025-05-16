@@ -248,16 +248,6 @@ const Chicks = () => {
                   {getSortIcon('quantity')}
                 </div>
               </th>
-              <th
-                scope="col"
-                className="cursor-pointer px-4 py-3 hover:text-amber-600"
-                onClick={() => handleSort('status')}
-              >
-                <div className="flex items-center">
-                  Status
-                  {getSortIcon('status')}
-                </div>
-              </th>
               <th scope="col" className="px-4 py-3">
                 Notes
               </th>
@@ -288,19 +278,6 @@ const Chicks = () => {
                     {formatDate(chick.hatched_date)}
                   </td>
                   <td className="px-4 py-4">{chick.quantity}</td>
-                  <td className="px-4 py-4">
-                    <span
-                      className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                        chick.status === 'Available'
-                          ? 'bg-green-100 text-green-800'
-                          : chick.status === 'Reserved'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {chick.status}
-                    </span>
-                  </td>
                   <td className="max-w-xs truncate px-4 py-4">
                     {chick.notes || '-'}
                   </td>
