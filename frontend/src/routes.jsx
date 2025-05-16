@@ -8,6 +8,10 @@ import Unauthorized from './components/Unauthorized';
 import ProtectedRoute from './components/ProtectedRoute';
 import Profile from './components/profile/Profile';
 
+// Employee components
+import { default as EmployeeOrders } from './components/employee/orders/Orders'; 
+import { default as EmployeeOrderDetails } from './components/employee/orders/OrderDetails';
+
 // Admin components
 import Calendar from './components/admin/calendar/Calendar';
 import Orders from './components/admin/orders/Orders';
@@ -89,7 +93,12 @@ const routes = [
   // Protected routes for employee users
   {
     element: <ProtectedRoute requireEmployee={true} />,
-    children: [{ path: '/employee/dashboard', element: <EmployeeDashboard /> }],
+    children: [
+      { path: '/employee/dashboard', element: <EmployeeDashboard /> },
+      // Employee Order Management routes
+      { path: '/employee/orders', element: <EmployeeOrders /> },
+      { path: '/employee/orders/:id', element: <EmployeeOrderDetails /> },
+    ],
   },
   // Protected routes for any authenticated user
   {
