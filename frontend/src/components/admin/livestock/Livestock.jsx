@@ -11,27 +11,27 @@ const Livestock = () => {
   const navigate = useNavigate();
   const { type } = useParams();
   const location = useLocation();
-  
+
   // Determine the correct tab based on the URL parameter or path
   const currentTab = useMemo(() => {
     // First check if we have a valid type parameter
     if (type && ['eggs', 'chicks', 'chickens'].includes(type)) {
       return type;
     }
-    
+
     // Fallback to checking the path
     const path = location.pathname;
     if (path.endsWith('/eggs')) return 'eggs';
     if (path.endsWith('/chicks')) return 'chicks';
     if (path.endsWith('/chickens')) return 'chickens';
-    
+
     // Default to eggs if no match
     return 'eggs';
   }, [type, location.pathname]);
-  
+
   // Set active tab state with the memoized value
   const [activeTab, setActiveTab] = useState(currentTab);
-  
+
   // Shared pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [paginationData, setPaginationData] = useState({
@@ -40,9 +40,9 @@ const Livestock = () => {
     itemsPerPage: 10,
     currentPageFirstItemIndex: 0,
     currentPageLastItemIndex: 0,
-    itemName: "items"
+    itemName: 'items',
   });
-  
+
   // Update active tab only when URL parameters change
   useEffect(() => {
     if (activeTab !== currentTab) {
@@ -50,7 +50,7 @@ const Livestock = () => {
       setCurrentPage(1); // Reset pagination when changing tabs
     }
   }, [currentTab, activeTab]);
-  
+
   // Handle tab change and navigation
   const handleTabChange = (tab) => {
     if (tab !== type) {
@@ -73,25 +73,33 @@ const Livestock = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'eggs':
-        return <Eggs
-          currentPage={currentPage}
-          onPaginationChange={handlePaginationUpdate}
-        />;
+        return (
+          <Eggs
+            currentPage={currentPage}
+            onPaginationChange={handlePaginationUpdate}
+          />
+        );
       case 'chicks':
-        return <Chicks
-          currentPage={currentPage}
-          onPaginationChange={handlePaginationUpdate}
-        />;
+        return (
+          <Chicks
+            currentPage={currentPage}
+            onPaginationChange={handlePaginationUpdate}
+          />
+        );
       case 'chickens':
-        return <Chickens
-          currentPage={currentPage}
-          onPaginationChange={handlePaginationUpdate}
-        />;
+        return (
+          <Chickens
+            currentPage={currentPage}
+            onPaginationChange={handlePaginationUpdate}
+          />
+        );
       default:
-        return <Eggs
-          currentPage={currentPage}
-          onPaginationChange={handlePaginationUpdate}
-        />;
+        return (
+          <Eggs
+            currentPage={currentPage}
+            onPaginationChange={handlePaginationUpdate}
+          />
+        );
     }
   };
 

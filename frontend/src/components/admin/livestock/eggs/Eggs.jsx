@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, MagnifyingGlass, Pencil, Trash, Eye, SortAscending, SortDescending, CaretLeft, CaretRight, X } from '@phosphor-icons/react';
 import { ConfirmationModal } from '../../buyers/BuyerModal';
 import api from '../../../../utils/api';
@@ -14,8 +14,6 @@ const Eggs = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAddEditModal, setShowAddEditModal] = useState(false);
   const [currentEgg, setCurrentEgg] = useState(null);
-  // Use parent's current page state instead of local state
-  // const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({
     field: 'laid_date',
     direction: 'desc',
@@ -100,52 +98,72 @@ const Eggs = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
     setSortConfig({ field, direction });
   };
 
-  // Filter and sort eggs
-  const filteredEggs = eggs.filter(
-    (egg) =>
-      egg.size.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      egg.color.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (egg.notes && egg.notes.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Filter and sort eggs - memoize to avoid recalculation on every render
+  const filteredAndSortedEggs = useMemo(() => {
+    // First filter eggs
+    const filtered = eggs.filter(
+      (egg) =>
+        egg.size.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        egg.color.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (egg.notes &&
+          egg.notes.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
 
-  const sortedEggs = [...filteredEggs].sort((a, b) => {
-    const { field, direction } = sortConfig;
+    // Then sort them
+    return [...filtered].sort((a, b) => {
+      const { field, direction } = sortConfig;
 
-    if (field === 'laid_date' || field === 'expiration_date') {
-      const dateA = new Date(a[field]);
-      const dateB = new Date(b[field]);
+      if (field === 'laid_date' || field === 'expiration_date') {
+        const dateA = new Date(a[field]);
+        const dateB = new Date(b[field]);
 
-      return direction === 'asc' ? dateA - dateB : dateB - dateA;
-    }
+        return direction === 'asc' ? dateA - dateB : dateB - dateA;
+      }
 
-    // For other fields
-    const valueA = (a[field] || '').toString().toLowerCase();
-    const valueB = (b[field] || '').toString().toLowerCase();
+      // For other fields
+      const valueA = (a[field] || '').toString().toLowerCase();
+      const valueB = (b[field] || '').toString().toLowerCase();
 
-    if (direction === 'asc') {
-      return valueA.localeCompare(valueB);
-    } else {
-      return valueB.localeCompare(valueA);
-    }
-  });
-  
-  // Pagination
-  const indexOfLastEgg = parentCurrentPage * eggsPerPage;
-  const indexOfFirstEgg = indexOfLastEgg - eggsPerPage;
-  const currentEggs = sortedEggs.slice(indexOfFirstEgg, indexOfLastEgg);
-  const totalPages = Math.ceil(sortedEggs.length / eggsPerPage);
-  
-  // Update parent component with pagination data
+      if (direction === 'asc') {
+        return valueA.localeCompare(valueB);
+      } else {
+        return valueB.localeCompare(valueA);
+      }
+    });
+  }, [eggs, searchTerm, sortConfig]);
+
+  // Calculate pagination values - memoize to prevent unnecessary recalculations
+  const paginationValues = useMemo(() => {
+    const indexOfLastEgg = parentCurrentPage * eggsPerPage;
+    const indexOfFirstEgg = indexOfLastEgg - eggsPerPage;
+    const currentEggs = filteredAndSortedEggs.slice(
+      indexOfFirstEgg,
+      indexOfLastEgg
+    );
+    const totalPages = Math.ceil(filteredAndSortedEggs.length / eggsPerPage);
+
+    return {
+      indexOfFirstEgg,
+      indexOfLastEgg,
+      currentEggs,
+      totalPages,
+    };
+  }, [filteredAndSortedEggs, parentCurrentPage, eggsPerPage]);
+
+  // Update parent component with pagination data when pagination values change
   useEffect(() => {
     onPaginationChange({
-      totalItems: sortedEggs.length,
-      totalPages: totalPages,
+      totalItems: filteredAndSortedEggs.length,
+      totalPages: paginationValues.totalPages,
       itemsPerPage: eggsPerPage,
-      currentPageFirstItemIndex: indexOfFirstEgg,
-      currentPageLastItemIndex: indexOfLastEgg - 1,
-      itemName: "eggs"
+      currentPageFirstItemIndex: paginationValues.indexOfFirstEgg,
+      currentPageLastItemIndex: Math.min(
+        paginationValues.indexOfLastEgg - 1,
+        filteredAndSortedEggs.length - 1
+      ),
+      itemName: 'eggs',
     });
-  }, [sortedEggs, parentCurrentPage, eggsPerPage, indexOfFirstEgg, indexOfLastEgg, totalPages, onPaginationChange]);
+  }, [paginationValues, filteredAndSortedEggs.length, onPaginationChange]);
 
   // Get sort icon
   const getSortIcon = (field) => {
@@ -290,8 +308,8 @@ const Eggs = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
                   </div>
                 </td>
               </tr>
-            ) : currentEggs.length > 0 ? (
-              currentEggs.map((egg) => (
+            ) : paginationValues.currentEggs.length > 0 ? (
+              paginationValues.currentEggs.map((egg) => (
                 <tr
                   key={egg.egg_record_id}
                   className="border-b bg-white hover:bg-gray-50"

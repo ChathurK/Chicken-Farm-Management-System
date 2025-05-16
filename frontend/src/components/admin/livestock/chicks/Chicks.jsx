@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, MagnifyingGlass, Pencil, Trash, SortAscending, SortDescending, X } from '@phosphor-icons/react';
 import { ConfirmationModal } from '../../buyers/BuyerModal';
 import api from '../../../../utils/api';
@@ -14,8 +14,6 @@ const Chicks = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAddEditModal, setShowAddEditModal] = useState(false);
   const [currentChick, setCurrentChick] = useState(null);
-  // Use parent's current page state instead of local state
-  // const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({
     field: 'hatched_date',
     direction: 'desc',
@@ -102,58 +100,79 @@ const Chicks = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
     setSortConfig({ field, direction });
   };
 
-  // Filter and sort chicks
-  const filteredChicks = chicks.filter(
-    (chick) =>
-      chick.parent_breed.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (chick.notes &&
-        chick.notes.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Filter and sort chicks - memoize to avoid recalculation on every render
+  const filteredAndSortedChicks = useMemo(() => {
+    // First filter chicks
+    const filtered = chicks.filter(
+      (chick) =>
+        chick.parent_breed.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (chick.notes &&
+          chick.notes.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
 
-  const sortedChicks = [...filteredChicks].sort((a, b) => {
-    const { field, direction } = sortConfig;
+    // Then sort them
+    return [...filtered].sort((a, b) => {
+      const { field, direction } = sortConfig;
 
-    if (field === 'hatched_date') {
-      const dateA = new Date(a[field]);
-      const dateB = new Date(b[field]);
+      if (field === 'hatched_date') {
+        const dateA = new Date(a[field]);
+        const dateB = new Date(b[field]);
 
-      return direction === 'asc' ? dateA - dateB : dateB - dateA;
-    }
+        return direction === 'asc' ? dateA - dateB : dateB - dateA;
+      }
 
-    if (field === 'quantity') {
-      return direction === 'asc'
-        ? a.quantity - b.quantity
-        : b.quantity - a.quantity;
-    }
+      if (field === 'quantity') {
+        return direction === 'asc'
+          ? a.quantity - b.quantity
+          : b.quantity - a.quantity;
+      }
 
-    // For other fields
-    const valueA = (a[field] || '').toString().toLowerCase();
-    const valueB = (b[field] || '').toString().toLowerCase();
+      // For other fields
+      const valueA = (a[field] || '').toString().toLowerCase();
+      const valueB = (b[field] || '').toString().toLowerCase();
 
-    if (direction === 'asc') {
-      return valueA.localeCompare(valueB);
-    } else {
-      return valueB.localeCompare(valueA);
-    }
-  });
+      if (direction === 'asc') {
+        return valueA.localeCompare(valueB);
+      } else {
+        return valueB.localeCompare(valueA);
+      }
+    });
+  }, [chicks, searchTerm, sortConfig]);
 
-  // Pagination
-  const indexOfLastChick = parentCurrentPage * chicksPerPage;
-  const indexOfFirstChick = indexOfLastChick - chicksPerPage;
-  const currentChicks = sortedChicks.slice(indexOfFirstChick, indexOfLastChick);
-  const totalPages = Math.ceil(sortedChicks.length / chicksPerPage);
-  
-  // Update parent component with pagination data
+  // Calculate pagination values - memoize to prevent unnecessary recalculations
+  const paginationValues = useMemo(() => {
+    const indexOfLastChick = parentCurrentPage * chicksPerPage;
+    const indexOfFirstChick = indexOfLastChick - chicksPerPage;
+    const currentChicks = filteredAndSortedChicks.slice(
+      indexOfFirstChick,
+      indexOfLastChick
+    );
+    const totalPages = Math.ceil(
+      filteredAndSortedChicks.length / chicksPerPage
+    );
+
+    return {
+      indexOfFirstChick,
+      indexOfLastChick,
+      currentChicks,
+      totalPages,
+    };
+  }, [filteredAndSortedChicks, parentCurrentPage, chicksPerPage]);
+
+  // Update parent component with pagination data when pagination values change
   useEffect(() => {
     onPaginationChange({
-      totalItems: sortedChicks.length,
-      totalPages: totalPages,
+      totalItems: filteredAndSortedChicks.length,
+      totalPages: paginationValues.totalPages,
       itemsPerPage: chicksPerPage,
-      currentPageFirstItemIndex: indexOfFirstChick,
-      currentPageLastItemIndex: indexOfLastChick - 1,
-      itemName: "chicks"
+      currentPageFirstItemIndex: paginationValues.indexOfFirstChick,
+      currentPageLastItemIndex: Math.min(
+        paginationValues.indexOfLastChick - 1,
+        filteredAndSortedChicks.length - 1
+      ),
+      itemName: 'chicks',
     });
-  }, [sortedChicks, parentCurrentPage, chicksPerPage, indexOfFirstChick, indexOfLastChick, totalPages, onPaginationChange]);
+  }, [paginationValues, filteredAndSortedChicks.length, onPaginationChange]);
 
   // Get sort icon
   const getSortIcon = (field) => {
@@ -278,8 +297,8 @@ const Chicks = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
                   </div>
                 </td>
               </tr>
-            ) : currentChicks.length > 0 ? (
-              currentChicks.map((chick) => (
+            ) : paginationValues.currentChicks.length > 0 ? (
+              paginationValues.currentChicks.map((chick) => (
                 <tr
                   key={chick.chick_record_id}
                   className="border-b bg-white hover:bg-gray-50"
