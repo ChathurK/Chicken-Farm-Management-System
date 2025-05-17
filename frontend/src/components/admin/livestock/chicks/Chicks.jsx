@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Plus, MagnifyingGlass, Pencil, Trash, SortAscending, SortDescending, X } from '@phosphor-icons/react';
+import { Plus, MagnifyingGlass, Pencil, Trash, SortAscending, SortDescending, X, Info } from '@phosphor-icons/react';
 import { ConfirmationModal } from '../../buyers/BuyerModal';
 import api from '../../../../utils/api';
 import ChickModal from './ChickModal';
@@ -15,8 +15,8 @@ const Chicks = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
   const [showAddEditModal, setShowAddEditModal] = useState(false);
   const [currentChick, setCurrentChick] = useState(null);
   const [sortConfig, setSortConfig] = useState({
-    field: 'hatched_date',
-    direction: 'desc',
+    field: '',
+    direction: '',
   });
 
   const chicksPerPage = 10;
@@ -172,17 +172,18 @@ const Chicks = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
       ),
       itemName: 'chicks',
     };
-    
+
     // Use JSON.stringify to compare only when the actual content changes
     const paginationString = JSON.stringify(paginationData);
-    
+
     // Store the previous pagination string using a ref to avoid unnecessary updates
     if (lastPaginationRef.current !== paginationString) {
       lastPaginationRef.current = paginationString;
       onPaginationChange(paginationData);
     }
   }, [filteredAndSortedChicks.length, parentCurrentPage, paginationValues, onPaginationChange, chicksPerPage]);
-    // Ref to store previous pagination string to prevent circular updates
+
+  // Ref to store previous pagination string to prevent circular updates
   const lastPaginationRef = useRef("");
 
   // Get sort icon
@@ -200,8 +201,28 @@ const Chicks = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
 
   // Format date
   const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    // Fix: Use local time instead of UTC to avoid off-by-one errors
     const date = new Date(dateString);
-    return date.toLocaleDateString();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Calculate age in weeks or days based on hatched date
+  const calculateAge = (hatchedDate) => {
+    if (!hatchedDate) return '-';
+    const hatched = new Date(hatchedDate);
+    const today = new Date();
+    const diffTime = today - hatched;
+    if (diffTime < 0) return '0 days';
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays < 7) {
+      return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+    }
+    const weeks = Math.floor(diffDays / 7);
+    return `${weeks} week${weeks !== 1 ? 's' : ''}`;
   };
 
   return (
@@ -281,6 +302,9 @@ const Chicks = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
                   {getSortIcon('hatched_date')}
                 </div>
               </th>
+              <th scope="col" className="px-4 py-3">
+                Age
+              </th>
               <th
                 scope="col"
                 className="cursor-pointer px-4 py-3 hover:text-amber-600"
@@ -319,6 +343,9 @@ const Chicks = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
                   </td>
                   <td className="px-4 py-4">
                     {formatDate(chick.hatched_date)}
+                  </td>
+                  <td className="px-4 py-4">
+                    {calculateAge(chick.hatched_date)}
                   </td>
                   <td className="px-4 py-4">{chick.quantity}</td>
                   <td className="max-w-xs truncate px-4 py-4">

@@ -35,10 +35,7 @@ export default function AdminSidebarContent() {
         <SidebarItem text="Chicks" to="/admin/livestock/chicks" />
         <SidebarItem text="Chickens" to="/admin/livestock/chickens" />
       </SubMenu>
-      <SubMenu
-        icon={<ArchiveBox size={20} weight="duotone" />}
-        text="Inventory"
-      >
+      <SubMenu icon={<ArchiveBox size={20} weight="duotone" />} text="Inventory">
         <SidebarItem text="Feed" to="/admin/inventory/feed" />
         <SidebarItem text="Medications" to="/admin/inventory/medications" />
         <SidebarItem text="Other" to="/admin/inventory/other" />

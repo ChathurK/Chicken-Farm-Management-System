@@ -19,7 +19,13 @@ const ChickModal = ({ isOpen, onClose, onSave, chick }) => {
     if (chick) {
       // Format dates for input field
       const formattedHatchedDate = chick.hatched_date
-        ? new Date(chick.hatched_date).toISOString().split('T')[0]
+        ? (() => {
+          const date = new Date(chick.hatched_date);
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        })()
         : '';
 
       setFormData({
@@ -68,9 +74,17 @@ const ChickModal = ({ isOpen, onClose, onSave, chick }) => {
     if (!formData.hatched_date)
       errors.hatched_date = 'Hatched date is required';
 
-    if (!formData.quantity) errors.quantity = 'Quantity is required';
-    else if (parseInt(formData.quantity) < 0)
-      errors.quantity = 'Quantity must be 0 or a positive number';
+    if (!formData.quantity && formData.quantity !== 0) {
+      errors.quantity = 'Quantity is required';
+    } else if (
+      chick
+        ? parseInt(formData.quantity) < 0
+        : parseInt(formData.quantity) <= 0
+    ) {
+      errors.quantity = chick
+        ? 'Quantity cannot be negative'
+        : 'Quantity must be greater than 0';
+    }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -149,7 +163,7 @@ const ChickModal = ({ isOpen, onClose, onSave, chick }) => {
             <input
               type="number"
               name="quantity"
-              min="1"
+              min="0"
               value={formData.quantity}
               onChange={handleChange}
               className={`w-full rounded-lg border ${

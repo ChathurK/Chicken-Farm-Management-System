@@ -39,7 +39,7 @@ router.put(
   [
     check('parent_breed', 'Parent breed is required').optional(),
     check('hatched_date', 'Valid hatched date is required').optional().isDate(),
-    check('quantity', 'Quantity must be a positive number').optional().isInt({ min: 1 })
+    check('quantity', 'Quantity must be a positive number').optional().isInt({ min: 0 })
   ],
   chickController.updateChick
 );

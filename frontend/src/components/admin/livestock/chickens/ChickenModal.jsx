@@ -194,14 +194,14 @@ const ChickenModal = ({ isOpen, onClose, onSave, chicken }) => {
                     weight="duotone" 
                   />
                   <div className="invisible absolute left-0 top-full z-10 w-64 rounded-md bg-gray-800 p-2 text-xs text-white opacity-0 transition-opacity duration-300 group-hover:visible group-hover:opacity-100">
-                    This is the age of the chickens when they were acquired. The current age will be calculated automatically based on this value and the acquisition date.
+                    This is the age of the chickens in weeks when they were acquired.
                   </div>
                 </div>
               </label>
               <input
                 type="number"
                 name="age_weeks"
-                min="1"
+                min="0"
                 value={formData.age_weeks}
                 onChange={handleChange}
                 className={`w-full rounded-lg border ${
