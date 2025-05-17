@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FloppyDisk } from '@phosphor-icons/react';
+import { FloppyDisk, Info } from '@phosphor-icons/react';
 import BuyerModal from '../../buyers/BuyerModal';
 
 const ChickenModal = ({ isOpen, onClose, onSave, chicken }) => {
@@ -19,9 +19,15 @@ const ChickenModal = ({ isOpen, onClose, onSave, chicken }) => {
   // Set form data when modal opens with chicken data
   useEffect(() => {
     if (chicken) {
-      // Format dates for input field
+      // Format dates for input field (use local date to avoid timezone issues)
       const formattedAcquisitionDate = chicken.acquisition_date
-        ? new Date(chicken.acquisition_date).toISOString().split('T')[0]
+        ? (() => {
+            const d = new Date(chicken.acquisition_date);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+          })()
         : '';
 
       setFormData({
@@ -71,12 +77,18 @@ const ChickenModal = ({ isOpen, onClose, onSave, chicken }) => {
     if (!formData.breed || formData.breed.trim() === '')
       errors.breed = 'Breed is required';
 
-    if (!formData.quantity) errors.quantity = 'Quantity is required';
-    else if (parseInt(formData.quantity) < 0)
-      errors.quantity = 'Quantity must be 0 or a positive number';
-
+    if (!formData.quantity && formData.quantity !== 0) {
+      errors.quantity = 'Quantity is required';
+    } else if (
+      (chicken ? parseInt(formData.quantity) < 0 : parseInt(formData.quantity) <= 0)
+    ) {
+      errors.quantity = chicken
+      ? 'Quantity cannot be negative'
+      : 'Quantity must be greater than 0';
+    }
+    
     if (formData.age_weeks && parseInt(formData.age_weeks) <= 0)
-      errors.age_weeks = 'Age must be a positive number';
+      errors.age_weeks = 'Initial age at acquisition must be a positive number';
 
     if (!formData.acquisition_date)
       errors.acquisition_date = 'Acquisition date is required';
@@ -158,7 +170,7 @@ const ChickenModal = ({ isOpen, onClose, onSave, chicken }) => {
               <input
                 type="number"
                 name="quantity"
-                min="1"
+                min="0"
                 value={formData.quantity}
                 onChange={handleChange}
                 className={`w-full rounded-lg border ${
@@ -173,8 +185,18 @@ const ChickenModal = ({ isOpen, onClose, onSave, chicken }) => {
               )}
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Age (Weeks)
+              <label className="mb-1 flex items-center gap-1 text-sm font-medium text-gray-700">
+                Age at Acquisition
+                <div className="group relative inline-block">
+                  <Info 
+                    size={16} 
+                    className="cursor-help text-gray-500" 
+                    weight="duotone" 
+                  />
+                  <div className="invisible absolute left-0 top-full z-10 w-64 rounded-md bg-gray-800 p-2 text-xs text-white opacity-0 transition-opacity duration-300 group-hover:visible group-hover:opacity-100">
+                    This is the age of the chickens when they were acquired. The current age will be calculated automatically based on this value and the acquisition date.
+                  </div>
+                </div>
               </label>
               <input
                 type="number"

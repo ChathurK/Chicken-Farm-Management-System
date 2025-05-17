@@ -7,6 +7,12 @@ class Chicken {
         return result.insertId;
     }
 
+    static async findAll() {
+        const query = `SELECT * FROM Chicken_Records ORDER BY chicken_record_id DESC`;
+        const [rows] = await db.execute(query);
+        return rows;
+    }
+
     static async findById(id) {
         const query = `SELECT * FROM Chicken_Records WHERE chicken_record_id = ?`;
         const [rows] = await db.execute(query, [id]);
@@ -26,6 +32,8 @@ class Chicken {
             query += ` AND breed = ?`;
             params.push(breed);
         }
+
+        query += ` ORDER BY chicken_record_id DESC`;
         
         const [rows] = await db.execute(query, params);
         return rows;

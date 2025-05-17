@@ -17,8 +17,7 @@ exports.getAllChickens = async (req, res) => {
     }
     
     // If no filters, get all chickens
-    const query = 'SELECT * FROM Chicken_Records';
-    const [chickens] = await db.execute(query);
+    const chickens = await Chicken.findAll();
     res.json(chickens);
   } catch (err) {
     console.error(err.message);

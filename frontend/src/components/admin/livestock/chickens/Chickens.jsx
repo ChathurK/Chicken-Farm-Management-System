@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Plus, MagnifyingGlass, Pencil, Trash, SortAscending, SortDescending, CaretLeft, CaretRight, X } from '@phosphor-icons/react';
+import { Plus, MagnifyingGlass, Pencil, Trash, SortAscending, SortDescending, X, Info } from '@phosphor-icons/react';
 import { ConfirmationModal } from '../../buyers/BuyerModal';
 import api from '../../../../utils/api';
 import ChickenModal from './ChickenModal';
@@ -15,8 +15,8 @@ const Chickens = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
   const [showAddEditModal, setShowAddEditModal] = useState(false);
   const [currentChicken, setCurrentChicken] = useState(null);
   const [sortConfig, setSortConfig] = useState({
-    field: 'acquisition_date',
-    direction: 'desc',
+    field: '',
+    direction: '',
   });
 
   const chickensPerPage = 10;
@@ -161,7 +161,7 @@ const Chickens = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
   }, [filteredAndSortedChickens, parentCurrentPage, chickensPerPage]);
   // Ref to store previous pagination string to prevent circular updates
   const lastPaginationRef = useRef("");
-  
+
   // Update parent component with pagination data when pagination values change
   useEffect(() => {
     // Create a pagination data object
@@ -176,10 +176,10 @@ const Chickens = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
       ),
       itemName: 'chickens',
     };
-    
+
     // Use JSON.stringify to compare only when the actual content changes
     const paginationString = JSON.stringify(paginationData);
-    
+
     // Only update if the pagination data actually changed
     if (lastPaginationRef.current !== paginationString) {
       lastPaginationRef.current = paginationString;
@@ -202,8 +202,31 @@ const Chickens = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
 
   // Format date
   const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    // Fix: Use local time instead of UTC to avoid off-by-one errors
     const date = new Date(dateString);
-    return date.toLocaleDateString();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Calculate current age in months based on acquisition date and initial age (in weeks)
+  const calculateCurrentAge = (acquisitionDate, initialAgeWeeks) => {
+    if (!acquisitionDate || initialAgeWeeks === null || initialAgeWeeks === undefined) {
+      return '-';
+    }
+
+    const acquisition = new Date(acquisitionDate);
+    const today = new Date();
+    // Calculate the difference in days
+    const diffDays = Math.floor((today - acquisition) / (1000 * 60 * 60 * 24));
+    // Add initial age and the number of full weeks passed since acquisition
+    const totalWeeks = parseInt(initialAgeWeeks || 0) + Math.floor(diffDays / 7);
+    // Convert weeks to months
+    const months = parseInt(totalWeeks / 4);
+
+    return `${months} month${months !== 1 ? 's' : ''}`;
   };
 
   return (
@@ -295,12 +318,10 @@ const Chickens = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
               </th>
               <th
                 scope="col"
-                className="cursor-pointer px-4 py-3 hover:text-amber-600"
-                onClick={() => handleSort('age_weeks')}
+                className="px-4 py-3"
               >
                 <div className="flex items-center">
-                  Age (Weeks)
-                  {getSortIcon('age_weeks')}
+                  Current Age
                 </div>
               </th>
               <th
@@ -322,6 +343,7 @@ const Chickens = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
             </tr>
           </thead>
           <tbody>
+
             {loading ? (
               <tr>
                 <td colSpan="7" className="px-4 py-10 text-center">
@@ -343,7 +365,9 @@ const Chickens = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
                     {chicken.breed}
                   </td>
                   <td className="px-4 py-4">{chicken.quantity}</td>
-                  <td className="px-4 py-4">{chicken.age_weeks || '-'}</td>
+                  <td className="px-4 py-4">
+                    {calculateCurrentAge(chicken.acquisition_date, chicken.age_weeks)}
+                  </td>
                   <td className="px-4 py-4">
                     {formatDate(chicken.acquisition_date)}
                   </td>
@@ -399,7 +423,7 @@ const Chickens = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
       {/* Add/Edit Chicken Modal */}
       <ChickenModal
         isOpen={showAddEditModal}
-        onClose={() => setShowAddEditModal(false)}
+        onClose={() => { setShowAddEditModal(false); setError(null) }}
         onSave={handleSaveChicken}
         chicken={currentChicken}
       />

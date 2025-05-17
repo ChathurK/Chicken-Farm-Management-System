@@ -42,7 +42,7 @@ router.put(
     check("breed", "Breed is required").optional(),
     check("quantity", "Quantity must be a positive number")
       .optional()
-      .isInt({ min: 1 }),
+      .isInt({ min: 0 }),
     // Use custom validation for the date
     check("acquisition_date", "Valid acquisition date is required")
       .optional()
