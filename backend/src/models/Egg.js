@@ -7,6 +7,12 @@ class Egg {
         return result.insertId;
     }
 
+    static async findAll() {
+        const query = `SELECT * FROM Egg_Records ORDER BY egg_record_id DESC`;
+        const [rows] = await db.execute(query);
+        return rows;
+    }
+
     static async findById(id) {
         const query = `SELECT * FROM Egg_Records WHERE egg_record_id = ?`;
         const [rows] = await db.execute(query, [id]);

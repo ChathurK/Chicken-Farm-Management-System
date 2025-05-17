@@ -19,13 +19,17 @@ const EggModal = ({ isOpen, onClose, onSave, egg }) => {
   // Set form data when modal opens with egg data
   useEffect(() => {
     if (egg) {
-      // Format dates for input field
-      const formattedLaidDate = egg.laid_date
-        ? new Date(egg.laid_date).toISOString().split('T')[0]
-        : '';
-      const formattedExpirationDate = egg.expiration_date
-        ? new Date(egg.expiration_date).toISOString().split('T')[0]
-        : '';
+      // Format dates for input field using local time to avoid off-by-one errors
+      const formatDate = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      const formattedLaidDate = formatDate(egg.laid_date);
+      const formattedExpirationDate = formatDate(egg.expiration_date);
 
       setFormData({
         laid_date: formattedLaidDate,
@@ -80,9 +84,15 @@ const EggModal = ({ isOpen, onClose, onSave, egg }) => {
     if (new Date(formData.expiration_date) <= new Date(formData.laid_date))
       errors.expiration_date = 'Expiration date must be after laid date';
 
-    if (!formData.quantity) errors.quantity = 'Quantity is required';
-    else if (parseInt(formData.quantity) < 0)
-      errors.quantity = 'Quantity must be 0 or a positive number';
+    if (!formData.quantity && formData.quantity !== 0) {
+      errors.quantity = 'Quantity is required';
+    } else if (
+      egg ? parseInt(formData.quantity) < 0 : parseInt(formData.quantity) <= 0
+    ) {
+      errors.quantity = egg
+        ? 'Quantity cannot be negative'
+        : 'Quantity must be greater than 0';
+    }
 
     if (!formData.size) errors.size = 'Size is required';
 
@@ -195,7 +205,6 @@ const EggModal = ({ isOpen, onClose, onSave, egg }) => {
                 <option value="Small">Small</option>
                 <option value="Medium">Medium</option>
                 <option value="Large">Large</option>
-                <option value="Extra Large">Extra Large</option>
               </select>
               {formErrors.size && (
                 <p className="mt-1 text-sm text-red-500">{formErrors.size}</p>
@@ -215,7 +224,6 @@ const EggModal = ({ isOpen, onClose, onSave, egg }) => {
               >
                 <option value="White">White</option>
                 <option value="Brown">Brown</option>
-                <option value="Other">Other</option>
               </select>
               {formErrors.color && (
                 <p className="mt-1 text-sm text-red-500">{formErrors.color}</p>

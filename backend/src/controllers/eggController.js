@@ -17,8 +17,7 @@ exports.getAllEggs = async (req, res) => {
     }
     
     // If no filters, get all eggs
-    const query = 'SELECT * FROM Egg_Records';
-    const [eggs] = await db.execute(query);
+    const eggs = await Egg.findAll();
     res.json(eggs);
   } catch (err) {
     console.error(err.message);
