@@ -75,16 +75,18 @@ const routes = [
       { path: '/admin/sellers/edit/:id', element: <SellerForm /> },
       { path: '/admin/sellers/:id', element: <SellerDetails /> },
       // Employees routes
-      { path: '/admin/employees', element: <Employees /> },      // Livestock routes
+      { path: '/admin/employees', element: <Employees /> },
+      // Livestock routes
       { path: '/admin/livestock', element: <Navigate to="/admin/livestock/eggs" replace /> },
       { path: '/admin/livestock/:type', element: <Livestock /> },
       // Inventory routes
-      { path: '/admin/inventory/feed', element: <Inventory /> },
-      { path: '/admin/inventory/medications', element: <Inventory /> },
-      { path: '/admin/inventory/other', element: <Inventory /> },
+      { path: '/admin/inventory', element: <Navigate to="/admin/inventory/feed" replace /> },
       { path: '/admin/inventory/reports', element: <InventoryReports /> },
       { path: '/admin/inventory/add/:category', element: <InventoryForm /> },
       { path: '/admin/inventory/edit/:id', element: <InventoryForm /> },
+      { path: '/admin/inventory/feed', element: <Inventory /> },
+      { path: '/admin/inventory/medication', element: <Inventory /> },
+      { path: '/admin/inventory/other', element: <Inventory /> },
       { path: '/admin/inventory/:id', element: <InventoryDetails /> },
     ],
   },

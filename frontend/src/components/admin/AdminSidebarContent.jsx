@@ -37,7 +37,7 @@ export default function AdminSidebarContent() {
       </SubMenu>
       <SubMenu icon={<ArchiveBox size={20} weight="duotone" />} text="Inventory">
         <SidebarItem text="Feed" to="/admin/inventory/feed" />
-        <SidebarItem text="Medications" to="/admin/inventory/medications" />
+        <SidebarItem text="Medications" to="/admin/inventory/medication" />
         <SidebarItem text="Other" to="/admin/inventory/other" />
         <SidebarItem text="Reports" to="/admin/inventory/reports" />
       </SubMenu>

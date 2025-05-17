@@ -1,78 +1,63 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Plus,
-  MagnifyingGlass,
-  Pencil,
-  Trash,
-  Eye,
-  SortAscending,
-  SortDescending,
-  CaretLeft,
-  CaretRight,
-  X,
-  Warning,
-} from '@phosphor-icons/react';
+import { Plus, MagnifyingGlass, Pencil, Trash, Eye, SortAscending, SortDescending, X, Warning } from '@phosphor-icons/react';
 import { ConfirmationModal } from '../InventoryModal';
 import api from '../../../../utils/api';
 
-const Feed = () => {
+const Feed = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
   const navigate = useNavigate();
 
   // State variables
-  const [inventory, setInventory] = useState([]);
+  const [feed, setFeed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [itemToDelete, setItemToDelete] = useState(null);
+  const [feedToDelete, setFeedToDelete] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({
-    field: 'item_name',
-    direction: 'asc',
+    field: '',
+    direction: '',
   });
 
-  const itemsPerPage = 10;
+  const feedsPerPage = 10;
 
-  // Fetch inventory
-  const fetchInventory = async () => {
+  // Fetch Feed
+  const fetchFeed = async () => {
     try {
       setLoading(true);
       const response = await api.get('/api/inventory/category/Feed');
-      setInventory(response.data);
+      setFeed(response.data);
       setLoading(false);
     } catch (err) {
-      setError('Failed to load inventory. Please try again.');
+      setError('Failed to load feed. Please try again.');
       setLoading(false);
-      console.error('Error fetching inventory:', err);
+      console.error('Error fetching feed:', err);
     }
   };
 
   useEffect(() => {
-    fetchInventory();
+    fetchFeed();
   }, []);
 
   // Handle delete
-  const handleDeleteClick = (item) => {
-    setItemToDelete(item);
+  const handleDeleteClick = (feed) => {
+    setFeedToDelete(feed);
     setShowDeleteModal(true);
   };
 
   const confirmDelete = async () => {
     try {
-      await api.delete(`/api/inventory/${itemToDelete.inventory_id}`);
-      setInventory(
-        inventory.filter(
-          (item) => item.inventory_id !== itemToDelete.inventory_id
-        )
+      await api.delete(`/api/inventory/${feedToDelete.inventory_id}`);
+      setFeed(
+        feed.filter((feed) => feed.inventory_id !== feedToDelete.inventory_id)
       );
       setShowDeleteModal(false);
     } catch (err) {
       setError(
         err.response?.data?.msg ||
-          'Failed to delete inventory item. Please try again.'
+        'Failed to delete feed item. Please try again.'
       );
-      console.error('Error deleting inventory item:', err);
+      console.error('Error deleting feed item:', err);
     }
   };
 
@@ -85,49 +70,97 @@ const Feed = () => {
     setSortConfig({ field, direction });
   };
 
-  // Filter and sort inventory
-  const filteredInventory = inventory.filter(
-    (item) =>
-      item.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.status &&
-        item.status.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Filter and sort feed - memorize to avid recalculation on every render
+  const filteredAndSortedFeed = useMemo(() => {
+    const filtered = feed.filter(
+      (feed) =>
+        feed.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (feed.status &&
+          feed.status.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
 
-  const sortedInventory = [...filteredInventory].sort((a, b) => {
-    const { field, direction } = sortConfig;
+    return [...filtered].sort((a, b) => {
+      const { field, direction } = sortConfig;
 
-    // Handle special numeric fields
-    if (field === 'quantity' || field === 'cost_per_unit') {
-      const valueA = parseFloat(a[field]) || 0;
-      const valueB = parseFloat(b[field]) || 0;
+      // Handle special numeric fields
+      if (field === 'quantity' || field === 'cost_per_unit') {
+        const valueA = parseFloat(a[field]) || 0;
+        const valueB = parseFloat(b[field]) || 0;
 
-      return direction === 'asc' ? valueA - valueB : valueB - valueA;
+        return direction === 'asc' ? valueA - valueB : valueB - valueA;
+      }
+
+      // Handle date fields
+      if (field === 'purchase_date' || field === 'expiration_date') {
+        const dateA = a[field] ? new Date(a[field]) : new Date(0);
+        const dateB = b[field] ? new Date(b[field]) : new Date(0);
+
+        return direction === 'asc' ? dateA - dateB : dateB - dateA;
+      }
+
+      // For string fields
+      const valueA = (a[field] || '').toLowerCase();
+      const valueB = (b[field] || '').toLowerCase();
+
+      if (direction === 'asc') {
+        return valueA.localeCompare(valueB);
+      } else {
+        return valueB.localeCompare(valueA);
+      }
+    });
+  }, [feed, searchTerm, sortConfig]);
+
+  // Calculate pagination values - memoize to prevent unnecessary recalculations
+  const paginationValues = useMemo(() => {
+    const indexOfLastFeed = parentCurrentPage * feedsPerPage;
+    const indexOfFirstFeed = indexOfLastFeed - feedsPerPage;
+    const currentFeeds = filteredAndSortedFeed.slice(
+      indexOfFirstFeed,
+      indexOfLastFeed
+    );
+    const totalPages = Math.ceil(filteredAndSortedFeed.length / feedsPerPage);
+
+    return {
+      indexOfFirstFeed,
+      indexOfLastFeed,
+      currentFeeds,
+      totalPages,
+    };
+  }, [filteredAndSortedFeed, parentCurrentPage, feedsPerPage]);
+
+  // Ref to store previous pagination string to prevent circular updates
+  const lastPaginationRef = useRef('');
+
+  // Update parent component with pagination data when pagination values change
+  useEffect(() => {
+    // Create a pagination data object
+    const paginationData = {
+      totalItems: filteredAndSortedFeed.length,
+      totalPages: paginationValues.totalPages,
+      itemsPerPage: feedsPerPage,
+      currentPageFirstItemIndex: paginationValues.indexOfFirstFeed,
+      currentPageLastItemIndex: Math.min(
+        paginationValues.indexOfLastFeed - 1,
+        filteredAndSortedFeed.length - 1
+      ),
+      itemName: 'feed items',
+    };
+
+    // Use JSON.stringify to compare only when the actual content changes
+    const paginationString = JSON.stringify(paginationData);
+
+    // Only update if the pagination data actually changed
+    if (lastPaginationRef.current !== paginationString) {
+      lastPaginationRef.current = paginationString;
+      onPaginationChange(paginationData);
     }
-
-    // Handle date fields
-    if (field === 'purchase_date' || field === 'expiration_date') {
-      const dateA = a[field] ? new Date(a[field]) : new Date(0);
-      const dateB = b[field] ? new Date(b[field]) : new Date(0);
-
-      return direction === 'asc' ? dateA - dateB : dateB - dateA;
-    }
-
-    // For string fields
-    const valueA = (a[field] || '').toLowerCase();
-    const valueB = (b[field] || '').toLowerCase();
-
-    if (direction === 'asc') {
-      return valueA.localeCompare(valueB);
-    } else {
-      return valueB.localeCompare(valueA);
-    }
-  });
-
-  // Pagination
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = sortedInventory.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(sortedInventory.length / itemsPerPage);
+  }, [
+    filteredAndSortedFeed.length,
+    parentCurrentPage,
+    paginationValues,
+    onPaginationChange,
+    feedsPerPage,
+  ]);
 
   // Get sort icon
   const getSortIcon = (field) => {
@@ -144,9 +177,13 @@ const Feed = () => {
 
   // Format date
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return '-';
+    // Fix: Use local time instead of UTC to avoid off-by-one errors
     const date = new Date(dateString);
-    return date.toLocaleDateString();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   // Get status color
@@ -218,25 +255,16 @@ const Feed = () => {
               onClick={() => setSearchTerm('')}
               className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
             >
-              <X size={18} />
+              <X size={18} weight='bold' />
             </button>
           )}
-        </div>
-
-        <div className="ml-4">
-          <button
-            onClick={() => navigate('/admin/inventory/reports')}
-            className="flex items-center gap-1 rounded-lg border border-amber-500 bg-white px-4 py-2 text-amber-500 hover:bg-amber-50"
-          >
-            Reports
-          </button>
         </div>
       </div>
 
       {/* Inventory Table */}
-      <div className="flex-1 overflow-auto rounded-lg border border-gray-200 shadow-sm">
+      <div className="h-[calc(100vh-462px)] overflow-auto rounded-lg border border-gray-200 shadow-md">
         <table className="w-full text-left text-sm text-gray-500">
-          <thead className="bg-gray-50 text-xs uppercase text-gray-700">
+          <thead className="sticky top-0 bg-gray-50 text-xs uppercase text-gray-700">
             <tr>
               <th
                 scope="col"
@@ -302,25 +330,25 @@ const Feed = () => {
                   </div>
                 </td>
               </tr>
-            ) : currentItems.length > 0 ? (
-              currentItems.map((item) => (
+            ) : paginationValues.currentFeeds.length > 0 ? (
+              paginationValues.currentFeeds.map((feed) => (
                 <tr
-                  key={item.inventory_id}
+                  key={feed.inventory_id}
                   className="border-b bg-white hover:bg-gray-50"
                 >
                   <td className="whitespace-nowrap px-4 py-4 font-medium text-gray-900">
-                    {item.item_name}
+                    {feed.item_name}
                   </td>
                   <td className="px-4 py-4">
-                    {item.quantity} {item.unit}
+                    {feed.quantity} {feed.unit}
                   </td>
                   <td className="px-4 py-4">
-                    {formatDate(item.purchase_date)}
+                    {formatDate(feed.purchase_date)}
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex items-center">
-                      {formatDate(item.expiration_date)}
-                      {isExpiringSoon(item.expiration_date) && (
+                      {formatDate(feed.expiration_date)}
+                      {isExpiringSoon(feed.expiration_date) && (
                         <Warning
                           size={16}
                           className="ml-2 text-yellow-500"
@@ -331,15 +359,15 @@ const Feed = () => {
                   </td>
                   <td className="px-4 py-4">
                     <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(item.status)}`}
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(feed.status)}`}
                     >
-                      {item.status}
+                      {feed.status}
                     </span>
                   </td>
                   <td className="flex justify-end gap-2 px-4 py-4">
                     <button
                       onClick={() =>
-                        navigate(`/admin/inventory/${item.inventory_id}`)
+                        navigate(`/admin/inventory/${feed.inventory_id}`)
                       }
                       className="text-amber-500 hover:text-amber-700"
                       title="View Details"
@@ -348,7 +376,7 @@ const Feed = () => {
                     </button>
                     <button
                       onClick={() =>
-                        navigate(`/admin/inventory/edit/${item.inventory_id}`)
+                        navigate(`/admin/inventory/edit/${feed.inventory_id}`)
                       }
                       className="text-blue-500 hover:text-blue-700"
                       title="Edit"
@@ -356,7 +384,7 @@ const Feed = () => {
                       <Pencil size={20} weight="duotone" />
                     </button>
                     <button
-                      onClick={() => handleDeleteClick(item)}
+                      onClick={() => handleDeleteClick(feed)}
                       className="text-red-500 hover:text-red-700"
                       title="Delete"
                     >
@@ -376,60 +404,18 @@ const Feed = () => {
         </table>
       </div>
 
-      {/* Pagination */}
-      {!loading && sortedInventory.length > itemsPerPage && (
-        <div className="mt-4 flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            Showing {indexOfFirstItem + 1} to{' '}
-            {Math.min(indexOfLastItem, sortedInventory.length)} of{' '}
-            {sortedInventory.length} items
-          </div>
-          <div className="flex">
-            {/* Previous Button */}
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className={`flex items-center rounded-l-lg border bg-gray-100 px-3 py-1 text-gray-700 ${
-                currentPage === 1
-                  ? 'cursor-not-allowed opacity-50'
-                  : 'hover:text-amber-500'
-              }`}
-            >
-              <CaretLeft size={14} weight="duotone" />
-              Prev
-            </button>
-
-            {/* Next Button */}
-            <button
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-              className={`flex items-center rounded-r-lg border bg-gray-100 px-3 py-1 text-gray-700 ${
-                currentPage === totalPages
-                  ? 'cursor-not-allowed opacity-50'
-                  : 'hover:text-amber-500'
-              }`}
-            >
-              Next
-              <CaretRight size={14} weight="duotone" />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Delete Confirmation Modal */}
       <ConfirmationModal
         isOpen={showDeleteModal}
         title="Delete Inventory Item"
-        message={`Are you sure you want to delete the inventory item "${itemToDelete?.item_name}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete the inventory item "${feedToDelete?.item_name}"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         confirmButtonClass="bg-red-500 hover:bg-red-600"
         onConfirm={confirmDelete}
         onCancel={() => {
           setShowDeleteModal(false);
-          setItemToDelete(null);
+          setFeedToDelete(null);
           setError(null);
         }}
       />

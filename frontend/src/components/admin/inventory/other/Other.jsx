@@ -1,22 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Plus,
-  MagnifyingGlass,
-  Pencil,
-  Trash,
-  Eye,
-  SortAscending,
-  SortDescending,
-  CaretLeft,
-  CaretRight,
-  X,
-  Warning,
-} from '@phosphor-icons/react';
+import { Plus, MagnifyingGlass, Pencil, Trash, Eye, SortAscending, SortDescending, X } from '@phosphor-icons/react';
 import { ConfirmationModal } from '../InventoryModal';
 import api from '../../../../utils/api';
 
-const Other = () => {
+const Other = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
   const navigate = useNavigate();
 
   // State variables
@@ -26,10 +14,9 @@ const Other = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [itemToDelete, setItemToDelete] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({
-    field: 'item_name',
-    direction: 'asc',
+    field: '',
+    direction: '',
   });
 
   const itemsPerPage = 10;
@@ -94,61 +81,99 @@ const Other = () => {
     setSortConfig({ field, direction });
   };
 
-  // Filter and sort inventory
-  const filteredInventory = inventory.filter(
-    (item) =>
-      item.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.status &&
-        item.status.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (item.category &&
-        item.category.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Filter and sort inventory - memorize to avoid recalculation on every render
+  const filteredAndSortedInventory = useMemo(() => {
+    const filtered = inventory.filter(
+      (item) =>
+        item.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.status &&
+          item.status.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (item.category &&
+          item.category.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
 
-  const sortedInventory = [...filteredInventory].sort((a, b) => {
-    const { field, direction } = sortConfig;
+    return [...filtered].sort((a, b) => {
+      const { field, direction } = sortConfig;
 
-    // For category field, sort alphabetically
-    if (field === 'category') {
+      // Handle special numeric fields
+      if (field === 'quantity' || field === 'cost_per_unit') {
+        const valueA = parseFloat(a[field]) || 0;
+        const valueB = parseFloat(b[field]) || 0;
+
+        return direction === 'asc' ? valueA - valueB : valueB - valueA;
+      }
+
+      // Handle date fields
+      if (field === 'purchase_date' || field === 'expiration_date') {
+        const dateA = a[field] ? new Date(a[field]) : new Date(0);
+        const dateB = b[field] ? new Date(b[field]) : new Date(0);
+
+        return direction === 'asc' ? dateA - dateB : dateB - dateA;
+      }
+
+      // For string fields
       const valueA = (a[field] || '').toLowerCase();
       const valueB = (b[field] || '').toLowerCase();
 
-      return direction === 'asc'
-        ? valueA.localeCompare(valueB)
-        : valueB.localeCompare(valueA);
+      if (direction === 'asc') {
+        return valueA.localeCompare(valueB);
+      } else {
+        return valueB.localeCompare(valueA);
+      }
+    });
+  }, [inventory, searchTerm, sortConfig]);
+
+  // Calculate pagination values - memoize to prevent unnecessary recalculations
+  const paginationValues = useMemo(() => {
+    const indexOfLastItem = parentCurrentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredAndSortedInventory.slice(
+      indexOfFirstItem,
+      indexOfLastItem
+    );
+    const totalPages = Math.ceil(filteredAndSortedInventory.length / itemsPerPage);
+
+    return {
+      indexOfFirstItem,
+      indexOfLastItem,
+      currentItems,
+      totalPages,
+    };
+  }, [filteredAndSortedInventory, parentCurrentPage, itemsPerPage]);
+  
+  // Ref to store previous pagination string to prevent circular updates
+  const lastPaginationRef = useRef('');
+
+  // Update parent component with pagination data when pagination values change
+  useEffect(() => {
+    // Create a pagination data object
+    const paginationData = {
+      totalItems: filteredAndSortedInventory.length,
+      totalPages: paginationValues.totalPages,
+      itemsPerPage: itemsPerPage,
+      currentPageFirstItemIndex: paginationValues.indexOfFirstItem,
+      currentPageLastItemIndex: Math.min(
+        paginationValues.indexOfLastItem - 1,
+        filteredAndSortedInventory.length - 1
+      ),
+      itemName: 'inventory items',
+    };
+
+    // Use JSON.stringify to compare only when the actual content changes
+    const paginationString = JSON.stringify(paginationData);
+
+    // Only update if the pagination data actually changed
+    if (lastPaginationRef.current !== paginationString) {
+      lastPaginationRef.current = paginationString;
+      onPaginationChange(paginationData);
     }
-
-    // Handle special numeric fields
-    if (field === 'quantity' || field === 'cost_per_unit') {
-      const valueA = parseFloat(a[field]) || 0;
-      const valueB = parseFloat(b[field]) || 0;
-
-      return direction === 'asc' ? valueA - valueB : valueB - valueA;
-    }
-
-    // Handle date fields
-    if (field === 'purchase_date' || field === 'expiration_date') {
-      const dateA = a[field] ? new Date(a[field]) : new Date(0);
-      const dateB = b[field] ? new Date(b[field]) : new Date(0);
-
-      return direction === 'asc' ? dateA - dateB : dateB - dateA;
-    }
-
-    // For other string fields
-    const valueA = (a[field] || '').toLowerCase();
-    const valueB = (b[field] || '').toLowerCase();
-
-    if (direction === 'asc') {
-      return valueA.localeCompare(valueB);
-    } else {
-      return valueB.localeCompare(valueA);
-    }
-  });
-
-  // Pagination
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = sortedInventory.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(sortedInventory.length / itemsPerPage);
+  }, [
+    filteredAndSortedInventory.length,
+    parentCurrentPage,
+    paginationValues,
+    onPaginationChange,
+    itemsPerPage,
+  ]);
 
   // Get sort icon
   const getSortIcon = (field) => {
@@ -165,9 +190,13 @@ const Other = () => {
 
   // Format date
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return '-';
+    // Fix: Use local time instead of UTC to avoid off-by-one errors
     const date = new Date(dateString);
-    return date.toLocaleDateString();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   // Get status color
@@ -201,9 +230,8 @@ const Other = () => {
   // Check if item is expiring soon (within 30 days)
   const isExpiringSoon = (expirationDate) => {
     if (!expirationDate) return false;
-
-    const expDate = new Date(expirationDate);
     const today = new Date();
+    const expDate = new Date(expirationDate);
     const diffTime = expDate - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -214,21 +242,14 @@ const Other = () => {
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-center justify-between">
-        <h2 className="text-xl font-semibold">Other Inventory Items</h2>
-        <div className="mt-2 flex gap-2 sm:mt-0">
-          <button
-            onClick={() => navigate('/admin/inventory/add/Supplies')}
-            className="flex items-center gap-1 rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
-          >
-            <Plus size={18} weight="bold" />
-            Add Supplies
-          </button>
+        <h2 className="text-xl font-semibold">Other Inventory</h2>
+        <div className="mt-2 sm:mt-0">
           <button
             onClick={() => navigate('/admin/inventory/add/Other')}
             className="flex items-center gap-1 rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
           >
             <Plus size={18} weight="bold" />
-            Add Other Item
+            Add New Item
           </button>
         </div>
       </div>
@@ -250,7 +271,7 @@ const Other = () => {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search supplies and other items..."
+            placeholder="Search inventory..."
             className="w-full rounded-lg border border-gray-300 p-2 pl-10 text-sm focus:border-amber-500 focus:outline-none focus:ring-amber-500"
           />
           {searchTerm && (
@@ -258,27 +279,17 @@ const Other = () => {
               onClick={() => setSearchTerm('')}
               className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
             >
-              <X size={18} />
+              <X size={18} weight='bold' />
             </button>
           )}
         </div>
       </div>
 
       {/* Inventory Table */}
-      <div className="flex-1 overflow-auto rounded-lg border border-gray-200 shadow-sm">
+      <div className="h-[calc(100vh-462px)] overflow-auto rounded-lg border border-gray-200 shadow-md">
         <table className="w-full text-left text-sm text-gray-500">
-          <thead className="bg-gray-50 text-xs uppercase text-gray-700">
+          <thead className="sticky top-0 bg-gray-50 text-xs uppercase text-gray-700">
             <tr>
-              <th
-                scope="col"
-                className="cursor-pointer px-4 py-3 hover:text-amber-600"
-                onClick={() => handleSort('category')}
-              >
-                <div className="flex items-center">
-                  Category
-                  {getSortIcon('category')}
-                </div>
-              </th>
               <th
                 scope="col"
                 className="cursor-pointer px-4 py-3 hover:text-amber-600"
@@ -287,6 +298,16 @@ const Other = () => {
                 <div className="flex items-center">
                   Item Name
                   {getSortIcon('item_name')}
+                </div>
+              </th>
+              <th
+                scope="col"
+                className="cursor-pointer px-4 py-3 hover:text-amber-600"
+                onClick={() => handleSort('category')}
+              >
+                <div className="flex items-center">
+                  Category
+                  {getSortIcon('category')}
                 </div>
               </th>
               <th
@@ -333,21 +354,19 @@ const Other = () => {
                   </div>
                 </td>
               </tr>
-            ) : currentItems.length > 0 ? (
-              currentItems.map((item) => (
+            ) : paginationValues.currentItems.length > 0 ? (
+              paginationValues.currentItems.map((item) => (
                 <tr
                   key={item.inventory_id}
                   className="border-b bg-white hover:bg-gray-50"
                 >
-                  <td className="px-4 py-4">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getCategoryColor(item.category)}`}
-                    >
-                      {item.category}
-                    </span>
-                  </td>
                   <td className="whitespace-nowrap px-4 py-4 font-medium text-gray-900">
                     {item.item_name}
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getCategoryColor(item.category)}`}>
+                      {item.category}
+                    </span>
                   </td>
                   <td className="px-4 py-4">
                     {item.quantity} {item.unit}
@@ -394,57 +413,13 @@ const Other = () => {
             ) : (
               <tr>
                 <td colSpan="6" className="px-4 py-10 text-center">
-                  <p className="text-gray-500">
-                    No supplies or other inventory items found
-                  </p>
+                  <p className="text-gray-500">No inventory items found</p>
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
-
-      {/* Pagination */}
-      {!loading && sortedInventory.length > itemsPerPage && (
-        <div className="mt-4 flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            Showing {indexOfFirstItem + 1} to{' '}
-            {Math.min(indexOfLastItem, sortedInventory.length)} of{' '}
-            {sortedInventory.length} items
-          </div>
-          <div className="flex">
-            {/* Previous Button */}
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className={`flex items-center rounded-l-lg border bg-gray-100 px-3 py-1 text-gray-700 ${
-                currentPage === 1
-                  ? 'cursor-not-allowed opacity-50'
-                  : 'hover:text-amber-500'
-              }`}
-            >
-              <CaretLeft size={14} weight="duotone" />
-              Prev
-            </button>
-
-            {/* Next Button */}
-            <button
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-              className={`flex items-center rounded-r-lg border bg-gray-100 px-3 py-1 text-gray-700 ${
-                currentPage === totalPages
-                  ? 'cursor-not-allowed opacity-50'
-                  : 'hover:text-amber-500'
-              }`}
-            >
-              Next
-              <CaretRight size={14} weight="duotone" />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Delete Confirmation Modal */}
       <ConfirmationModal

@@ -1,18 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
-import {
-  ArrowLeft,
-  FloppyDisk,
-  Warning,
-  Clock,
-  Package,
-  ShoppingCart,
-  Tag,
-  Calendar,
-  Ruler,
-} from '@phosphor-icons/react';
+import { ArrowLeft, FloppyDisk, WarningDiamond, Clock, Package, ShoppingCart, Tag, Calendar, Ruler } from '@phosphor-icons/react';
 import api from '../../../utils/api';
+// import { format } from '../../../../../backend/src/config/database';
 
 const InventoryForm = () => {
   const navigate = useNavigate();
@@ -25,7 +16,7 @@ const InventoryForm = () => {
     item_name: '',
     quantity: '',
     unit: '',
-    purchase_date: '',
+    purchase_date: new Date().toLocaleDateString('en-CA'),
     expiration_date: '',
     cost_per_unit: '',
     status: 'Available',
@@ -51,10 +42,10 @@ const InventoryForm = () => {
           const formattedItem = {
             ...item,
             purchase_date: item.purchase_date
-              ? item.purchase_date.split('T')[0]
+              ? formatDate(item.purchase_date)
               : '',
             expiration_date: item.expiration_date
-              ? item.expiration_date.split('T')[0]
+              ? formatDate(item.expiration_date)
               : '',
             threshold: item.threshold || '',
           };
@@ -89,15 +80,26 @@ const InventoryForm = () => {
     }
   };
 
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const formattedDate = new Date(dateString).toLocaleDateString('en-CA');
+    return formattedDate;
+  };
+  
   // Validate form
   const validateForm = () => {
     const errors = {};
 
     if (!formData.category) errors.category = 'Category is required';
     if (!formData.item_name) errors.item_name = 'Item name is required';
-    if (!formData.quantity) errors.quantity = 'Quantity is required';
-    if (formData.quantity <= 0)
+    if (!formData.quantity && formData.quantity !== 0) {
+      errors.quantity = 'Quantity is required';
+    } else if (!isEditMode && formData.quantity <= 0) {
       errors.quantity = 'Quantity must be greater than 0';
+    } else if (isEditMode && formData.quantity < 0) {
+      errors.quantity = 'Quantity cannot be negative';
+    }
     if (!formData.unit) errors.unit = 'Unit is required';
     if (!formData.status) errors.status = 'Status is required';
 
@@ -109,21 +111,6 @@ const InventoryForm = () => {
     // Ensure threshold is a valid number if provided
     if (formData.threshold && isNaN(parseInt(formData.threshold))) {
       errors.threshold = 'Threshold must be a valid number';
-    }
-
-    // Ensure dates are valid
-    if (
-      formData.purchase_date &&
-      new Date(formData.purchase_date) > new Date()
-    ) {
-      errors.purchase_date = 'Purchase date cannot be in the future';
-    }
-
-    if (
-      formData.expiration_date &&
-      new Date(formData.expiration_date) <= new Date(formData.purchase_date)
-    ) {
-      errors.expiration_date = 'Expiration date must be after purchase date';
     }
 
     setFormErrors(errors);
@@ -190,7 +177,7 @@ const InventoryForm = () => {
 
         {/* Error message */}
         {error && (
-          <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+          <div className="mb-4 rounded-lg bg-red-100 px-4 py-3 text-red-700">
             <p>{error}</p>
           </div>
         )}
@@ -221,11 +208,10 @@ const InventoryForm = () => {
                       name="category"
                       value={formData.category}
                       onChange={handleChange}
-                      className={`w-full rounded-lg border ${
-                        formErrors.category
-                          ? 'border-red-500'
-                          : 'border-gray-300'
-                      } p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
+                      className={`w-full rounded-lg border cursor-pointer ${formErrors.category
+                        ? 'border-red-500'
+                        : 'border-gray-300'
+                        } p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                     >
                       <option value="Feed">Feed</option>
                       <option value="Medication">Medication</option>
@@ -259,11 +245,10 @@ const InventoryForm = () => {
                       value={formData.item_name}
                       onChange={handleChange}
                       placeholder="Enter item name"
-                      className={`w-full rounded-lg border ${
-                        formErrors.item_name
-                          ? 'border-red-500'
-                          : 'border-gray-300'
-                      } p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
+                      className={`w-full rounded-lg border ${formErrors.item_name
+                        ? 'border-red-500'
+                        : 'border-gray-300'
+                        } p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                     />
                   </div>
                   {formErrors.item_name && (
@@ -291,15 +276,14 @@ const InventoryForm = () => {
                     <input
                       type="number"
                       name="quantity"
-                      min="1"
+                      min="0"
                       value={formData.quantity}
                       onChange={handleChange}
                       placeholder="Enter quantity"
-                      className={`w-full rounded-lg border ${
-                        formErrors.quantity
-                          ? 'border-red-500'
-                          : 'border-gray-300'
-                      } p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
+                      className={`w-full rounded-lg border ${formErrors.quantity
+                        ? 'border-red-500'
+                        : 'border-gray-300'
+                        } p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                     />
                   </div>
                   {formErrors.quantity && (
@@ -328,9 +312,8 @@ const InventoryForm = () => {
                       value={formData.unit}
                       onChange={handleChange}
                       placeholder="E.g., kg, pcs, bottles"
-                      className={`w-full rounded-lg border ${
-                        formErrors.unit ? 'border-red-500' : 'border-gray-300'
-                      } p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
+                      className={`w-full rounded-lg border ${formErrors.unit ? 'border-red-500' : 'border-gray-300'
+                        } p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                     />
                   </div>
                   {formErrors.unit && (
@@ -357,11 +340,10 @@ const InventoryForm = () => {
                       value={formData.cost_per_unit}
                       onChange={handleChange}
                       placeholder="0.00"
-                      className={`w-full rounded-lg border ${
-                        formErrors.cost_per_unit
-                          ? 'border-red-500'
-                          : 'border-gray-300'
-                      } p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
+                      className={`w-full rounded-lg border ${formErrors.cost_per_unit
+                        ? 'border-red-500'
+                        : 'border-gray-300'
+                        } p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                     />
                   </div>
                   {formErrors.cost_per_unit && (
@@ -389,13 +371,13 @@ const InventoryForm = () => {
                     <input
                       type="date"
                       name="purchase_date"
+                      max={new Date().toLocaleDateString('en-CA')}
                       value={formData.purchase_date}
                       onChange={handleChange}
-                      className={`w-full rounded-lg border ${
-                        formErrors.purchase_date
-                          ? 'border-red-500'
-                          : 'border-gray-300'
-                      } p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
+                      className={`w-full rounded-lg border ${formErrors.purchase_date
+                        ? 'border-red-500'
+                        : 'border-gray-300'
+                        } p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                     />
                   </div>
                   {formErrors.purchase_date && (
@@ -421,13 +403,13 @@ const InventoryForm = () => {
                     <input
                       type="date"
                       name="expiration_date"
+                      min={new Date().toLocaleDateString('en-CA')}
                       value={formData.expiration_date}
                       onChange={handleChange}
-                      className={`w-full rounded-lg border ${
-                        formErrors.expiration_date
-                          ? 'border-red-500'
-                          : 'border-gray-300'
-                      } p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
+                      className={`w-full rounded-lg border ${formErrors.expiration_date
+                        ? 'border-red-500'
+                        : 'border-gray-300'
+                        } p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                     />
                   </div>
                   {formErrors.expiration_date && (
@@ -444,7 +426,7 @@ const InventoryForm = () => {
                   </label>
                   <div className="relative">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                      <Warning
+                      <WarningDiamond
                         size={20}
                         className="text-gray-400"
                         weight="duotone"
@@ -454,9 +436,8 @@ const InventoryForm = () => {
                       name="status"
                       value={formData.status}
                       onChange={handleChange}
-                      className={`w-full rounded-lg border ${
-                        formErrors.status ? 'border-red-500' : 'border-gray-300'
-                      } p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
+                      className={`w-full rounded-lg border ${formErrors.status ? 'border-red-500' : 'border-gray-300'
+                        } p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                     >
                       <option value="Available">Available</option>
                       <option value="Low">Low</option>
@@ -485,11 +466,10 @@ const InventoryForm = () => {
                     value={formData.threshold}
                     onChange={handleChange}
                     placeholder="Quantity at which to show low stock alert"
-                    className={`w-full rounded-lg border ${
-                      formErrors.threshold
-                        ? 'border-red-500'
-                        : 'border-gray-300'
-                    } p-2.5 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
+                    className={`w-full rounded-lg border ${formErrors.threshold
+                      ? 'border-red-500'
+                      : 'border-gray-300'
+                      } p-2.5 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                   />
                 </div>
                 {formErrors.threshold && (
@@ -511,8 +491,17 @@ const InventoryForm = () => {
                 disabled={isSubmitting}
                 className="flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600 disabled:opacity-70"
               >
-                <FloppyDisk size={20} weight="duotone" />
-                {isSubmitting ? 'Saving...' : 'Save'}
+                {isSubmitting ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <FloppyDisk size={18} weight="bold" />
+                    Save
+                  </>
+                )}
               </button>
             </div>
           </form>

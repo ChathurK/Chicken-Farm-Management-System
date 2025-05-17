@@ -53,7 +53,7 @@ class Inventory {
 
     // Find inventory items by category
     static async findByCategory(category) {
-        const query = 'SELECT * FROM Inventory WHERE category = ? ORDER BY item_name';
+        const query = 'SELECT * FROM Inventory WHERE category = ? ORDER BY inventory_id DESC';
         const [rows] = await db.execute(query, [category]);
         return rows;
     }
