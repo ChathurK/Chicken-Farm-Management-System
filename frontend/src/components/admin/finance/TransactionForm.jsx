@@ -550,22 +550,27 @@ const TransactionForm = () => {
       if (!formData.chicken_age) {
         errors.chicken_age = 'Age is required';
       }
-      if (
-        !formData.chicken_quantity ||
-        parseInt(formData.chicken_quantity) <= 0
-      ) {
-        errors.chicken_quantity = 'Quantity must be greater than zero';
-      } else if (
-        parseInt(formData.chicken_quantity) > availableChickenQuantity
-      ) {
+      // Chicken quantity validation
+      if (!formData.chicken_quantity && formData.chicken_quantity !== 0) {
+        errors.chicken_quantity = 'Quantity is required';
+      } else if (!isEditMode && formData.chicken_quantity <= 0) {
+        errors.chicken_quantity = 'Quantity must be greater than 0';
+      } else if (isEditMode && formData.chicken_quantity <= 0) {
+        errors.chicken_quantity = 'Quantity must be greater than 0';
+      } else if (parseInt(formData.chicken_quantity) > availableChickenQuantity) {
         errors.chicken_quantity = `Quantity cannot exceed available quantity (${availableChickenQuantity})`;
       }
     } else if (formData.category === 'Chick Sale') {
       if (!formData.chick_parent_breed) {
         errors.chick_parent_breed = 'Parent breed is required';
       }
-      if (!formData.chick_quantity || parseInt(formData.chick_quantity) <= 0) {
-        errors.chick_quantity = 'Quantity must be greater than zero';
+      // Chick quantity validation
+      if (!formData.chick_quantity && formData.chick_quantity !== 0) {
+        errors.chick_quantity = 'Quantity is required';
+      } else if (!isEditMode && formData.chick_quantity <= 0) {
+        errors.chick_quantity = 'Quantity must be greater than 0';
+      } else if (isEditMode && formData.chick_quantity <= 0) {
+        errors.chick_quantity = 'Quantity must be greater than 0';
       } else if (parseInt(formData.chick_quantity) > availableChickQuantity) {
         errors.chick_quantity = `Quantity cannot exceed available quantity (${availableChickQuantity})`;
       }
@@ -576,8 +581,13 @@ const TransactionForm = () => {
       if (!formData.egg_color) {
         errors.egg_color = 'Egg color is required';
       }
-      if (!formData.egg_quantity || parseInt(formData.egg_quantity) <= 0) {
-        errors.egg_quantity = 'Quantity must be greater than zero';
+      // Egg quantity validation
+      if (!formData.egg_quantity && formData.egg_quantity !== 0) {
+        errors.egg_quantity = 'Quantity is required';
+      } else if (!isEditMode && formData.egg_quantity <= 0) {
+        errors.egg_quantity = 'Quantity must be greater than 0';
+      } else if (isEditMode && formData.egg_quantity <= 0) {
+        errors.egg_quantity = 'Quantity must be greater than 0';
       } else if (parseInt(formData.egg_quantity) > availableEggQuantity) {
         errors.egg_quantity = `Quantity cannot exceed available quantity (${availableEggQuantity})`;
       }
