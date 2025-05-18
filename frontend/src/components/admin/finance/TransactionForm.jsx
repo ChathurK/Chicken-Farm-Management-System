@@ -36,6 +36,7 @@ const TransactionForm = () => {
     // Chicken specific fields
     chicken_type: '',
     chicken_breed: '',
+    chicken_age: '',
 
     // Chick specific fields
     chick_parent_breed: '',
@@ -74,6 +75,7 @@ const TransactionForm = () => {
   const [inventoryItems, setInventoryItems] = useState([]);
   const [chickenTypes] = useState(['Layer', 'Broiler', 'Breeder']);
   const [chickenBreeds, setChickenBreeds] = useState([]);
+  const [chickenAges, setChickenAges] = useState([]);
   const [eggSizes] = useState(['Small', 'Medium', 'Large']);
   const [eggColors] = useState(['White', 'Brown']);
   const [transactionCategories] = useState([
@@ -143,11 +145,6 @@ const TransactionForm = () => {
         // Handle transaction data in edit mode
         if (isEditMode && responses.length > 6) {
           const transactionData = responses[6].data;
-
-          /* just for debugging >>>>>>>>>>>>>*/
-          const transactionDate = new Date(transactionData.transaction_date);
-          console.log('Transaction happened on:', transactionDate);
-          /* >>>>>>>>>>>>>>>>>>>>>>>>>> */
 
           // Initial transaction data
           const initialData = {
@@ -225,9 +222,22 @@ const TransactionForm = () => {
   // Fetch available chicken quantity when chicken attributes change
   useEffect(() => {
     if (formData.category === 'Chicken Sale') {
-      fetchAvailableChickenQuantity();
+      // Reset chicken age and quantity when type or breed changes
+      if (formData.chicken_type && formData.chicken_breed) {
+        fetchChickenAges();
+      } else {
+        setChickenAges([]);
+        setAvailableChickenQuantity(0);
+      }
     }
   }, [formData.chicken_type, formData.chicken_breed]);
+
+  // Fetch available chicken quantity when chicken age changes
+  useEffect(() => {
+    if (formData.category === 'Chicken Sale' && formData.chicken_type && formData.chicken_breed && formData.chicken_age) {
+      fetchAvailableChickenQuantity();
+    }
+  }, [formData.chicken_age]);
 
   // Fetch available chick quantity when chick attributes change
   useEffect(() => {
@@ -245,24 +255,20 @@ const TransactionForm = () => {
 
   // Fetch available chicken quantity when chicken attributes change
   const fetchAvailableChickenQuantity = async () => {
-    if (!formData.chicken_type || !formData.chicken_breed) return;
+    if (!formData.chicken_type || !formData.chicken_breed || !formData.chicken_age) return;
 
     try {
-      const res = await api.get('/api/chickens', {
-        params: {
-          type: formData.chicken_type,
-          breed: formData.chicken_breed,
-        },
-      });
-
-      if (res.data.length > 0) {
-        const total = res.data.reduce((sum, item) => sum + item.quantity, 0);
-        setAvailableChickenQuantity(total);
+      // Find the selected age entry from chickenAges
+      const selectedAgeEntry = chickenAges.find(([key]) => key === formData.chicken_age);
+      
+      if (selectedAgeEntry) {
+        // Get the quantity directly from the selected age entry
+        setAvailableChickenQuantity(selectedAgeEntry[1].quantity);
       } else {
         setAvailableChickenQuantity(0);
       }
     } catch (err) {
-      console.error('Error fetching available chicken quantity:', err);
+      console.error('Error determining available chicken quantity:', err);
       setAvailableChickenQuantity(0);
     }
   };
@@ -314,6 +320,88 @@ const TransactionForm = () => {
     }
   };
 
+  // Fetch available chicken ages for the selected type and breed
+  const fetchChickenAges = async () => {
+    if (!formData.chicken_type || !formData.chicken_breed) return;
+
+    try {
+      const res = await api.get('/api/chickens', {
+        params: {
+          type: formData.chicken_type,
+          breed: formData.chicken_breed,
+        },
+      });
+
+      if (res.data.length > 0) {
+        // Calculate age for each chicken and group by age
+        const ageMap = new Map();
+        
+        res.data.forEach(chicken => {
+          if (chicken.quantity > 0) {
+            const ageMonths = calculateCurrentAge(chicken.acquisition_date, chicken.age_weeks);
+            if (ageMonths !== '-') {
+              // Store the record ID with the age for easy access later
+              const key = `${ageMonths}|${chicken.chicken_record_id}`;
+              ageMap.set(key, {
+                label: ageMonths,
+                recordId: chicken.chicken_record_id,
+                quantity: chicken.quantity
+              });
+            }
+          }
+        });
+        
+        // Sort ages by numeric value (extract number from "X months")
+        const sortedAges = Array.from(ageMap.entries()).sort((a, b) => {
+          const monthsA = parseInt(a[1].label.split(' ')[0]);
+          const monthsB = parseInt(b[1].label.split(' ')[0]);
+          return monthsA - monthsB;
+        });
+        
+        setChickenAges(sortedAges);
+        
+        // Reset chicken age
+        setFormData(prev => ({
+          ...prev,
+          chicken_age: '',
+          chicken_quantity: ''
+        }));
+        
+        setAvailableChickenQuantity(0);
+      } else {
+        setChickenAges([]);
+        setAvailableChickenQuantity(0);
+      }
+    } catch (err) {
+      console.error('Error fetching available chicken ages:', err);
+      setChickenAges([]);
+      setAvailableChickenQuantity(0);
+    }
+  };
+  
+  // Calculate current age in months based on acquisition date and initial age (in weeks)
+  const calculateCurrentAge = (acquisitionDate, initialAgeWeeks) => {
+    if (!acquisitionDate || initialAgeWeeks === null || initialAgeWeeks === undefined) {
+      return '-';
+    }
+
+    const acquisition = new Date(acquisitionDate);
+    console.log('Acquisition date:', acquisition);
+    const today = new Date();
+    console.log('Today:', today);
+    // Calculate the difference in days
+    const diffDays = Math.floor((today - acquisition) / (1000 * 60 * 60 * 24));
+    console.log('Difference in days:', diffDays);
+    // Add initial age and the number of full weeks passed since acquisition
+    const totalWeeks = parseInt(initialAgeWeeks || 0) + Math.floor(diffDays / 7);
+    console.log('Total weeks:', totalWeeks);
+    // Convert weeks to months
+    const months = parseInt(totalWeeks / 4);
+    console.log('Total months:', months);
+
+    return `${months} month${months !== 1 ? 's' : ''}`;
+  };
+
   // Handle input changes
   const handleChange = (e) => {
     setError(null); // Clear error when user types
@@ -328,6 +416,7 @@ const TransactionForm = () => {
         egg_record_id: null,
         chicken_type: '',
         chicken_breed: '',
+        chicken_age: '',
         chicken_quantity: '',
         chick_parent_breed: '',
         chick_quantity: '',
@@ -370,6 +459,7 @@ const TransactionForm = () => {
         egg_record_id: null,
         chicken_type: '',
         chicken_breed: '',
+        chicken_age: '',
         chicken_quantity: '',
         chick_parent_breed: '',
         chick_quantity: '',
@@ -462,6 +552,9 @@ const TransactionForm = () => {
       if (!formData.chicken_breed) {
         errors.chicken_breed = 'Breed is required';
       }
+      if (!formData.chicken_age) {
+        errors.chicken_age = 'Age is required';
+      }
       if (
         !formData.chicken_quantity ||
         parseInt(formData.chicken_quantity) <= 0
@@ -522,85 +615,67 @@ const TransactionForm = () => {
     // Format today's date in YYYY-MM-DD format
     const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
 
-    // Find existing chicken records
-    const chickenRes = await api.get('/api/chickens', {
-      params: {
-        type: formData.chicken_type,
-        breed: formData.chicken_breed,
-      },
-    });
+    // Get the chicken record ID from the selected age entry
+    const selectedAgeEntry = chickenAges.find(([key]) => key === formData.chicken_age);
+    
+    if (!selectedAgeEntry) {
+      setError('No chicken record found for the selected age');
+      setSubmitting(false);
+      throw new Error('No chicken record found');
+    }
+    
+    const chickenRecordId = selectedAgeEntry[1].recordId;
 
-    let chickenRecordId = null;
+    // Fetch the specific chicken record
+    const chickenRes = await api.get(`/api/chickens/${chickenRecordId}`);
+    
+    if (!chickenRes.data) {
+      setError('Chicken record not found');
+      setSubmitting(false);
+      throw new Error('Chicken record not found');
+    }
 
-    if (chickenRes.data.length > 0) {
-      // Update existing chicken record
-      const existingChicken = chickenRes.data[0];
-      chickenRecordId = existingChicken.chicken_record_id;
+    const existingChicken = chickenRes.data;
+    const newQuantity = existingChicken.quantity - parseInt(formData.chicken_quantity);
+    
+    if (newQuantity < 0) {
+      setError(
+        `Cannot sell more than the available quantity (${existingChicken.quantity})`
+      );
+      setSubmitting(false);
+      throw new Error('Insufficient quantity');
+    }
 
-      const newQuantity =
-        existingChicken.quantity - parseInt(formData.chicken_quantity);
-      if (newQuantity < 0) {
-        setError(
-          `Cannot sell more than the available quantity (${existingChicken.quantity})`
-        );
-        setSubmitting(false);
-        throw new Error('Insufficient quantity');
+    // Format the existing acquisition_date properly if it exists
+    let formattedAcquisitionDate = today; // Default to today
+    if (existingChicken.acquisition_date) {
+      // Convert the date to YYYY-MM-DD format
+      const date = new Date(existingChicken.acquisition_date);
+      if (!isNaN(date.getTime())) {
+        // Check if date is valid
+        formattedAcquisitionDate = date.toLocaleDateString('en-CA'); // YYYY-MM-DD format
       }
+    }
 
-      // Format the existing acquisition_date properly if it exists
-      let formattedAcquisitionDate = today; // Default to today
-      if (existingChicken.acquisition_date) {
-        // Convert the date to YYYY-MM-DD format
-        const date = new Date(existingChicken.acquisition_date);
-        if (!isNaN(date.getTime())) {
-          // Check if date is valid
-          formattedAcquisitionDate = date.toLocaleDateString('en-CA'); // YYYY-MM-DD format
-        }
-      }
+    // Create update data object
+    const updateData = {
+      type: existingChicken.type,
+      breed: existingChicken.breed,
+      quantity: newQuantity,
+      age_weeks: existingChicken.age_weeks || null,
+      // Keep the original acquisition_date
+      acquisition_date: existingChicken.acquisition_date || formattedAcquisitionDate,
+      notes: existingChicken.notes
+        ? `${existingChicken.notes}; Sold ${formData.chicken_quantity} on ${today}`
+        : `Sold ${formData.chicken_quantity} on ${today}`,
+    };
 
-      // Create update data object
-      const updateData = {
-        type: formData.chicken_type,
-        breed: formData.chicken_breed,
-        quantity: newQuantity,
-        age_weeks: existingChicken.age_weeks || null,
-        // Keep the original acquisition_date if it exists, otherwise use today's date
-        acquisition_date:
-          existingChicken.acquisition_date || formattedAcquisitionDate,
-        notes: existingChicken.notes
-          ? `${existingChicken.notes}; Sold ${formData.chicken_quantity} on ${today}`
-          : `Sold ${formData.chicken_quantity} on ${today}`,
-      };
-
-      try {
-        console.log('Sending data to server:', updateData);
-        await api.put(
-          `/api/chickens/${existingChicken.chicken_record_id}`,
-          updateData
-        );
-      } catch (err) {
-        console.error('Error details', err.response?.data);
-        throw err;
-      }
-    } else {
-      // Create new chicken record with all required fields
-      const newChickenData = {
-        type: formData.chicken_type,
-        breed: formData.chicken_breed,
-        quantity: formData.chicken_quantity,
-        age_weeks: null, // Include null instead of undefined
-        acquisition_date: today,
-        notes: `Sold ${formData.chicken_quantity} on ${today}`,
-      };
-
-      console.log('Sending data to server:', newChickenData);
-      try {
-        const newChickenRes = await api.post('/api/chickens', newChickenData);
-        chickenRecordId = newChickenRes.data.chicken_record_id;
-      } catch (err) {
-        console.error('Error details:', err.response?.data);
-        throw err;
-      }
+    try {
+      console.log('Sending data to server:', updateData);
+      await api.put(`/api/chickens/${chickenRecordId}`, updateData);
+    } catch (err) {
+      console.error('Error details', err.response?.data);
+      throw err;
     }
 
     // Update form data with record ID
@@ -1260,6 +1335,56 @@ const TransactionForm = () => {
 
                       <div>
                         <label
+                          htmlFor="chicken_age"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Age <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="chicken_age"
+                          name="chicken_age"
+                          value={formData.chicken_age}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${
+                            formErrors.chicken_age
+                              ? 'border-red-300'
+                              : 'border-gray-300'
+                          } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                          disabled={
+                            !formData.chicken_type ||
+                            !formData.chicken_breed ||
+                            chickenAges.length === 0
+                          }
+                        >
+                          <option value="">Select Age</option>
+                          {chickenAges.map(([key, data]) => (
+                            <option key={key} value={key}>
+                              {data.label}
+                            </option>
+                          ))}
+                        </select>
+                        {chickenAges.length > 0 ? (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-green-100 px-2 py-1 font-medium text-green-800">
+                              Available
+                            </span>
+                          </p>
+                        ) : (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
+                              No stock available
+                            </span>
+                          </p>
+                        )}
+                        {formErrors.chicken_age && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.chicken_age}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label
                           htmlFor="chicken_quantity"
                           className="mb-1 block text-sm font-medium text-gray-700"
                         >
@@ -1677,6 +1802,8 @@ const TransactionForm = () => {
                             chicken
                             {formData.chicken_breed &&
                               ` (${formData.chicken_breed})`}
+                            {formData.chicken_age &&
+                              ` - ${formData.chicken_age.split('|')[0]}`}
                           </p>
                         </div>
                       )}
