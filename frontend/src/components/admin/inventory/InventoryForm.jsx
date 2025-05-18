@@ -403,9 +403,10 @@ const InventoryForm = () => {
                     <input
                       type="date"
                       name="expiration_date"
-                      min={new Date().toLocaleDateString('en-CA')}
                       value={formData.expiration_date}
                       onChange={handleChange}
+                      // Only set min date if not in edit mode
+                      {...(!isEditMode && { min: new Date().toLocaleDateString('en-CA') })}
                       className={`w-full rounded-lg border ${formErrors.expiration_date
                         ? 'border-red-500'
                         : 'border-gray-300'

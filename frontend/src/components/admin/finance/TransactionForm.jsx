@@ -144,6 +144,11 @@ const TransactionForm = () => {
         if (isEditMode && responses.length > 6) {
           const transactionData = responses[6].data;
 
+          /* just for debugging >>>>>>>>>>>>>*/
+          const transactionDate = new Date(transactionData.transaction_date);
+          console.log('Transaction happened on:', transactionDate);
+          /* >>>>>>>>>>>>>>>>>>>>>>>>>> */
+
           // Initial transaction data
           const initialData = {
             transaction_type: transactionData.transaction_type || '',
@@ -153,9 +158,7 @@ const TransactionForm = () => {
             buyer_id: transactionData.buyer_id || '',
             seller_id: transactionData.seller_id || '',
             inventory_id: transactionData.inventory_id || '',
-            transaction_date:
-              transactionData.transaction_date ||
-              new Date().toISOString().split('T')[0],
+            transaction_date: new Date(transactionData.transaction_date).toISOString().split('T')[0] || '',
             chicken_record_id: transactionData.chicken_record_id || null,
             chick_record_id: transactionData.chick_record_id || null,
             egg_record_id: transactionData.egg_record_id || null,
@@ -517,7 +520,7 @@ const TransactionForm = () => {
     }
 
     // Format today's date in YYYY-MM-DD format
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
 
     // Find existing chicken records
     const chickenRes = await api.get('/api/chickens', {
@@ -551,7 +554,7 @@ const TransactionForm = () => {
         const date = new Date(existingChicken.acquisition_date);
         if (!isNaN(date.getTime())) {
           // Check if date is valid
-          formattedAcquisitionDate = date.toISOString().split('T')[0];
+          formattedAcquisitionDate = date.toLocaleDateString('en-CA'); // YYYY-MM-DD format
         }
       }
 
@@ -617,7 +620,7 @@ const TransactionForm = () => {
 
     const chickData = {
       parent_breed: formData.chick_parent_breed,
-      hatched_date: new Date().toISOString().split('T')[0], // Default to today
+      hatched_date: new Date().toLocaleDateString('en-CA'), // Default to today
       quantity: formData.chick_quantity,
     };
 
@@ -649,8 +652,8 @@ const TransactionForm = () => {
         ...chickData,
         quantity: newQuantity,
         notes: existingChick.notes
-          ? `${existingChick.notes}; Sold ${formData.chick_quantity} on ${new Date().toISOString().split('T')[0]}`
-          : `Sold ${formData.chick_quantity} on ${new Date().toISOString().split('T')[0]}`,
+          ? `${existingChick.notes}; Sold ${formData.chick_quantity} on ${new Date().toLocaleDateString('en-CA')}`
+          : `Sold ${formData.chick_quantity} on ${new Date().toLocaleDateString('en-CA')}`,
       });
     } else {
       // Create new chick record
@@ -679,10 +682,8 @@ const TransactionForm = () => {
     const eggData = {
       size: formData.egg_size,
       color: formData.egg_color,
-      laid_date: new Date().toISOString().split('T')[0], // Default to today
-      expiration_date: new Date(new Date().setDate(new Date().getDate() + 30))
-        .toISOString()
-        .split('T')[0], // Default to 30 days from now
+      laid_date: new Date().toLocaleDateString('en-CA'), // Default to today
+      expiration_date: new Date(new Date().setDate(new Date().getDate() + 30)).toLocaleDateString('en-CA'), // Default to 30 days from now
       quantity: formData.egg_quantity,
     };
 
@@ -713,11 +714,11 @@ const TransactionForm = () => {
 
       await api.put(`/api/eggs/${existingEgg.egg_record_id}`, {
         ...eggData,
-        laid_date: new Date(existingEgg.laid_date).toISOString().split('T')[0],
+        laid_date: new Date(existingEgg.laid_date).toLocaleDateString('en-CA'),
         quantity: newQuantity,
         notes: existingEgg.notes
-          ? `${existingEgg.notes}; Sold ${formData.egg_quantity} on ${new Date().toISOString().split('T')[0]}`
-          : `Sold ${formData.egg_quantity} on ${new Date().toISOString().split('T')[0]}`,
+          ? `${existingEgg.notes}; Sold ${formData.egg_quantity} on ${new Date().toLocaleDateString('en-CA')}`
+          : `Sold ${formData.egg_quantity} on ${new Date().toLocaleDateString('en-CA')}`,
       });
     } else {
       // Create new egg record
@@ -758,10 +759,10 @@ const TransactionForm = () => {
         await api.put(`/api/inventory/${formData.inventory_id}`, {
           ...inventoryItem,
           quantity: newQuantity,
-          last_restocked: new Date().toISOString().split('T')[0],
+          last_restocked: new Date().toLocaleDateString('en-CA'),
           notes: inventoryItem.notes
-            ? `${inventoryItem.notes}; Purchased ${formData.inventory_quantity || 1} on ${new Date().toISOString().split('T')[0]}`
-            : `Purchased ${formData.inventory_quantity || 1} on ${new Date().toISOString().split('T')[0]}`,
+            ? `${inventoryItem.notes}; Purchased ${formData.inventory_quantity || 1} on ${new Date().toLocaleDateString('en-CA')}`
+            : `Purchased ${formData.inventory_quantity || 1} on ${new Date().toLocaleDateString('en-CA')}`,
         });
       }
 
@@ -878,6 +879,7 @@ const TransactionForm = () => {
   return (
     <DashboardLayout>
       <div className="bg-white-50 rounded-lg p-6 shadow">
+        {/* Header with back button */}
         <div className="mb-6 flex items-center">
           <button
             onClick={() =>
@@ -894,12 +896,14 @@ const TransactionForm = () => {
           </h1>
         </div>
 
+        {/* Show loading spinner or form */}
         {loading ? (
           <div className="flex h-64 items-center justify-center">
             <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-amber-500"></div>
           </div>
         ) : (
           <div className="rounded-lg bg-white p-6 shadow">
+            {/* Error and success messages */}
             {error && (
               <div className="mb-4 rounded-lg bg-red-100 px-4 py-3 text-red-700">
                 <p>{error}</p>
@@ -931,6 +935,7 @@ const TransactionForm = () => {
               </div>
             )}
 
+            {/* Form elements */}
             <form onSubmit={handleSubmit}>
               <div className="mb-6 grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
                 {/* Transaction Type */}
@@ -980,17 +985,22 @@ const TransactionForm = () => {
                   </label>
                   <div className="relative">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                      <Tag size={20} className="text-gray-500" />
+                      <Tag
+                        size={20}
+                        weight="duotone"
+                        className="text-gray-500"
+                      />
                     </div>
                     <select
                       id="category"
                       name="category"
                       value={formData.category}
                       onChange={handleChange}
-                      className={`block w-full cursor-pointer rounded-md border ${formErrors.category
+                      className={`block w-full cursor-pointer rounded-md border ${
+                        formErrors.category
                           ? 'border-red-300'
                           : 'border-gray-300'
-                        } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none`}
+                      } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none`}
                     >
                       <option value="">Select a Category</option>
                       {transactionCategories
@@ -1038,12 +1048,13 @@ const TransactionForm = () => {
                       type="number"
                       id="amount"
                       name="amount"
-                      min="0.01"
+                      min="1.00"
                       step="0.01"
                       value={formData.amount}
                       onChange={handleChange}
-                      className={`block w-full rounded-md border ${formErrors.amount ? 'border-red-300' : 'border-gray-300'
-                        } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none`}
+                      className={`block w-full rounded-md border ${
+                        formErrors.amount ? 'border-red-300' : 'border-gray-300'
+                      } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none`}
                       placeholder="0.00"
                     />
                   </div>
@@ -1063,7 +1074,11 @@ const TransactionForm = () => {
                   </label>
                   <div className="relative">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                      <CalendarDots size={20} className="text-gray-500" />
+                      <CalendarDots
+                        size={20}
+                        weight="duotone"
+                        className="text-gray-500"
+                      />
                     </div>
                     <input
                       type="date"
@@ -1071,6 +1086,7 @@ const TransactionForm = () => {
                       name="transaction_date"
                       value={formData.transaction_date}
                       onChange={handleChange}
+                      max={new Date().toLocaleDateString('en-CA')} // Set maximum date to today
                       className="block w-full cursor-pointer rounded-md border border-gray-300 py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none"
                     />
                   </div>
@@ -1086,17 +1102,22 @@ const TransactionForm = () => {
                     </label>
                     <div className="relative">
                       <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <UserCircle size={20} className="text-gray-500" />
+                        <UserCircle
+                          size={20}
+                          weight="duotone"
+                          className="text-gray-500"
+                        />
                       </div>
                       <select
                         id="buyer_id"
                         name="buyer_id"
                         value={formData.buyer_id}
                         onChange={handleChange}
-                        className={`block w-full cursor-pointer rounded-md border ${formErrors.buyer_id
+                        className={`block w-full cursor-pointer rounded-md border ${
+                          formErrors.buyer_id
                             ? 'border-red-300'
                             : 'border-gray-300'
-                          } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none`}
+                        } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none`}
                       >
                         <option value="">Select a Buyer</option>
                         {buyers.map((buyer) => (
@@ -1125,17 +1146,22 @@ const TransactionForm = () => {
                     </label>
                     <div className="relative">
                       <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <UserCircle size={20} className="text-gray-500" />
+                        <UserCircle
+                          size={20}
+                          weight="duotone"
+                          className="text-gray-500"
+                        />
                       </div>
                       <select
                         id="seller_id"
                         name="seller_id"
                         value={formData.seller_id}
                         onChange={handleChange}
-                        className={`block w-full cursor-pointer rounded-md border ${formErrors.seller_id
+                        className={`block w-full cursor-pointer rounded-md border ${
+                          formErrors.seller_id
                             ? 'border-red-300'
                             : 'border-gray-300'
-                          } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none`}
+                        } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none`}
                       >
                         <option value="">Select a Seller</option>
                         {sellers.map((seller) => (
@@ -1157,6 +1183,331 @@ const TransactionForm = () => {
                   </div>
                 )}
 
+                {/* Chicken Sale Fields */}
+                {formData.transaction_type === 'Income' &&
+                  formData.category === 'Chicken Sale' && (
+                    <>
+                      <div className="col-span-full mb-4 mt-2">
+                        <h3 className="text-lg font-medium text-gray-700">
+                          Chicken Information
+                        </h3>
+                        <div className="mt-2 border-t border-gray-200"></div>
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="chicken_type"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Chicken Type <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="chicken_type"
+                          name="chicken_type"
+                          value={formData.chicken_type}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${
+                            formErrors.chicken_type
+                              ? 'border-red-300'
+                              : 'border-gray-300'
+                          } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                        >
+                          <option value="">Select Type</option>
+                          {chickenTypes.map((type) => (
+                            <option key={type} value={type}>
+                              {type}
+                            </option>
+                          ))}
+                        </select>
+                        {formErrors.chicken_type && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.chicken_type}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="chicken_breed"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Breed <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="chicken_breed"
+                          name="chicken_breed"
+                          value={formData.chicken_breed}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${
+                            formErrors.chicken_breed
+                              ? 'border-red-300'
+                              : 'border-gray-300'
+                          } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                        >
+                          <option value="">Select Breed</option>
+                          {chickenBreeds.map((breed) => (
+                            <option key={breed} value={breed}>
+                              {breed}
+                            </option>
+                          ))}
+                        </select>
+                        {formErrors.chicken_breed && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.chicken_breed}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="chicken_quantity"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Quantity <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          id="chicken_quantity"
+                          name="chicken_quantity"
+                          min="1"
+                          step="1"
+                          value={formData.chicken_quantity}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${
+                            formErrors.chicken_quantity
+                              ? 'border-red-300'
+                              : 'border-gray-300'
+                          } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                          placeholder="Enter quantity"
+                        />
+                        {availableChickenQuantity > 0 ? (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-green-100 px-2 py-1 font-medium text-green-800">
+                              Available: {availableChickenQuantity}
+                            </span>
+                          </p>
+                        ) : (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
+                              No stock available
+                            </span>
+                          </p>
+                        )}
+                        {formErrors.chicken_quantity && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.chicken_quantity}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                {/* Chick Sale Fields */}
+                {formData.transaction_type === 'Income' &&
+                  formData.category === 'Chick Sale' && (
+                    <>
+                      <div className="col-span-full mb-4 mt-2">
+                        <h3 className="text-lg font-medium text-gray-700">
+                          Chick Information
+                        </h3>
+                        <div className="mt-2 border-t border-gray-200"></div>
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="chick_parent_breed"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Parent Breed <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="chick_parent_breed"
+                          name="chick_parent_breed"
+                          value={formData.chick_parent_breed}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${
+                            formErrors.chick_parent_breed
+                              ? 'border-red-300'
+                              : 'border-gray-300'
+                          } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                        >
+                          <option value="">Select Parent Breed</option>
+                          {chickenBreeds.map((breed) => (
+                            <option key={breed} value={breed}>
+                              {breed}
+                            </option>
+                          ))}
+                        </select>
+                        {formErrors.chick_parent_breed && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.chick_parent_breed}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="chick_quantity"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Quantity <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          id="chick_quantity"
+                          name="chick_quantity"
+                          min="1"
+                          step="1"
+                          value={formData.chick_quantity}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${
+                            formErrors.chick_quantity
+                              ? 'border-red-300'
+                              : 'border-gray-300'
+                          } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                          placeholder="Enter quantity"
+                        />
+                        {availableChickQuantity > 0 ? (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-green-100 px-2 py-1 font-medium text-green-800">
+                              Available: {availableChickQuantity}
+                            </span>
+                          </p>
+                        ) : (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
+                              No stock available
+                            </span>
+                          </p>
+                        )}
+                        {formErrors.chick_quantity && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.chick_quantity}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                {/* Egg Sale Fields */}
+                {formData.transaction_type === 'Income' &&
+                  formData.category === 'Egg Sale' && (
+                    <>
+                      <div className="col-span-full mb-4 mt-2">
+                        <h3 className="text-lg font-medium text-gray-700">
+                          Egg Information
+                        </h3>
+                        <div className="mt-2 border-t border-gray-200"></div>
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="egg_size"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Size <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="egg_size"
+                          name="egg_size"
+                          value={formData.egg_size}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${
+                            formErrors.egg_size
+                              ? 'border-red-300'
+                              : 'border-gray-300'
+                          } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                        >
+                          <option value="">Select Size</option>
+                          {eggSizes.map((size) => (
+                            <option key={size} value={size}>
+                              {size}
+                            </option>
+                          ))}
+                        </select>
+                        {formErrors.egg_size && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.egg_size}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="egg_color"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Color <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="egg_color"
+                          name="egg_color"
+                          value={formData.egg_color}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${
+                            formErrors.egg_color
+                              ? 'border-red-300'
+                              : 'border-gray-300'
+                          } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                        >
+                          <option value="">Select Color</option>
+                          {eggColors.map((color) => (
+                            <option key={color} value={color}>
+                              {color}
+                            </option>
+                          ))}
+                        </select>
+                        {formErrors.egg_color && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.egg_color}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="egg_quantity"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Quantity <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          id="egg_quantity"
+                          name="egg_quantity"
+                          min="1"
+                          step="1"
+                          value={formData.egg_quantity}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${
+                            formErrors.egg_quantity
+                              ? 'border-red-300'
+                              : 'border-gray-300'
+                          } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                          placeholder="Enter quantity"
+                        />
+                        {availableEggQuantity > 0 ? (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-green-100 px-2 py-1 font-medium text-green-800">
+                              Available: {availableEggQuantity}
+                            </span>
+                          </p>
+                        ) : (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
+                              No stock available
+                            </span>
+                          </p>
+                        )}
+                        {formErrors.egg_quantity && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.egg_quantity}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
+
                 {/* Inventory Purchase Fields */}
                 {formData.transaction_type === 'Expense' &&
                   formData.category === 'Inventory Purchase' && (
@@ -1170,7 +1521,11 @@ const TransactionForm = () => {
                         </label>
                         <div className="relative">
                           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <ShoppingBag size={20} className="text-gray-500" />
+                            <ShoppingBag
+                              size={20}
+                              weight="duotone"
+                              className="text-gray-500"
+                            />
                           </div>
                           <select
                             id="inventory_id"
@@ -1228,323 +1583,6 @@ const TransactionForm = () => {
                     </>
                   )}
 
-                {/* Chicken Sale Fields */}
-                {formData.transaction_type === 'Income' &&
-                  formData.category === 'Chicken Sale' && (
-                    <>
-                      <div className="col-span-full mb-4 mt-2">
-                        <h3 className="text-lg font-medium text-gray-700">
-                          Chicken Information
-                        </h3>
-                        <div className="mt-2 border-t border-gray-200"></div>
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="chicken_type"
-                          className="mb-1 block text-sm font-medium text-gray-700"
-                        >
-                          Chicken Type <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          id="chicken_type"
-                          name="chicken_type"
-                          value={formData.chicken_type}
-                          onChange={handleChange}
-                          className={`block w-full rounded-md border ${formErrors.chicken_type
-                              ? 'border-red-300'
-                              : 'border-gray-300'
-                            } px-3 py-2 focus:border-amber-500 focus:outline-none`}
-                        >
-                          <option value="">Select Type</option>
-                          {chickenTypes.map((type) => (
-                            <option key={type} value={type}>
-                              {type}
-                            </option>
-                          ))}
-                        </select>
-                        {formErrors.chicken_type && (
-                          <p className="mt-1 text-sm text-red-600">
-                            {formErrors.chicken_type}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="chicken_breed"
-                          className="mb-1 block text-sm font-medium text-gray-700"
-                        >
-                          Breed <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          id="chicken_breed"
-                          name="chicken_breed"
-                          value={formData.chicken_breed}
-                          onChange={handleChange}
-                          className={`block w-full rounded-md border ${formErrors.chicken_breed
-                              ? 'border-red-300'
-                              : 'border-gray-300'
-                            } px-3 py-2 focus:border-amber-500 focus:outline-none`}
-                        >
-                          <option value="">Select Breed</option>
-                          {chickenBreeds.map((breed) => (
-                            <option key={breed} value={breed}>
-                              {breed}
-                            </option>
-                          ))}
-                        </select>
-                        {formErrors.chicken_breed && (
-                          <p className="mt-1 text-sm text-red-600">
-                            {formErrors.chicken_breed}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="chicken_quantity"
-                          className="mb-1 block text-sm font-medium text-gray-700"
-                        >
-                          Quantity <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="number"
-                          id="chicken_quantity"
-                          name="chicken_quantity"
-                          min="1"
-                          step="1"
-                          value={formData.chicken_quantity}
-                          onChange={handleChange}
-                          className={`block w-full rounded-md border ${formErrors.chicken_quantity
-                              ? 'border-red-300'
-                              : 'border-gray-300'
-                            } px-3 py-2 focus:border-amber-500 focus:outline-none`}
-                          placeholder="Enter quantity"
-                        />
-                        {availableChickenQuantity > 0 ? (
-                          <p className="mt-1 flex items-center text-xs">
-                            <span className="rounded bg-green-100 px-2 py-1 font-medium text-green-800">
-                              Available: {availableChickenQuantity}
-                            </span>
-                          </p>
-                        ) : (
-                          <p className="mt-1 flex items-center text-xs">
-                            <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
-                              No stock available
-                            </span>
-                          </p>
-                        )}
-                        {formErrors.chicken_quantity && (
-                          <p className="mt-1 text-sm text-red-600">
-                            {formErrors.chicken_quantity}
-                          </p>
-                        )}
-                      </div>
-                    </>
-                  )}
-
-                {/* Chick Sale Fields */}
-                {formData.transaction_type === 'Income' &&
-                  formData.category === 'Chick Sale' && (
-                    <>
-                      <div className="col-span-full mb-4 mt-2">
-                        <h3 className="text-lg font-medium text-gray-700">
-                          Chick Information
-                        </h3>
-                        <div className="mt-2 border-t border-gray-200"></div>
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="chick_parent_breed"
-                          className="mb-1 block text-sm font-medium text-gray-700"
-                        >
-                          Parent Breed <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          id="chick_parent_breed"
-                          name="chick_parent_breed"
-                          value={formData.chick_parent_breed}
-                          onChange={handleChange}
-                          className={`block w-full rounded-md border ${formErrors.chick_parent_breed
-                              ? 'border-red-300'
-                              : 'border-gray-300'
-                            } px-3 py-2 focus:border-amber-500 focus:outline-none`}
-                        >
-                          <option value="">Select Parent Breed</option>
-                          {chickenBreeds.map((breed) => (
-                            <option key={breed} value={breed}>
-                              {breed}
-                            </option>
-                          ))}
-                        </select>
-                        {formErrors.chick_parent_breed && (
-                          <p className="mt-1 text-sm text-red-600">
-                            {formErrors.chick_parent_breed}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="chick_quantity"
-                          className="mb-1 block text-sm font-medium text-gray-700"
-                        >
-                          Quantity <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="number"
-                          id="chick_quantity"
-                          name="chick_quantity"
-                          min="1"
-                          step="1"
-                          value={formData.chick_quantity}
-                          onChange={handleChange}
-                          className={`block w-full rounded-md border ${formErrors.chick_quantity
-                              ? 'border-red-300'
-                              : 'border-gray-300'
-                            } px-3 py-2 focus:border-amber-500 focus:outline-none`}
-                          placeholder="Enter quantity"
-                        />
-                        {availableChickQuantity > 0 ? (
-                          <p className="mt-1 flex items-center text-xs">
-                            <span className="rounded bg-green-100 px-2 py-1 font-medium text-green-800">
-                              Available: {availableChickQuantity}
-                            </span>
-                          </p>
-                        ) : (
-                          <p className="mt-1 flex items-center text-xs">
-                            <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
-                              No stock available
-                            </span>
-                          </p>
-                        )}
-                        {formErrors.chick_quantity && (
-                          <p className="mt-1 text-sm text-red-600">
-                            {formErrors.chick_quantity}
-                          </p>
-                        )}
-                      </div>
-                    </>
-                  )}
-
-                {/* Egg Sale Fields */}
-                {formData.transaction_type === 'Income' &&
-                  formData.category === 'Egg Sale' && (
-                    <>
-                      <div className="col-span-full mb-4 mt-2">
-                        <h3 className="text-lg font-medium text-gray-700">
-                          Egg Information
-                        </h3>
-                        <div className="mt-2 border-t border-gray-200"></div>
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="egg_size"
-                          className="mb-1 block text-sm font-medium text-gray-700"
-                        >
-                          Size <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          id="egg_size"
-                          name="egg_size"
-                          value={formData.egg_size}
-                          onChange={handleChange}
-                          className={`block w-full rounded-md border ${formErrors.egg_size
-                              ? 'border-red-300'
-                              : 'border-gray-300'
-                            } px-3 py-2 focus:border-amber-500 focus:outline-none`}
-                        >
-                          <option value="">Select Size</option>
-                          {eggSizes.map((size) => (
-                            <option key={size} value={size}>
-                              {size}
-                            </option>
-                          ))}
-                        </select>
-                        {formErrors.egg_size && (
-                          <p className="mt-1 text-sm text-red-600">
-                            {formErrors.egg_size}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="egg_color"
-                          className="mb-1 block text-sm font-medium text-gray-700"
-                        >
-                          Color <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          id="egg_color"
-                          name="egg_color"
-                          value={formData.egg_color}
-                          onChange={handleChange}
-                          className={`block w-full rounded-md border ${formErrors.egg_color
-                              ? 'border-red-300'
-                              : 'border-gray-300'
-                            } px-3 py-2 focus:border-amber-500 focus:outline-none`}
-                        >
-                          <option value="">Select Color</option>
-                          {eggColors.map((color) => (
-                            <option key={color} value={color}>
-                              {color}
-                            </option>
-                          ))}
-                        </select>
-                        {formErrors.egg_color && (
-                          <p className="mt-1 text-sm text-red-600">
-                            {formErrors.egg_color}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="egg_quantity"
-                          className="mb-1 block text-sm font-medium text-gray-700"
-                        >
-                          Quantity <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="number"
-                          id="egg_quantity"
-                          name="egg_quantity"
-                          min="1"
-                          step="1"
-                          value={formData.egg_quantity}
-                          onChange={handleChange}
-                          className={`block w-full rounded-md border ${formErrors.egg_quantity
-                              ? 'border-red-300'
-                              : 'border-gray-300'
-                            } px-3 py-2 focus:border-amber-500 focus:outline-none`}
-                          placeholder="Enter quantity"
-                        />
-                        {availableEggQuantity > 0 ? (
-                          <p className="mt-1 flex items-center text-xs">
-                            <span className="rounded bg-green-100 px-2 py-1 font-medium text-green-800">
-                              Available: {availableEggQuantity}
-                            </span>
-                          </p>
-                        ) : (
-                          <p className="mt-1 flex items-center text-xs">
-                            <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
-                              No stock available
-                            </span>
-                          </p>
-                        )}
-                        {formErrors.egg_quantity && (
-                          <p className="mt-1 text-sm text-red-600">
-                            {formErrors.egg_quantity}
-                          </p>
-                        )}
-                      </div>
-                    </>
-                  )}
-
                 {/* Notes */}
                 <div className="sm:col-span-2">
                   <label
@@ -1555,16 +1593,21 @@ const TransactionForm = () => {
                   </label>
                   <div className="relative">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                      <ChatText size={20} className="text-gray-500" />
+                      <ChatText
+                        size={20}
+                        weight="duotone"
+                        className="text-gray-500"
+                      />
                     </div>
                     <textarea
                       id="notes"
                       name="notes"
                       value={formData.notes}
                       onChange={handleChange}
-                      rows="3"
-                      className={`block w-full rounded-md border ${formErrors.notes ? 'border-red-300' : 'border-gray-300'
-                        } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
+                      rows="2"
+                      className={`block w-full rounded-md border ${
+                        formErrors.notes ? 'border-red-300' : 'border-gray-300'
+                      } py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                       placeholder="Add notes about the transaction..."
                     ></textarea>
                   </div>
@@ -1619,7 +1662,7 @@ const TransactionForm = () => {
                         <p className="text-base font-medium">
                           {new Date(
                             formData.transaction_date
-                          ).toLocaleDateString()}
+                          ).toLocaleDateString('en-CA')}
                         </p>
                       </div>
 
@@ -1681,47 +1724,45 @@ const TransactionForm = () => {
 
                       {formData.transaction_type === 'Income' &&
                         formData.buyer_id &&
-                        buyers.length > 0 && (
-                          <div className="col-span-2">
-                            <p className="text-sm font-medium text-gray-600">
-                              Buyer:
-                            </p>
-                            <p className="text-base font-medium">
-                              {
-                                buyers.find(
-                                  (b) => b.buyer_id == formData.buyer_id
-                                )?.first_name
-                              }{' '}
-                              {
-                                buyers.find(
-                                  (b) => b.buyer_id == formData.buyer_id
-                                )?.last_name
-                              }
-                            </p>
-                          </div>
-                        )}
+                        // Immediately Invoked Function Expression (IIFE)
+                        // defines an anonymous function () => {... } and immediately calls it with ().
+                        buyers.length > 0 &&
+                        (() => {
+                          const selectedBuyer = buyers.find(
+                            (b) => b.buyer_id == formData.buyer_id
+                          );
+                          return (
+                            <div className="col-span-2">
+                              <p className="text-sm font-medium text-gray-600">
+                                Buyer:
+                              </p>
+                              <p className="text-base font-medium">
+                                {selectedBuyer?.first_name}{' '}
+                                {selectedBuyer?.last_name}
+                              </p>
+                            </div>
+                          );
+                        })()}
 
                       {formData.transaction_type === 'Expense' &&
                         formData.seller_id &&
-                        sellers.length > 0 && (
-                          <div className="col-span-2">
-                            <p className="text-sm font-medium text-gray-600">
-                              Seller:
-                            </p>
-                            <p className="text-base font-medium">
-                              {
-                                sellers.find(
-                                  (s) => s.seller_id == formData.seller_id
-                                )?.first_name
-                              }{' '}
-                              {
-                                sellers.find(
-                                  (s) => s.seller_id == formData.seller_id
-                                )?.last_name
-                              }
-                            </p>
-                          </div>
-                        )}
+                        sellers.length > 0 &&
+                        (() => {
+                          const selectedSeller = sellers.find(
+                            (s) => s.seller_id == formData.seller_id
+                          );
+                          return (
+                            <div className="col-span-2">
+                              <p className="text-sm font-medium text-gray-600">
+                                Seller:
+                              </p>
+                              <p className="text-base font-medium">
+                                {selectedSeller?.first_name}{' '}
+                                {selectedSeller?.last_name}
+                              </p>
+                            </div>
+                          );
+                        })()}
                     </div>
                   </div>
                 )}
