@@ -81,25 +81,32 @@ exports.updateChick = async (req, res) => {
     }
 
     const { parent_breed, hatched_date, quantity, notes } = req.body;
-    
+
+    // Convert hatched_date safely
+    const localHatchedDate = hatched_date
+      ? new Date(hatched_date).toLocaleDateString("en-CA")
+      : null;
+
     // First get the chick record
     const chick = await Chick.findById(req.params.id);
     if (!chick) {
-      return res.status(404).json({ msg: 'Chick record not found' });
+      return res.status(404).json({ msg: "Chick record not found" });
     }
-    
-    // Update the chick record
-    await Chick.update(req.params.id, {
-      parent_breed,
-      hatched_date,
-      quantity,
-      notes
-    });
-    
-    res.json({ msg: 'Chick record updated' });
+
+    // Update the chick record (replace undefined with existing values or null)
+    const updateData = {
+      parent_breed: parent_breed ?? chick.parent_breed,
+      hatched_date: localHatchedDate ?? chick.hatched_date,
+      quantity: quantity ?? chick.quantity,
+      notes: notes ?? chick.notes,
+    };
+
+    await Chick.update(req.params.id, updateData);
+
+    res.json({ msg: "Chick record updated" });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    res.status(500).send(err.message);
   }
 };
 

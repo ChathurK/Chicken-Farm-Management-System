@@ -223,6 +223,7 @@ const ChickenModal = ({ isOpen, onClose, onSave, chicken }) => {
                 type="date"
                 name="acquisition_date"
                 value={formData.acquisition_date}
+                max={new Date().toLocaleDateString('en-CA')}
                 onChange={handleChange}
                 className={`w-full rounded-lg border ${
                   formErrors.acquisition_date

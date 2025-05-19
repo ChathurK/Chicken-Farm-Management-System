@@ -104,7 +104,7 @@ exports.updateChicken = async (req, res) => {
       const date = new Date(acquisition_date);
       if (!isNaN(date.getTime())) {
         // Format as YYYY-MM-DD for MySQL
-        updateData.acquisition_date = date.toISOString().split("T")[0];
+        updateData.acquisition_date = date.toLocaleDateString('en-CA');
       } else if (acquisition_date === null) {
         // If explicitly null, use null
         updateData.acquisition_date = null;

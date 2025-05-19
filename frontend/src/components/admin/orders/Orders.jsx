@@ -1,15 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
-import {
-  MagnifyingGlass,
-  CaretDown,
-  DotsThreeVertical,
-  Eye,
-  Pencil,
-  Trash,
-  Plus,
-} from '@phosphor-icons/react';
+import { MagnifyingGlass, CaretDown, DotsThreeVertical, Eye, Pencil, Trash, Plus, X } from '@phosphor-icons/react';
 import api from '../../../utils/api';
 
 const Orders = () => {
@@ -67,8 +59,7 @@ const Orders = () => {
   };
 
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    return new Date(dateString).toLocaleDateString('en-CA');
   };
 
   const calculateOrderTotal = (items) => {
@@ -78,6 +69,18 @@ const Orders = () => {
       0
     );
   };
+
+  const handleDeleteClick = async (orderId) => {
+    if (window.confirm('Are you sure you want to delete this order?')) {
+      try {
+        await api.delete(`/api/orders/${orderId}`);
+        setOrders((prev) => prev.filter((order) => order.order_id !== orderId));
+      } catch (err) {
+        console.error('Error deleting order:', err);
+        setError('Failed to delete order. Please try again.');
+      }
+    }
+  }
 
   return (
     <DashboardLayout>
@@ -109,21 +112,34 @@ const Orders = () => {
         <div className="mb-6 flex flex-col gap-4 md:flex-row">
           <div className="relative flex-1">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <MagnifyingGlass size={20} className="text-gray-400" />
+              <MagnifyingGlass
+                size={20}
+                weight="duotone"
+                className="text-gray-400"
+              />
             </div>
             <input
               type="text"
-              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:ring-amber-500"
+              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none"
               placeholder="Search orders by ID or customer"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+                title="Clear search"
+              >
+                <X size={18} weight="bold" />
+              </button>
+            )}
           </div>
 
           <div className="w-full md:w-64">
             <div className="relative">
               <select
-                className="block w-full appearance-none rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-amber-500 focus:ring-amber-500"
+                className="block w-full cursor-pointer appearance-none rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-amber-500 focus:outline-none"
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
               >
@@ -133,7 +149,11 @@ const Orders = () => {
                 <option value="Cancelled">Cancelled</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                <CaretDown size={16} className="text-gray-400" />
+                <CaretDown
+                  size={16}
+                  weight="duotone"
+                  className="text-gray-400"
+                />
               </div>
             </div>
           </div>
@@ -144,9 +164,9 @@ const Orders = () => {
             <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-amber-500"></div>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-auto rounded-lg border border-gray-200 shadow-sm">
             <table className="w-full text-left text-sm text-gray-500">
-              <thead className="bg-gray-50 text-xs uppercase text-gray-700">
+              <thead className="sticky top-0 bg-gray-50 text-xs uppercase text-gray-700">
                 <tr>
                   <th scope="col" className="px-6 py-3">
                     Order ID
@@ -163,7 +183,7 @@ const Orders = () => {
                   <th scope="col" className="px-6 py-3">
                     Status
                   </th>
-                  <th scope="col" className="px-6 py-3">
+                  <th scope="col" className="px-6 py-3 text-right">
                     Actions
                   </th>
                 </tr>
@@ -198,24 +218,31 @@ const Orders = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex space-x-2">
+                      <div className="flex justify-end space-x-2">
                         <button
                           onClick={() =>
                             navigate(`/admin/orders/${order.order_id}`)
                           }
-                          className="text-blue-500 hover:text-blue-700"
+                          className="text-amber-500 hover:text-amber-700"
                           title="View Details"
                         >
-                          <Eye size={18} weight="bold" />
+                          <Eye size={18} weight="duotone" />
                         </button>
                         <button
                           onClick={() =>
                             navigate(`/admin/orders/edit/${order.order_id}`)
                           }
-                          className="text-amber-500 hover:text-amber-700"
+                          className="text-blue-500 hover:text-blue-700"
                           title="Edit Order"
                         >
-                          <Pencil size={18} weight="bold" />
+                          <Pencil size={18} weight="duotone" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(order.order_id)}
+                          className="text-red-500 hover:text-red-700"
+                          title="Delete Order"
+                        >
+                          <Trash size={18} weight="duotone" />
                         </button>
                       </div>
                     </td>

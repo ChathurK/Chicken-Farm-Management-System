@@ -143,6 +143,7 @@ const ChickModal = ({ isOpen, onClose, onSave, chick }) => {
                 type="date"
                 name="hatched_date"
                 value={formData.hatched_date}
+                max={new Date().toLocaleDateString('en-CA')}
                 onChange={handleChange}
                 className={`w-full rounded-lg border ${
                   formErrors.hatched_date ? 'border-red-500' : 'border-gray-300'

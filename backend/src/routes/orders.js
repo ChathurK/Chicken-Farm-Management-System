@@ -23,6 +23,11 @@ router.get('/:id', orderController.getOrderById);
 // @access  Private
 router.get('/:id/items', orderController.getOrderItems);
 
+// @route   GET /api/orders/:id/items/:itemId
+// @desc    Get order item by ID
+// @access  Private
+router.get('/:id/items/:itemId', orderController.getOrderItemById);
+
 // @route   POST /api/orders
 // @desc    Create new order
 // @access  Private
@@ -67,9 +72,14 @@ router.patch(
 router.post(
   '/:id/items',
   [
-    check('inventory_id', 'Inventory ID is required').not().isEmpty().isNumeric(),
+    check('product_type', 'Product type is required').not().isEmpty().isIn(['Chicken', 'Chick', 'Egg']),
     check('quantity', 'Quantity must be a positive number').isNumeric().toFloat().custom(value => value > 0),
-    check('unit_price', 'Unit price must be a positive number').isNumeric().toFloat().custom(value => value > 0)
+    check('unit_price', 'Unit price must be a positive number').isNumeric().toFloat().custom(value => value > 0),
+    check('total_price', 'Total price must be a positive number').isNumeric().toFloat().custom(value => value > 0),
+    check('notes', 'Notes must be a string').optional().isString(),
+    check('chicken_record_id', 'Chicken record ID must be a number').optional().isNumeric(),
+    check('chick_record_id', 'Chick record ID must be a number').optional().isNumeric(),
+    check('egg_record_id', 'Egg record ID must be a number').optional().isNumeric()
   ],
   orderController.addOrderItem
 );
@@ -81,7 +91,8 @@ router.put(
   '/:orderId/items/:itemId',
   [
     check('quantity', 'Quantity must be a positive number').isNumeric().toFloat().custom(value => value > 0),
-    check('unit_price', 'Unit price must be a positive number').isNumeric().toFloat().custom(value => value > 0)
+    check('unit_price', 'Unit price must be a positive number').isNumeric().toFloat().custom(value => value > 0),
+    check('notes', 'Notes must be a string').optional().isString()
   ],
   orderController.updateOrderItem
 );

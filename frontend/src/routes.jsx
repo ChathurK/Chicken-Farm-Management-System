@@ -57,7 +57,7 @@ const routes = [
       { path: '/admin/orders/edit/:id', element: <OrderForm /> },
       { path: '/admin/orders/:id', element: <OrderDetails /> },
       { path: '/admin/orders/:id/add-item', element: <OrderItemForm /> },
-      { path: '/admin/orders/:id/edit-item/:itemId', element: <OrderItemForm /> },
+      { path: '/admin/orders/:id/items/:itemId/edit', element: <OrderItemForm /> },
       // Finance routes
       { path: '/admin/finance/transactions', element: <TransactionList /> },
       { path: '/admin/finance/transactions/add', element: <TransactionForm /> },

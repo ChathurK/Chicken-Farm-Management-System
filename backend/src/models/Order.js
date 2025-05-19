@@ -18,17 +18,17 @@ class Order {
             // Insert the order
             const orderQuery = `
                 INSERT INTO Orders 
-                (buyer_id, order_date, deadline_date, status) 
-                VALUES (?, ?, ?, ?)
+                (buyer_id, deadline_date, status) 
+                VALUES (?, ?, ?)
             `;
 
             const [orderResult] = await connection.execute(orderQuery, [
                 buyer_id,
-                order_date,
                 deadline_date || null,
                 status
             ]);
 
+            // Get the newly created order ID
             const order_id = orderResult.insertId;
 
             await connection.commit();
@@ -42,6 +42,28 @@ class Order {
         } finally {
             connection.release();
         }
+    }
+    
+    // Get all orders
+    static async findAll() {
+        const query = 'SELECT * FROM Orders ORDER BY order_date DESC';
+        const [orders] = await db.execute(query);
+
+        const detailedOrders = [];
+
+        for (const order of orders) {
+            // Get buyer information
+            const buyerQuery = 'SELECT * FROM Buyers WHERE buyer_id = ?';
+            const [buyers] = await db.execute(buyerQuery, [order.buyer_id]);
+            const buyer = buyers.length > 0 ? buyers[0] : null;
+
+            detailedOrders.push({
+                ...order,
+                buyer
+            });
+        }
+
+        return detailedOrders;
     }
 
     // Find order by ID
@@ -75,28 +97,6 @@ class Order {
         };
     }
 
-    // Get all orders
-    static async findAll() {
-        const query = 'SELECT * FROM Orders ORDER BY order_date DESC';
-        const [orders] = await db.execute(query);
-
-        const detailedOrders = [];
-
-        for (const order of orders) {
-            // Get buyer information
-            const buyerQuery = 'SELECT * FROM Buyers WHERE buyer_id = ?';
-            const [buyers] = await db.execute(buyerQuery, [order.buyer_id]);
-            const buyer = buyers.length > 0 ? buyers[0] : null;
-
-            detailedOrders.push({
-                ...order,
-                buyer
-            });
-        }
-
-        return detailedOrders;
-    }
-
     // Find orders with filters
     static async findWithFilters(filters) {
         let query = 'SELECT * FROM Orders WHERE 1=1';
@@ -128,31 +128,6 @@ class Order {
         return orders;
     }
 
-    // Get orders by buyer
-    static async findByBuyer(buyerId) {
-        const query = 'SELECT * FROM Orders WHERE buyer_id = ? ORDER BY order_date DESC';
-        const [orders] = await db.execute(query, [buyerId]);
-
-        const detailedOrders = [];
-
-        for (const order of orders) {
-            // Get order items
-            const itemQuery = `
-                SELECT oi.*
-                FROM Order_Items oi
-                WHERE oi.order_id = ?
-            `;
-            const [items] = await db.execute(itemQuery, [order.order_id]);
-
-            detailedOrders.push({
-                ...order,
-                items
-            });
-        }
-
-        return detailedOrders;
-    }
-
     // Update order
     static async update(id, orderData) {
         const {
@@ -177,23 +152,59 @@ class Order {
             SET buyer_id = ?, deadline_date = ?, status = ?
             WHERE order_id = ?
         `;
-
+        
         await db.execute(query, [
             buyer_id !== undefined ? buyer_id : currentOrder[0].buyer_id,
             deadline_date !== undefined ? deadline_date : currentOrder[0].deadline_date,
             status !== undefined ? status : currentOrder[0].status,
             id
         ]);
-
+        
         return this.findById(id);
     }
-
+    
     // Update order status
     static async updateStatus(id, status) {
         const query = 'UPDATE Orders SET status = ? WHERE order_id = ?';
         await db.execute(query, [status, id]);
         return this.findById(id);
     }
+    
+    // Add order item
+    static async addOrderItem(itemData) {
+        const {
+            order_id,
+            product_type,
+            quantity,
+            unit_price,
+            total_price,
+            notes,
+            chicken_record_id,
+            chick_record_id,
+            egg_record_id
+        } = itemData;
+
+        const query = `
+            INSERT INTO Order_Items 
+            (order_id, product_type, quantity, unit_price, total_price, notes, chicken_record_id, chick_record_id, egg_record_id) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        const [result] = await db.execute(query, [
+            order_id,
+            product_type,
+            quantity,
+            unit_price,
+            total_price,
+            notes,
+            chicken_record_id || null,
+            chick_record_id || null,
+            egg_record_id || null
+        ]);
+
+        return this.getOrderItemById(result.insertId);
+    }
+
     // Get order items
     static async getOrderItems(orderId) {
         const query = `
@@ -211,44 +222,19 @@ class Order {
         const [items] = await db.execute(query, [itemId]);
         return items.length > 0 ? items[0] : null;
     }
-    // Add order item
-    static async addOrderItem(itemData) {
-        const {
-            order_id,
-            product_type,
-            quantity,
-            unit_price,
-            total_price
-        } = itemData;
 
-        const query = `
-            INSERT INTO Order_Items 
-            (order_id, product_type, quantity, unit_price, total_price) 
-            VALUES (?, ?, ?, ?, ?)
-        `;
-
-        const [result] = await db.execute(query, [
-            order_id,
-            product_type,
-            quantity,
-            unit_price,
-            total_price
-        ]);
-
-        return this.getOrderItemById(result.insertId);
-    }
 
     // Update order item
     static async updateOrderItem(itemId, itemData) {
-        const { quantity, unit_price, total_price } = itemData;
+        const { quantity, unit_price, total_price, notes } = itemData;
 
         const query = `
             UPDATE Order_Items 
-            SET quantity = ?, unit_price = ?, total_price = ?
+            SET quantity = ?, unit_price = ?, total_price = ?, notes = ?
             WHERE order_item_id = ?
         `;
 
-        await db.execute(query, [quantity, unit_price, total_price, itemId]);
+        await db.execute(query, [quantity, unit_price, total_price, notes, itemId]);
         return this.getOrderItemById(itemId);
     }
 

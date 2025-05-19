@@ -1,18 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Pencil, 
-  Trash, 
-  User, 
-  Calendar, 
-  CalendarCheck, 
-  ClockClockwise, 
-  Package,
-  Plus,
-  Check,
-  X
-} from '@phosphor-icons/react';
+import { ArrowLeft, Pencil, Trash, User, Calendar, CalendarCheck, ClockClockwise, Package, Phone, MapPin, Plus, Check, X } from '@phosphor-icons/react';
 import DashboardLayout from '../DashboardLayout';
 import api from '../../../utils/api';
 
@@ -25,6 +13,8 @@ const OrderDetails = () => {
   const [error, setError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
   const [newStatus, setNewStatus] = useState('');
 
   useEffect(() => {
@@ -60,6 +50,24 @@ const OrderDetails = () => {
     }
   };
 
+  const handleDeleteItem = async (itemId) => {
+    try {
+      await api.delete(`/api/orders/${id}/items/${itemId}`);
+      
+      // Update the order state by filtering out the deleted item
+      setOrder({
+        ...order,
+        items: order.items.filter(item => item.order_item_id !== itemId)
+      });
+      
+      setShowDeleteItemModal(false);
+      setItemToDelete(null);
+    } catch (err) {
+      setError(err.response?.data?.msg || 'Error deleting item');
+      console.error('Error deleting item:', err);
+    }
+  };
+
   const handleStatusChange = async () => {
     try {
       await api.patch(`/api/orders/${id}/status`, { status: newStatus });
@@ -90,9 +98,18 @@ const OrderDetails = () => {
     }
   };
 
+  const getProductTypeColor = (type) => {
+    switch(type) {
+      case 'Chicken': return 'bg-amber-100 text-amber-800';
+      case 'Chick': return 'bg-yellow-100 text-yellow-800';
+      case 'Egg': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const calculateTotal = (items) => {
     if (!items || items.length === 0) return 0;
-    return items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+    return items.reduce((sum, item) => sum + parseFloat(item.total_price), 0);
   };
 
   if (loading) {
@@ -255,7 +272,7 @@ const OrderDetails = () => {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <Package
+                  <Phone
                     size={24}
                     weight="duotone"
                     className="mt-0.5 text-amber-500"
@@ -269,7 +286,7 @@ const OrderDetails = () => {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <Package
+                  <MapPin
                     size={24}
                     weight="duotone"
                     className="mt-0.5 text-amber-500"
@@ -303,51 +320,80 @@ const OrderDetails = () => {
 
           {order.items && order.items.length > 0 ? (
             <>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm text-gray-500">
-                  <thead className="bg-gray-100 text-xs uppercase text-gray-700">
+              <div className="overflow-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50 text-xs uppercase">
                     <tr>
-                      <th scope="col" className="px-4 py-3">Item</th>
-                      <th scope="col" className="px-4 py-3">Type</th>
-                      <th scope="col" className="px-4 py-3">Quantity</th>
-                      <th scope="col" className="px-4 py-3">Unit Price</th>
-                      <th scope="col" className="px-4 py-3">Total</th>
-                      <th scope="col" className="px-4 py-3">Actions</th>
+                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">
+                        #
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">
+                        Product
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">
+                        Details
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">
+                        Qty
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">
+                        Unit Price
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">
+                        Total
+                      </th>
+                      <th className="px-4 py-3 text-right font-medium tracking-wider text-gray-500">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {order.items.map((item) => (
-                      <tr key={item.order_item_id} className="border-b">
-                        <td className="px-4 py-3 font-medium text-gray-900">
-                          {item.product_name || `Item #${item.order_item_id}`}
+                  <tbody className="divide-y divide-gray-200 bg-white">
+                    {order.items.map((item, index) => (
+                      <tr key={item.order_item_id} className="hover:bg-gray-50">
+                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500">
+                          {index + 1}
                         </td>
-                        <td className="px-4 py-3">
-                          {item.product_type}
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getProductTypeColor(item.product_type)}`}>
+                            {item.product_type}
+                          </span>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 text-sm text-gray-500">
+                          {item.notes ? (
+                            <div className="max-w-xs">
+                              {item.notes}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">No details</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
                           {item.quantity}
                         </td>
-                        <td className="px-4 py-3">
-                          ${parseFloat(item.unit_price).toFixed(2)}
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          Rs. {parseFloat(item.unit_price).toFixed(2)}
                         </td>
-                        <td className="px-4 py-3 font-medium">
-                          ${(item.quantity * parseFloat(item.unit_price)).toFixed(2)}
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                          Rs. {parseFloat(item.total_price).toFixed(2)}
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="flex space-x-2">
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium">
+                          <div className="flex justify-end">
                             <button
-                              onClick={() => navigate(`/admin/orders/${id}/edit-item/${item.order_item_id}`)}
-                              className="text-blue-500 hover:text-blue-700"
+                              onClick={() => navigate(`/admin/orders/${id}/items/${item.order_item_id}/edit`)}
+                              className="mr-2 text-blue-500 hover:text-blue-700"
+                              title="Edit item"
                             >
-                              <Pencil size={18} weight="bold" />
+                              <Pencil size={18} weight="duotone" />
                             </button>
                             <button
                               onClick={() => {
-                                // Handle item deletion
+                                setItemToDelete(item);
+                                setShowDeleteItemModal(true);
                               }}
                               className="text-red-500 hover:text-red-700"
+                              title="Delete item"
                             >
-                              <Trash size={18} weight="bold" />
+                              <Trash size={18} weight="duotone" />
                             </button>
                           </div>
                         </td>
@@ -356,11 +402,11 @@ const OrderDetails = () => {
                   </tbody>
                   <tfoot>
                     <tr className="bg-gray-50 font-medium">
-                      <td colSpan="4" className="px-4 py-3 text-right">
+                      <td colSpan="5" className="px-4 py-3 text-right">
                         Total:
                       </td>
                       <td className="px-4 py-3 text-gray-900">
-                        ${calculateTotal(order.items).toFixed(2)}
+                        Rs. {calculateTotal(order.items).toFixed(2)}
                       </td>
                       <td></td>
                     </tr>
@@ -382,9 +428,9 @@ const OrderDetails = () => {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Order Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
             <h3 className="mb-4 text-xl font-bold">Delete Order</h3>
             <p className="mb-6">
@@ -408,9 +454,38 @@ const OrderDetails = () => {
         </div>
       )}
 
+      {/* Delete Item Confirmation Modal */}
+      {showDeleteItemModal && itemToDelete && (
+        <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+            <h3 className="mb-4 text-xl font-bold">Delete Item</h3>
+            <p className="mb-6">
+              Are you sure you want to remove this order item from the order? This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => {
+                  setShowDeleteItemModal(false);
+                  setItemToDelete(null);
+                }}
+                className="rounded-lg bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteItem(itemToDelete.order_item_id)}
+                className="rounded-lg bg-red-500 px-4 py-2 text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Status Update Modal */}
       {showStatusModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
             <h3 className="mb-4 text-xl font-bold">Update Order Status</h3>
             <div className="mb-4">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, FloppyDisk } from '@phosphor-icons/react';
+import { ArrowLeft, FloppyDisk, CaretDown } from '@phosphor-icons/react';
 import DashboardLayout from '../DashboardLayout';
 import api from '../../../utils/api';
 
@@ -21,7 +21,7 @@ const OrderForm = () => {
   const [error, setError] = useState(null);
   const [formErrors, setFormErrors] = useState({});
   const [buyers, setBuyers] = useState([]);
-  
+
   // Load order data if in edit mode
   useEffect(() => {
     const fetchBuyers = async () => {
@@ -41,15 +41,14 @@ const OrderForm = () => {
         try {
           setLoading(true);
           const response = await api.get(`/api/orders/${id}`);
-          
+
           // Format the date for input field
           const order = response.data;
           if (order.deadline_date) {
-            const deadlineDate = new Date(order.deadline_date);
             // Format the date as YYYY-MM-DD for input field
-            order.deadline_date = deadlineDate.toISOString().split('T')[0];
+            order.deadline_date = new Date(order.deadline_date).toLocaleDateString('en-CA');
           }
-          
+
           setFormData(order);
           setLoading(false);
         } catch (err) {
@@ -92,7 +91,7 @@ const OrderForm = () => {
     if (formData.deadline_date) {
       const currentDate = new Date();
       const selectedDate = new Date(formData.deadline_date);
-      
+
       if (selectedDate <= currentDate) {
         errors.deadline_date = 'Deadline date must be in the future';
       }
@@ -121,7 +120,7 @@ const OrderForm = () => {
       navigate('/admin/orders');
     } catch (err) {
       setLoading(false);
-      
+
       // Check if error response exists
       if (err.response?.data) {
         // Handle field validation errors
@@ -199,21 +198,29 @@ const OrderForm = () => {
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Select Buyer <span className="text-red-600">*</span>
               </label>
-              <select
-                name="buyer_id"
-                value={formData.buyer_id}
-                onChange={handleChange}
-                className={`border bg-gray-50 ${
-                  formErrors.buyer_id ? 'border-red-500' : 'border-gray-300'
-                } block w-full rounded-lg p-2.5 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
-              >
-                <option value="">Select a buyer</option>
-                {buyers.map((buyer) => (
-                  <option key={buyer.buyer_id} value={buyer.buyer_id}>
-                    {buyer.first_name} {buyer.last_name} - {buyer.contact_number}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  name="buyer_id"
+                  value={formData.buyer_id}
+                  onChange={handleChange}
+                  className={`cursor-pointer appearance-none border bg-gray-50 ${formErrors.buyer_id ? 'border-red-500' : 'border-gray-300'
+                    } block w-full rounded-lg p-2.5 text-sm text-gray-900 focus:border-amber-500 focus:outline-none`}
+                >
+                  <option value="">Select a buyer</option>
+                  {buyers.map((buyer) => (
+                    <option key={buyer.buyer_id} value={buyer.buyer_id}>
+                      {buyer.first_name} {buyer.last_name} - {buyer.contact_number}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                  <CaretDown
+                    size={16}
+                    weight="duotone"
+                    className="text-gray-400"
+                  />
+                </div>
+              </div>
               {formErrors.buyer_id && (
                 <p className="mt-1 text-sm text-red-500">
                   {formErrors.buyer_id}
@@ -230,10 +237,10 @@ const OrderForm = () => {
                 type="date"
                 name="deadline_date"
                 value={formData.deadline_date || ''}
+                min={new Date().toLocaleDateString('en-CA')}
                 onChange={handleChange}
-                className={`border bg-gray-50 ${
-                  formErrors.deadline_date ? 'border-red-500' : 'border-gray-300'
-                } block w-full rounded-lg p-2.5 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
+                className={`cursor-pointer border bg-gray-50 ${formErrors.deadline_date ? 'border-red-500' : 'border-gray-300'
+                  } block w-full rounded-lg p-2.5 text-sm text-gray-900 focus:border-amber-500 focus:outline-none`}
               />
               {formErrors.deadline_date && (
                 <p className="mt-1 text-sm text-red-500">
@@ -248,16 +255,25 @@ const OrderForm = () => {
                 <label className="mb-2 block text-sm font-medium text-gray-700">
                   Order Status
                 </label>
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
-                >
-                  <option value="Ongoing">Ongoing</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Cancelled">Cancelled</option>
-                </select>
+                <div className="relative">
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleChange}
+                    className="cursor-pointer appearance-none block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-amber-500 focus:outline-none"
+                  >
+                    <option value="Ongoing">Ongoing</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                    <CaretDown
+                      size={16}
+                      weight="duotone"
+                      className="text-gray-400"
+                    />
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -267,14 +283,14 @@ const OrderForm = () => {
             <button
               type="button"
               onClick={() => navigate('/admin/orders')}
-              className="mr-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="mr-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-400"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:bg-amber-300"
+              className="flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 focus:outline-none focus:ring-1 focus:ring-amber-300 disabled:bg-amber-300"
             >
               {loading ? (
                 <>

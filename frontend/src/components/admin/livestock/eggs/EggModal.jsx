@@ -135,6 +135,7 @@ const EggModal = ({ isOpen, onClose, onSave, egg }) => {
                 type="date"
                 name="laid_date"
                 value={formData.laid_date}
+                max={new Date().toLocaleDateString('en-CA')}
                 onChange={handleChange}
                 className={`w-full rounded-lg border ${
                   formErrors.laid_date ? 'border-red-500' : 'border-gray-300'
@@ -154,6 +155,7 @@ const EggModal = ({ isOpen, onClose, onSave, egg }) => {
                 type="date"
                 name="expiration_date"
                 value={formData.expiration_date}
+                min={new Date().toLocaleDateString('en-CA')}
                 onChange={handleChange}
                 className={`w-full rounded-lg border ${
                   formErrors.expiration_date

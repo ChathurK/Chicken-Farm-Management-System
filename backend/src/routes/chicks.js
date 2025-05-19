@@ -25,7 +25,10 @@ router.post(
   '/',
   [
     check('parent_breed', 'Parent breed is required').not().isEmpty(),
-    check('hatched_date', 'Valid hatched date is required').isDate(),
+    check('hatched_date', 'Valid hatched date is required').isDate().custom((value) => {
+      const date = new Date(value);
+      return !isNaN(date.getTime()); // Return true if it's a valid date
+    }),
     check('quantity', 'Quantity is required').isInt({ min: 1 })
   ],
   chickController.createChick
@@ -38,7 +41,10 @@ router.put(
   '/:id',
   [
     check('parent_breed', 'Parent breed is required').optional(),
-    check('hatched_date', 'Valid hatched date is required').optional().isDate(),
+    check('hatched_date', 'Valid hatched date is required').optional().isDate().custom((value) => {
+      const date = new Date(value);
+      return !isNaN(date.getTime()); // Return true if it's a valid date
+    }),
     check('quantity', 'Quantity must be a positive number').optional().isInt({ min: 0 })
   ],
   chickController.updateChick

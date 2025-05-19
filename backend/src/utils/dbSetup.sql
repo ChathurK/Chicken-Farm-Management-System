@@ -164,6 +164,7 @@ CREATE TABLE Order_Items (
     quantity INT NOT NULL,
     unit_price DECIMAL(10, 2) NOT NULL,
     total_price DECIMAL(12, 2) NOT NULL,
+    notes TEXT,
     chicken_record_id INT,
     chick_record_id INT,
     egg_record_id INT,
