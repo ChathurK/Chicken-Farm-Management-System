@@ -11,6 +11,7 @@ import Profile from './components/profile/Profile';
 // Employee components
 import { default as EmployeeOrders } from './components/employee/orders/Orders'; 
 import { default as EmployeeOrderDetails } from './components/employee/orders/OrderDetails';
+import { default as EmployeeLivestock } from './components/employee/livestock/Livestock';
 
 // Admin components
 import Calendar from './components/admin/calendar/Calendar';
@@ -98,6 +99,9 @@ const routes = [
       // Employee Order Management routes
       { path: '/employee/orders', element: <EmployeeOrders /> },
       { path: '/employee/orders/:id', element: <EmployeeOrderDetails /> },
+      // Employee Livestock routes
+      { path: '/employee/livestock', element: <Navigate to="/employee/livestock/eggs" replace /> },
+      { path: '/employee/livestock/:type', element: <EmployeeLivestock /> },
     ],
   },
   // Protected routes for any authenticated user
