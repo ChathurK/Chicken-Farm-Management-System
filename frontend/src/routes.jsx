@@ -12,6 +12,9 @@ import Profile from './components/profile/Profile';
 import { default as EmployeeOrders } from './components/employee/orders/Orders'; 
 import { default as EmployeeOrderDetails } from './components/employee/orders/OrderDetails';
 import { default as EmployeeLivestock } from './components/employee/livestock/Livestock';
+import { default as EmployeeInventory } from './components/employee/inventory/Inventory';
+import { default as EmployeeInventoryDetails } from './components/employee/inventory/InventoryDetails';
+import { default as EmployeeInventoryUpdateForm } from './components/employee/inventory/InventoryUpdateForm';
 
 // Admin components
 import Calendar from './components/admin/calendar/Calendar';
@@ -91,6 +94,7 @@ const routes = [
       { path: '/admin/inventory/:id', element: <InventoryDetails /> },
     ],
   },
+
   // Protected routes for employee users
   {
     element: <ProtectedRoute requireEmployee={true} />,
@@ -102,6 +106,13 @@ const routes = [
       // Employee Livestock routes
       { path: '/employee/livestock', element: <Navigate to="/employee/livestock/eggs" replace /> },
       { path: '/employee/livestock/:type', element: <EmployeeLivestock /> },
+      // Employee Inventory routes
+      { path: '/employee/inventory', element: <Navigate to="/employee/inventory/feed" replace /> },
+      { path: '/employee/inventory/feed', element: <EmployeeInventory /> },
+      { path: '/employee/inventory/medication', element: <EmployeeInventory /> },
+      { path: '/employee/inventory/other', element: <EmployeeInventory /> },
+      { path: '/employee/inventory/view/:id', element: <EmployeeInventoryDetails /> },
+      { path: '/employee/inventory/update/:id', element: <EmployeeInventoryUpdateForm /> },
     ],
   },
   // Protected routes for any authenticated user

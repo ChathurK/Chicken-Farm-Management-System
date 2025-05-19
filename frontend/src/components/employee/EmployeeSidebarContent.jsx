@@ -31,7 +31,7 @@ export default function EmployeeSidebarContent() {
                 text="Inventory"
             >
                 <SidebarItem text="Feed" to="/employee/inventory/feed" />
-                <SidebarItem text="Medications" to="/employee/inventory/medications" />
+                <SidebarItem text="Medications" to="/employee/inventory/medication" />
                 <SidebarItem text="Other" to="/employee/inventory/other" />
             </SubMenu>
             
