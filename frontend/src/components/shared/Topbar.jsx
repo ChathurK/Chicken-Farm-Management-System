@@ -72,8 +72,7 @@ const Topbar = () => {
   return (
     <div className="bg-white shadow px-6 py-4 flex justify-end items-center relative">
       <div className="flex items-center gap-5">
-        {/* Dark/Light Mode Toggle */}
-        <button 
+        {/* <button 
           onClick={toggleDarkMode} 
           className="p-2 rounded-full hover:bg-gray-200 transition-colors duration-300"
           aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
@@ -82,7 +81,7 @@ const Topbar = () => {
             <Sun size={24} weight='duotone' className="text-amber-600" /> : 
             <Moon size={24} weight='duotone' className="text-amber-600" />
           }
-        </button>
+        </button> */}
         
         {/* Notifications */}
         <div className="relative" ref={notificationRef}>

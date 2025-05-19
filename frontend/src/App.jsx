@@ -61,7 +61,7 @@ const App = () => {
               );
             })}
           </Routes>
-          <ScreenSizeIndicator />
+          {/* <ScreenSizeIndicator /> */}
         </AuthCheck>
       </AuthProvider>
     </Router>
