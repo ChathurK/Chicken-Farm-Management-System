@@ -40,6 +40,7 @@ const TransactionForm = () => {
 
     // Chick specific fields
     chick_parent_breed: '',
+    chick_age: '',
 
     // Egg specific fields
     egg_size: '',
@@ -76,6 +77,7 @@ const TransactionForm = () => {
   const [chickenTypes] = useState(['Layer', 'Broiler', 'Breeder']);
   const [chickenBreeds, setChickenBreeds] = useState([]);
   const [chickenAges, setChickenAges] = useState([]);
+  const [chicksAges, setChicksAges] = useState([]);
   const [eggSizes] = useState(['Small', 'Medium', 'Large']);
   const [eggColors] = useState(['White', 'Brown']);
   const [transactionCategories] = useState([
@@ -115,12 +117,7 @@ const TransactionForm = () => {
 
         // Log transaction data fetch if applicable
         if (isEditMode) {
-          console.log(
-            'Fetching transaction data for edit mode with ID:',
-            id,
-            'is success:',
-            responses
-          );
+          console.log('Fetching transaction data for edit mode with ID:', id, 'is success');
         }
 
         // Extract response data
@@ -133,6 +130,7 @@ const TransactionForm = () => {
 
         // Set data for dropdowns
         setBuyers(buyersRes.data);
+        console.log('Buyers:', buyersRes.data);  // just for debugging
         setSellers(sellersRes.data);
         setInventoryItems(inventoryRes.data);
 
@@ -141,10 +139,12 @@ const TransactionForm = () => {
           ...new Set(chickenRes.data.map((chicken) => chicken.breed)),
         ];
         setChickenBreeds(uniqueBreeds);
+        console.log('Unique chicken breeds:', uniqueBreeds);  // just for debugging
 
         // Handle transaction data in edit mode
         if (isEditMode && responses.length > 6) {
           const transactionData = responses[6].data;
+          console.log('Transaction data:', transactionData);  // just for debugging
 
           // Initial transaction data
           const initialData = {
@@ -155,13 +155,20 @@ const TransactionForm = () => {
             buyer_id: transactionData.buyer_id || '',
             seller_id: transactionData.seller_id || '',
             inventory_id: transactionData.inventory_id || '',
-            transaction_date: new Date(transactionData.transaction_date).toISOString().split('T')[0] || '',
+            transaction_date: new Date(transactionData.transaction_date).toLocaleDateString('en-CA') || '',
             chicken_record_id: transactionData.chicken_record_id || null,
             chick_record_id: transactionData.chick_record_id || null,
             egg_record_id: transactionData.egg_record_id || null,
-            chicken_quantity: '',
-            chick_quantity: '',
-            egg_quantity: '',
+            chicken_quantity: '', // This should be the number of chickens sold
+            chick_quantity: '', // This should be the number of chicks sold
+            egg_quantity: '', // This should be the number of eggs sold
+            chicken_type: transactionData.chicken_type || '',
+            chicken_breed: transactionData.chicken_breed || '',
+            chicken_age: '',
+            chick_parent_breed: transactionData.chick_parent_breed || '',
+            chick_age: '',
+            egg_size: transactionData.egg_size || '',
+            egg_color: transactionData.egg_color || '',
             inventory_quantity: '',
           };
 
@@ -242,9 +249,21 @@ const TransactionForm = () => {
   // Fetch available chick quantity when chick attributes change
   useEffect(() => {
     if (formData.category === 'Chick Sale') {
-      fetchAvailableChickQuantity();
+      if (formData.chick_parent_breed) {
+        fetchChickAges();
+      } else {
+        setChicksAges([]);
+        setAvailableChickQuantity(0);
+      }
     }
   }, [formData.chick_parent_breed]);
+  
+  // Fetch available chick quantity when chick age changes
+  useEffect(() => {
+    if (formData.category === 'Chick Sale' && formData.chick_parent_breed && formData.chick_age) {
+      fetchAvailableChickQuantity();
+    }
+  }, [formData.chick_age]);
 
   // Fetch available egg quantity when egg attributes change
   useEffect(() => {
@@ -275,23 +294,20 @@ const TransactionForm = () => {
 
   // Fetch available chick quantity
   const fetchAvailableChickQuantity = async () => {
-    if (!formData.chick_parent_breed) return;
+    if (!formData.chick_parent_breed || !formData.chick_age) return;
 
     try {
-      const res = await api.get('/api/chicks', {
-        params: {
-          parent_breed: formData.chick_parent_breed,
-        },
-      });
-
-      if (res.data.length > 0) {
-        const total = res.data.reduce((sum, item) => sum + item.quantity, 0);
-        setAvailableChickQuantity(total);
+      // Find the selected age entry from chicksAges
+      const selectedAgeEntry = chicksAges.find(([key]) => key === formData.chick_age);
+      
+      if (selectedAgeEntry) {
+        // Get the quantity directly from the selected age entry
+        setAvailableChickQuantity(selectedAgeEntry[1].quantity);
       } else {
         setAvailableChickQuantity(0);
       }
     } catch (err) {
-      console.error('Error fetching available chick quantity:', err);
+      console.error('Error determining available chick quantity:', err);
       setAvailableChickQuantity(0);
     }
   };
@@ -379,6 +395,73 @@ const TransactionForm = () => {
     }
   };
   
+  // Fetch available chick ages for the selected parent breed
+  const fetchChickAges = async () => {
+    if (!formData.chick_parent_breed) return;
+
+    try {
+      const res = await api.get('/api/chicks', {
+        params: {
+          parent_breed: formData.chick_parent_breed,
+        },
+      });
+
+      if (res.data.length > 0) {
+        // Calculate age for each chick and group by age
+        const ageMap = new Map();
+        
+        res.data.forEach(chick => {
+          if (chick.quantity > 0) {
+            const age = calculateAge(chick.hatched_date);
+            if (age !== '-') {
+              // Store the record ID with the age for easy access later
+              const key = `${age}|${chick.chick_record_id}`;
+              ageMap.set(key, {
+                label: age,
+                recordId: chick.chick_record_id,
+                quantity: chick.quantity
+              });
+            }
+          }
+        });
+        
+        // Sort ages - first by weeks, then by days
+        const sortedAges = Array.from(ageMap.entries()).sort((a, b) => {
+          const ageA = a[1].label;
+          const ageB = b[1].label;
+          // Extract numeric value and unit (days or weeks)
+          const [valueA, unitA] = ageA.split(' ');
+          const [valueB, unitB] = ageB.split(' ');
+          
+          // If units are different, weeks come first
+          if (unitA.startsWith('week') && unitB.startsWith('day')) return 1;
+          if (unitA.startsWith('day') && unitB.startsWith('week')) return -1;
+          
+          // If units are the same, sort by numeric value
+          return parseInt(valueA) - parseInt(valueB);
+        });
+        
+        setChicksAges(sortedAges);
+        
+        // Reset chick age and quantity
+        setFormData(prev => ({
+          ...prev,
+          chick_age: '',
+          chick_quantity: ''
+        }));
+        
+        setAvailableChickQuantity(0);
+      } else {
+        setChicksAges([]);
+        setAvailableChickQuantity(0);
+      }
+    } catch (err) {
+      console.error('Error fetching available chick ages:', err);
+      setChicksAges([]);
+      setAvailableChickQuantity(0);
+    }
+  };
+
   // Calculate current age in months based on acquisition date and initial age (in weeks)
   const calculateCurrentAge = (acquisitionDate, initialAgeWeeks) => {
     if (!acquisitionDate || initialAgeWeeks === null || initialAgeWeeks === undefined) {
@@ -395,6 +478,21 @@ const TransactionForm = () => {
     const months = parseInt(totalWeeks / 4);
 
     return `${months} month${months !== 1 ? 's' : ''}`;
+  };
+  
+  // Calculate age in weeks or days based on hatched date for chicks
+  const calculateAge = (hatchedDate) => {
+    if (!hatchedDate) return '-';
+    const hatched = new Date(hatchedDate);
+    const today = new Date();
+    const diffTime = today - hatched;
+    if (diffTime < 0) return '0 days';
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays < 7) {
+      return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+    }
+    const weeks = Math.floor(diffDays / 7);
+    return `${weeks} week${weeks !== 1 ? 's' : ''}`;
   };
 
   // Handle input changes
@@ -564,6 +662,9 @@ const TransactionForm = () => {
       if (!formData.chick_parent_breed) {
         errors.chick_parent_breed = 'Parent breed is required';
       }
+      if (!formData.chick_age) {
+        errors.chick_age = 'Age is required';
+      }
       // Chick quantity validation
       if (!formData.chick_quantity && formData.chick_quantity !== 0) {
         errors.chick_quantity = 'Quantity is required';
@@ -698,51 +799,51 @@ const TransactionForm = () => {
       throw new Error('Insufficient quantity');
     }
 
+    // Format today's date in YYYY-MM-DD format
+    const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+
+    // Get the chick record ID from the selected age entry
+    const selectedAgeEntry = chicksAges.find(([key]) => key === formData.chick_age);
+    
+    if (!selectedAgeEntry) {
+      setError('No chick record found for the selected age');
+      setSubmitting(false);
+      throw new Error('No chick record found');
+    }
+    
+    const chickRecordId = selectedAgeEntry[1].recordId;
+
+    // Fetch the specific chick record
+    const chickRes = await api.get(`/api/chicks/${chickRecordId}`);
+    
+    if (!chickRes.data) {
+      setError('Chick record not found');
+      setSubmitting(false);
+      throw new Error('Chick record not found');
+    }
+
+    const existingChick = chickRes.data;
+    const newQuantity = existingChick.quantity - parseInt(formData.chick_quantity);
+    
+    if (newQuantity < 0) {
+      setError(
+        `Cannot sell more than the available quantity (${existingChick.quantity})`
+      );
+      setSubmitting(false);
+      throw new Error('Insufficient quantity');
+    }
+
     const chickData = {
-      parent_breed: formData.chick_parent_breed,
-      hatched_date: new Date().toLocaleDateString('en-CA'), // Default to today
-      quantity: formData.chick_quantity,
+      parent_breed: existingChick.parent_breed,
+      hatched_date: existingChick.hatched_date || today,
+      quantity: newQuantity,
+      notes: existingChick.notes
+        ? `${existingChick.notes}; Sold ${formData.chick_quantity} on ${today}`
+        : `Sold ${formData.chick_quantity} on ${today}`,
     };
 
-    // Find existing chick records
-    const chicksRes = await api.get('/api/chicks', {
-      params: {
-        parent_breed: formData.chick_parent_breed,
-      },
-    });
-
-    let chickRecordId = null;
-
-    if (chicksRes.data.length > 0) {
-      // Update existing chick record
-      const existingChick = chicksRes.data[0];
-      chickRecordId = existingChick.chick_record_id;
-
-      const newQuantity =
-        existingChick.quantity - parseInt(formData.chick_quantity);
-      if (newQuantity < 0) {
-        setError(
-          `Cannot sell more than the available quantity (${existingChick.quantity})`
-        );
-        setSubmitting(false);
-        throw new Error('Insufficient quantity');
-      }
-
-      await api.put(`/api/chicks/${existingChick.chick_record_id}`, {
-        ...chickData,
-        quantity: newQuantity,
-        notes: existingChick.notes
-          ? `${existingChick.notes}; Sold ${formData.chick_quantity} on ${new Date().toLocaleDateString('en-CA')}`
-          : `Sold ${formData.chick_quantity} on ${new Date().toLocaleDateString('en-CA')}`,
-      });
-    } else {
-      // Create new chick record
-      const newChickRes = await api.post('/api/chicks', {
-        ...chickData,
-        status: 'Sold',
-      });
-      chickRecordId = newChickRes.data.chick_record_id;
-    }
+    // Update the specific chick record
+    await api.put(`/api/chicks/${chickRecordId}`, chickData);
 
     // Update form data with record ID
     setFormData((prev) => ({ ...prev, chick_record_id: chickRecordId }));
@@ -1471,6 +1572,51 @@ const TransactionForm = () => {
                         {formErrors.chick_parent_breed && (
                           <p className="mt-1 text-sm text-red-600">
                             {formErrors.chick_parent_breed}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="chick_age"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Age <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="chick_age"
+                          name="chick_age"
+                          value={formData.chick_age}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${
+                            formErrors.chick_age
+                              ? 'border-red-300'
+                              : 'border-gray-300'
+                          } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                        >
+                          <option value="">Select Age</option>
+                          {chicksAges.map(([key, value]) => (
+                            <option key={key} value={key}>
+                              {value.label} ({value.quantity} available)
+                            </option>
+                          ))}
+                        </select>
+                        {chicksAges > 0 ? (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-green-100 px-2 py-1 font-medium text-green-800">
+                              Available: {chicksAges[0][1].quantity}
+                            </span>
+                          </p>
+                        ) : (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
+                              No stock available
+                            </span>
+                          </p>
+                        )}
+                        {formErrors.chick_age && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.chick_age}
                           </p>
                         )}
                       </div>

@@ -32,6 +32,8 @@ class Egg {
             query += ` AND color = ?`;
             params.push(color);
         }
+
+        query += ` ORDER BY egg_record_id DESC`;
         
         const [rows] = await db.execute(query, params);
         return rows;

@@ -17,8 +17,7 @@ exports.getAllChicks = async (req, res) => {
     }
     
     // If no filters, get all chicks
-    const query = 'SELECT * FROM Chick_Records ORDER BY chick_record_id DESC';
-    const [chicks] = await db.execute(query);
+    const chicks = await Chick.findAll();
     res.json(chicks);
   } catch (err) {
     console.error(err.message);
