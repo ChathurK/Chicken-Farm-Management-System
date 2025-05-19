@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Calendar, CalendarCheck, ClockClockwise, Package, Check, X } from '@phosphor-icons/react';
+import { ArrowLeft, User, Calendar, CalendarCheck, ClockClockwise, Check, X, Phone, MapPin } from '@phosphor-icons/react';
 import DashboardLayout from '../DashboardLayout';
 import api from '../../../utils/api';
 import { ToastContainer, toast } from 'react-toastify';
@@ -108,11 +108,25 @@ const OrderDetails = () => {
     }
   };
 
+  // Get product type color
+  const getProductTypeColor = (type) => {
+    switch(type) {
+      case 'Chicken':
+        return 'bg-amber-100 text-amber-800';
+      case 'Egg':
+        return 'bg-blue-100 text-blue-800';
+      case 'Chick':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
         <ToastContainer position="top-right" autoClose={2500} />
-        <div className="flex justify-center items-center h-64">
+        <div className="flex h-64 items-center justify-center">
           <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-amber-500"></div>
         </div>
       </DashboardLayout>
@@ -268,7 +282,7 @@ const OrderDetails = () => {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <Package
+                  <Phone
                     size={24}
                     weight="duotone"
                     className="mt-0.5 text-amber-500"
@@ -282,7 +296,7 @@ const OrderDetails = () => {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <Package
+                  <MapPin
                     size={24}
                     weight="duotone"
                     className="mt-0.5 text-amber-500"
@@ -309,29 +323,37 @@ const OrderDetails = () => {
 
           {order.items && order.items.length > 0 ? (
             <>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm text-gray-500">
-                  <thead className="bg-gray-100 text-xs uppercase text-gray-700">
+              <div className="overflow-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50 text-xs uppercase">
                     <tr>
-                      <th scope="col" className="px-4 py-3">#</th>
-                      <th scope="col" className="px-4 py-3">Product</th>
-                      <th scope="col" className="px-4 py-3">Details</th>
-                      <th scope="col" className="px-4 py-3">QTY</th>
+                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">#</th>
+                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">Product</th>
+                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">Details</th>
+                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">Qty</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-gray-200 bg-white">
                     {order.items.map((item, index) => (
-                      <tr key={item.order_item_id} className="border-b">
-                        <td className="px-4 py-3 font-medium text-gray-900">
+                      <tr key={item.order_item_id} className="hover:bg-gray-50">
+                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500">
                           {index + 1}
                         </td>
-                        <td className="px-4 py-3 font-medium text-gray-900">
-                          {item.product_type}
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getProductTypeColor(item.product_type)}`}>
+                            {item.product_type}
+                          </span>
                         </td>
-                        <td className="px-4 py-3">
-                          {item.notes}
+                        <td className="px-4 py-3 text-sm text-gray-500">
+                          {item.notes ? (
+                            <div className="max-w-xs">
+                              {item.notes}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">No details</span>
+                          )}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 text-sm text-gray-900">
                           {item.quantity}
                         </td>
                       </tr>
@@ -350,7 +372,7 @@ const OrderDetails = () => {
 
       {/* Status Update Modal */}
       {showStatusModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
             <h3 className="mb-4 text-xl font-bold">Update Order Status</h3>
             <div className="mb-4">

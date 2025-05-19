@@ -324,27 +324,13 @@ const OrderDetails = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50 text-xs uppercase">
                     <tr>
-                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">
-                        #
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">
-                        Product
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">
-                        Details
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">
-                        Qty
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">
-                        Unit Price
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">
-                        Total
-                      </th>
-                      <th className="px-4 py-3 text-right font-medium tracking-wider text-gray-500">
-                        Actions
-                      </th>
+                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">#</th>
+                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">Product</th>
+                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">Details</th>
+                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">Qty</th>
+                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">Unit Price</th>
+                      <th className="px-4 py-3 text-left font-medium tracking-wider text-gray-500">Total</th>
+                      <th className="px-4 py-3 text-right font-medium tracking-wider text-gray-500">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">

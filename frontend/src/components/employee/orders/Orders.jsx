@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
-import {
-  MagnifyingGlass,
-  CaretDown,
-  Eye,
-} from '@phosphor-icons/react';
+import { MagnifyingGlass, CaretDown, Eye, X } from '@phosphor-icons/react';
 import api from '../../../utils/api';
 
 const Orders = () => {
@@ -65,8 +61,7 @@ const Orders = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Not set';
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    return new Date(dateString).toLocaleDateString('en-CA');
   };
 
   const handleRowClick = (orderId) => {
@@ -76,9 +71,8 @@ const Orders = () => {
   return (
     <DashboardLayout>
       <div className="rounded-lg bg-white p-6 shadow">
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Orders Management</h1>
-          <p className="text-gray-600 mt-1">View and update order status</p>
         </div>
 
         {/* Show error if any */}
@@ -98,20 +92,33 @@ const Orders = () => {
         <div className="mb-6 flex flex-col gap-4 md:flex-row">
           <div className="relative flex-1">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <MagnifyingGlass size={20} className="text-gray-400" />
+              <MagnifyingGlass
+                size={20}
+                weight="duotone"
+                className="text-gray-400"
+              />
             </div>
             <input
               type="text"
-              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:ring-amber-500"
+              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 pl-10 text-sm text-gray-900 focus:border-amber-500 focus:outline-none"
               placeholder="Search orders by ID or customer"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+                title="Clear search"
+              >
+                <X size={18} weight="bold" />
+              </button>
+            )}
           </div>
           <div className="w-full md:w-64">
             <div className="relative">
               <select
-                className="block w-full appearance-none rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-amber-500 focus:ring-amber-500"
+                className="block w-full cursor-pointer appearance-none rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-amber-500 focus:outline-none"
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
               >
@@ -121,7 +128,11 @@ const Orders = () => {
                 <option value="Cancelled">Cancelled</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                <CaretDown size={16} className="text-gray-400" />
+                <CaretDown
+                  size={16}
+                  weight="duotone"
+                  className="text-gray-400"
+                />
               </div>
             </div>
           </div>
@@ -133,9 +144,9 @@ const Orders = () => {
             <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-amber-500"></div>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-auto rounded-lg border border-gray-200 shadow-sm">
             <table className="w-full text-left text-sm text-gray-500">
-              <thead className="bg-gray-50 text-xs uppercase text-gray-700">
+              <thead className="sticky top-0 bg-gray-50 text-xs uppercase text-gray-700">
                 <tr>
                   <th scope="col" className="px-6 py-3">
                     Order ID
@@ -193,10 +204,10 @@ const Orders = () => {
                           onClick={() =>
                             navigate(`/employee/orders/${order.order_id}`)
                           }
-                          className="text-blue-500 hover:text-blue-700"
+                          className="text-amber-500 hover:text-amber-700"
                           title="View Details"
                         >
-                          <Eye size={18} weight="bold" />
+                          <Eye size={18} weight="duotone" />
                         </button>
                       </div>
                     </td>
@@ -207,7 +218,7 @@ const Orders = () => {
           </div>
         )}
 
-        {filteredOrders.length === 0 && !loading && (
+        {filteredOrders.length === 0 && (
           <div className="py-4 text-center">
             <p className="text-gray-500">
               No orders found matching your criteria.
