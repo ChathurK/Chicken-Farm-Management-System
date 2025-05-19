@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  User, 
-  Calendar, 
-  CalendarCheck, 
-  ClockClockwise, 
-  Package,
-  Check,
-  X
-} from '@phosphor-icons/react';
+import { ArrowLeft, User, Calendar, CalendarCheck, ClockClockwise, Package, Check, X } from '@phosphor-icons/react';
 import DashboardLayout from '../DashboardLayout';
 import api from '../../../utils/api';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const OrderDetails = () => {
   const { id } = useParams();
@@ -33,8 +26,16 @@ const OrderDetails = () => {
       } catch (err) {
         if (err.response?.status === 404) {
           setOrder(false);
+          toast.error('Order not found', {
+            position: "top-right",
+            autoClose: 2500,
+          });
         } else {
           setError('Failed to load order details. Please try again.');
+          toast.error('Failed to load order details', {
+            position: "top-right",
+            autoClose: 2500,
+          });
         }
         setLoading(false);
         console.error('Error fetching order details:', err);
@@ -53,10 +54,28 @@ const OrderDetails = () => {
         status: newStatus
       });
       setShowStatusModal(false);
-      // Show success toast or notification here if you have one
+      
+      // Show success toast notification
+      toast.success(`Order #${id} status updated to ${newStatus}`, {
+        position: "top-right",
+        autoClose: 2500,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      
+      // Navigate back to orders page after a short delay so user can see the toast
+      setTimeout(() => {
+        navigate('/employee/orders');
+      }, 3500);
     } catch (err) {
       setError('Failed to update order status. Please try again.');
       console.error('Error updating order status:', err);
+      toast.error('Failed to update order status', {
+        position: "top-right",
+        autoClose: 2500,
+      });
     }
   };
 
@@ -92,6 +111,7 @@ const OrderDetails = () => {
   if (loading) {
     return (
       <DashboardLayout>
+        <ToastContainer position="top-right" autoClose={2500} />
         <div className="flex justify-center items-center h-64">
           <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-amber-500"></div>
         </div>
@@ -102,6 +122,7 @@ const OrderDetails = () => {
   if (error) {
     return (
       <DashboardLayout>
+        <ToastContainer position="top-right" autoClose={2500} />
         <div className="mb-4 rounded-lg bg-red-100 px-4 py-3 text-red-700">
           <p>{error}</p>
           <button
@@ -118,6 +139,7 @@ const OrderDetails = () => {
   if (!order) {
     return (
       <DashboardLayout>
+        <ToastContainer position="top-right" autoClose={2500} />
         <div className="py-8 text-center">
           <p className="text-gray-500">Order not found.</p>
           <button
@@ -130,9 +152,20 @@ const OrderDetails = () => {
       </DashboardLayout>
     );
   }
-  
-  return (
+    return (
     <DashboardLayout>
+      <ToastContainer 
+        position="top-right"
+        autoClose={2500}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       <div className="rounded-lg bg-white p-6 shadow">
         {/* Header with back button and actions */}
         <div className="mb-6 flex flex-wrap items-center justify-between">
@@ -280,44 +313,30 @@ const OrderDetails = () => {
                 <table className="w-full text-left text-sm text-gray-500">
                   <thead className="bg-gray-100 text-xs uppercase text-gray-700">
                     <tr>
-                      <th scope="col" className="px-4 py-3">Item</th>
-                      <th scope="col" className="px-4 py-3">Type</th>
-                      <th scope="col" className="px-4 py-3">Quantity</th>
-                      <th scope="col" className="px-4 py-3">Unit Price</th>
-                      <th scope="col" className="px-4 py-3">Total</th>
+                      <th scope="col" className="px-4 py-3">#</th>
+                      <th scope="col" className="px-4 py-3">Product</th>
+                      <th scope="col" className="px-4 py-3">Details</th>
+                      <th scope="col" className="px-4 py-3">QTY</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {order.items.map((item) => (
+                    {order.items.map((item, index) => (
                       <tr key={item.order_item_id} className="border-b">
                         <td className="px-4 py-3 font-medium text-gray-900">
-                          {item.product_name || `Item #${item.order_item_id}`}
+                          {index + 1}
+                        </td>
+                        <td className="px-4 py-3 font-medium text-gray-900">
+                          {item.product_type}
                         </td>
                         <td className="px-4 py-3">
-                          {item.product_type}
+                          {item.notes}
                         </td>
                         <td className="px-4 py-3">
                           {item.quantity}
                         </td>
-                        <td className="px-4 py-3">
-                          ${parseFloat(item.unit_price).toFixed(2)}
-                        </td>
-                        <td className="px-4 py-3 font-medium">
-                          ${(item.quantity * parseFloat(item.unit_price)).toFixed(2)}
-                        </td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot>
-                    <tr className="bg-gray-50 font-medium">
-                      <td colSpan="4" className="px-4 py-3 text-right">
-                        Total:
-                      </td>
-                      <td className="px-4 py-3 text-gray-900">
-                        ${calculateTotal(order.items).toFixed(2)}
-                      </td>
-                    </tr>
-                  </tfoot>
                 </table>
               </div>
             </>

@@ -81,6 +81,10 @@ const Orders = () => {
       }
     }
   }
+  
+  const handleRowClick = (orderId) => {
+    navigate(`/admin/orders/${orderId}`);
+  };
 
   return (
     <DashboardLayout>
@@ -192,7 +196,8 @@ const Orders = () => {
                 {filteredOrders.map((order) => (
                   <tr
                     key={order.order_id}
-                    className="border-b bg-white hover:bg-gray-50"
+                    className="border-b bg-white hover:bg-gray-50 cursor-pointer"
+                    onClick={() => handleRowClick(order.order_id)}
                   >
                     <td className="whitespace-nowrap px-6 py-4 font-medium text-gray-900">
                       #{order.order_id}
@@ -217,7 +222,7 @@ const Orders = () => {
                         {order.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-end space-x-2">
                         <button
                           onClick={() =>
