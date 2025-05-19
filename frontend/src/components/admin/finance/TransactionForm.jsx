@@ -45,6 +45,7 @@ const TransactionForm = () => {
     // Egg specific fields
     egg_size: '',
     egg_color: '',
+    egg_age: '',
 
     // Inventory specific fields
     inventory_quantity: '',
@@ -69,7 +70,6 @@ const TransactionForm = () => {
   const [availableChickenQuantity, setAvailableChickenQuantity] = useState(0);
   const [availableChickQuantity, setAvailableChickQuantity] = useState(0);
   const [availableEggQuantity, setAvailableEggQuantity] = useState(0);
-
   // Options for dropdowns
   const [buyers, setBuyers] = useState([]);
   const [sellers, setSellers] = useState([]);
@@ -80,6 +80,7 @@ const TransactionForm = () => {
   const [chicksAges, setChicksAges] = useState([]);
   const [eggSizes] = useState(['Small', 'Medium', 'Large']);
   const [eggColors] = useState(['White', 'Brown']);
+  const [eggAges, setEggAges] = useState([]);
   const [transactionCategories] = useState([
     'Chicken Sale',
     'Chicken Purchase',
@@ -271,6 +272,16 @@ const TransactionForm = () => {
       fetchAvailableEggQuantity();
     }
   }, [formData.egg_size, formData.egg_color]);
+  
+  // Update available egg quantity when egg age changes
+  useEffect(() => {
+    if (formData.category === 'Egg Sale' && formData.egg_age) {
+      const selectedAgeEntry = eggAges.find(([key]) => key === formData.egg_age);
+      if (selectedAgeEntry) {
+        setAvailableEggQuantity(selectedAgeEntry[1].quantity);
+      }
+    }
+  }, [formData.egg_age]);
 
   // Fetch available chicken quantity when chicken attributes change
   const fetchAvailableChickenQuantity = async () => {
@@ -325,13 +336,64 @@ const TransactionForm = () => {
       });
 
       if (res.data.length > 0) {
-        const total = res.data.reduce((sum, item) => sum + item.quantity, 0);
-        setAvailableEggQuantity(total);
+        // Calculate age for each egg batch and group by age
+        const ageMap = new Map();
+        
+        res.data.forEach(egg => {
+          if (egg.quantity > 0) {
+            const age = calculateEggAge(egg.laid_date);
+            if (age !== '-') {
+              // Store the record ID with the age for easy access later
+              const key = `${age}|${egg.egg_record_id}`;
+              ageMap.set(key, {
+                label: age,
+                recordId: egg.egg_record_id,
+                quantity: egg.quantity
+              });
+            }
+          }
+        });
+        
+        // Sort ages by numeric value (extract number from "X days")
+        const sortedAges = Array.from(ageMap.entries()).sort((a, b) => {
+          const daysA = parseInt(a[1].label.split(' ')[0]);
+          const daysB = parseInt(b[1].label.split(' ')[0]);
+          return daysA - daysB;
+        });
+        
+        setEggAges(sortedAges);
+        
+        if (formData.egg_age && sortedAges.length > 0) {
+          // Find the selected age entry from eggAges
+          const selectedAgeEntry = sortedAges.find(([key]) => key === formData.egg_age);
+          if (selectedAgeEntry) {
+            setAvailableEggQuantity(selectedAgeEntry[1].quantity);
+          } else {
+            setAvailableEggQuantity(0);
+            // Reset egg age since the previously selected one is no longer available
+            setFormData(prev => ({
+              ...prev,
+              egg_age: '',
+              egg_quantity: ''
+            }));
+          }
+        } else {
+          const total = res.data.reduce((sum, item) => sum + item.quantity, 0);
+          // Reset egg age and quantity when parameters change
+          setFormData(prev => ({
+            ...prev,
+            egg_age: '',
+            egg_quantity: ''
+          }));
+          setAvailableEggQuantity(total);
+        }
       } else {
+        setEggAges([]);
         setAvailableEggQuantity(0);
       }
     } catch (err) {
       console.error('Error fetching available egg quantity:', err);
+      setEggAges([]);
       setAvailableEggQuantity(0);
     }
   };
@@ -479,7 +541,7 @@ const TransactionForm = () => {
 
     return `${months} month${months !== 1 ? 's' : ''}`;
   };
-  
+
   // Calculate age in weeks or days based on hatched date for chicks
   const calculateAge = (hatchedDate) => {
     if (!hatchedDate) return '-';
@@ -493,6 +555,17 @@ const TransactionForm = () => {
     }
     const weeks = Math.floor(diffDays / 7);
     return `${weeks} week${weeks !== 1 ? 's' : ''}`;
+  };
+  
+  // Calculate age in days for eggs based on laid date
+  const calculateEggAge = (laidDate) => {
+    if (!laidDate) return '-';
+    const laid = new Date(laidDate);
+    const today = new Date();
+    const diffTime = today - laid;
+    if (diffTime < 0) return '0 days';
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
   };
 
   // Handle input changes
@@ -558,6 +631,7 @@ const TransactionForm = () => {
         chick_quantity: '',
         egg_size: '',
         egg_color: '',
+        egg_age: '',
         egg_quantity: '',
         inventory_quantity: '',
       };
@@ -681,6 +755,9 @@ const TransactionForm = () => {
       }
       if (!formData.egg_color) {
         errors.egg_color = 'Egg color is required';
+      }
+      if (!formData.egg_age) {
+        errors.egg_age = 'Age is required';
       }
       // Egg quantity validation
       if (!formData.egg_quantity && formData.egg_quantity !== 0) {
@@ -860,55 +937,53 @@ const TransactionForm = () => {
       throw new Error('Insufficient quantity');
     }
 
+    // Format today's date in YYYY-MM-DD format
+    const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+
+    // Get the egg record ID from the selected age entry
+    const selectedAgeEntry = eggAges.find(([key]) => key === formData.egg_age);
+    
+    if (!selectedAgeEntry) {
+      setError('No egg record found for the selected age');
+      setSubmitting(false);
+      throw new Error('No egg record found');
+    }
+    
+    const eggRecordId = selectedAgeEntry[1].recordId;
+
+    // Fetch the specific egg record
+    const eggRes = await api.get(`/api/eggs/${eggRecordId}`);
+    
+    if (!eggRes.data) {
+      setError('Egg record not found');
+      setSubmitting(false);
+      throw new Error('Egg record not found');
+    }
+
+    const existingEgg = eggRes.data;
+    const newQuantity = existingEgg.quantity - parseInt(formData.egg_quantity);
+    
+    if (newQuantity < 0) {
+      setError(
+        `Cannot sell more than the available quantity (${existingEgg.quantity})`
+      );
+      setSubmitting(false);
+      throw new Error('Insufficient quantity');
+    }
+
     const eggData = {
-      size: formData.egg_size,
-      color: formData.egg_color,
-      laid_date: new Date().toLocaleDateString('en-CA'), // Default to today
-      expiration_date: new Date(new Date().setDate(new Date().getDate() + 30)).toLocaleDateString('en-CA'), // Default to 30 days from now
-      quantity: formData.egg_quantity,
+      laid_date: new Date(existingEgg.laid_date).toLocaleDateString('en-CA') || today,
+      expiration_date: new Date(existingEgg.expiration_date).toLocaleDateString('en-CA') || today,
+      quantity: newQuantity,
+      size: existingEgg.size,
+      color: existingEgg.color,
+      notes: existingEgg.notes
+        ? `${existingEgg.notes}; Sold ${formData.egg_quantity} on ${today}`
+        : `Sold ${formData.egg_quantity} on ${today}`,
     };
 
-    // Find existing egg records
-    const eggsRes = await api.get('/api/eggs', {
-      params: {
-        size: formData.egg_size,
-        color: formData.egg_color,
-      },
-    });
-
-    let eggRecordId = null;
-
-    if (eggsRes.data.length > 0) {
-      // Update existing egg record
-      const existingEgg = eggsRes.data[0];
-      eggRecordId = existingEgg.egg_record_id;
-
-      const newQuantity =
-        existingEgg.quantity - parseInt(formData.egg_quantity);
-      if (newQuantity < 0) {
-        setError(
-          `Cannot sell more than the available quantity (${existingEgg.quantity})`
-        );
-        setSubmitting(false);
-        throw new Error('Insufficient quantity');
-      }
-
-      await api.put(`/api/eggs/${existingEgg.egg_record_id}`, {
-        ...eggData,
-        laid_date: new Date(existingEgg.laid_date).toLocaleDateString('en-CA'),
-        quantity: newQuantity,
-        notes: existingEgg.notes
-          ? `${existingEgg.notes}; Sold ${formData.egg_quantity} on ${new Date().toLocaleDateString('en-CA')}`
-          : `Sold ${formData.egg_quantity} on ${new Date().toLocaleDateString('en-CA')}`,
-      });
-    } else {
-      // Create new egg record
-      const newEggRes = await api.post('/api/eggs', {
-        ...eggData,
-        status: 'Sold',
-      });
-      eggRecordId = newEggRes.data.egg_record_id;
-    }
+    // Update the specific egg record
+    await api.put(`/api/eggs/${eggRecordId}`, eggData);
 
     // Update form data with record ID
     setFormData((prev) => ({ ...prev, egg_record_id: eggRecordId }));
@@ -1478,7 +1553,7 @@ const TransactionForm = () => {
                         ) : (
                           <p className="mt-1 flex items-center text-xs">
                             <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
-                              No stock available
+                              Not available
                             </span>
                           </p>
                         )}
@@ -1520,7 +1595,7 @@ const TransactionForm = () => {
                         ) : (
                           <p className="mt-1 flex items-center text-xs">
                             <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
-                              No stock available
+                              Not available
                             </span>
                           </p>
                         )}
@@ -1601,16 +1676,16 @@ const TransactionForm = () => {
                             </option>
                           ))}
                         </select>
-                        {chicksAges > 0 ? (
+                        {chicksAges.length > 0 ? (
                           <p className="mt-1 flex items-center text-xs">
                             <span className="rounded bg-green-100 px-2 py-1 font-medium text-green-800">
-                              Available: {chicksAges[0][1].quantity}
+                              Available
                             </span>
                           </p>
                         ) : (
                           <p className="mt-1 flex items-center text-xs">
                             <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
-                              No stock available
+                              Not available
                             </span>
                           </p>
                         )}
@@ -1652,7 +1727,7 @@ const TransactionForm = () => {
                         ) : (
                           <p className="mt-1 flex items-center text-xs">
                             <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
-                              No stock available
+                              Not available
                             </span>
                           </p>
                         )}
@@ -1707,7 +1782,7 @@ const TransactionForm = () => {
                           </p>
                         )}
                       </div>
-
+                      
                       <div>
                         <label
                           htmlFor="egg_color"
@@ -1736,6 +1811,52 @@ const TransactionForm = () => {
                         {formErrors.egg_color && (
                           <p className="mt-1 text-sm text-red-600">
                             {formErrors.egg_color}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <label
+                          htmlFor="egg_age"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Age <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="egg_age"
+                          name="egg_age"
+                          value={formData.egg_age}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${
+                            formErrors.egg_age
+                              ? 'border-red-300'
+                              : 'border-gray-300'
+                          } px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                          disabled={!formData.egg_size || !formData.egg_color || eggAges.length === 0}
+                        >
+                          <option value="">Select Age</option>
+                          {eggAges.map(([key, value]) => (
+                            <option key={key} value={key}>
+                              {value.label} ({value.quantity} available)
+                            </option>
+                          ))}
+                        </select>
+                        {eggAges.length > 0 ? (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-green-100 px-2 py-1 font-medium text-green-800">
+                              Available
+                            </span>
+                          </p>
+                        ) : (
+                          <p className="mt-1 flex items-center text-xs">
+                            <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
+                              Not available
+                            </span>
+                          </p>
+                        )}
+                        {formErrors.egg_age && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.egg_age}
                           </p>
                         )}
                       </div>
@@ -1771,7 +1892,7 @@ const TransactionForm = () => {
                         ) : (
                           <p className="mt-1 flex items-center text-xs">
                             <span className="rounded bg-red-100 px-2 py-1 font-medium text-red-800">
-                              No stock available
+                              Not available
                             </span>
                           </p>
                         )}
@@ -1979,8 +2100,8 @@ const TransactionForm = () => {
                           </p>
                           <p className="text-base font-medium">
                             {formData.egg_quantity} Eggs
-                            {(formData.egg_size || formData.egg_color) &&
-                              ` (${formData.egg_size}${formData.egg_color ? ` - ${formData.egg_color}` : ''})`}
+                            {(formData.egg_size || formData.egg_color || formData.egg_age) &&
+                              ` (${formData.egg_size}${formData.egg_color ? ` - ${formData.egg_color}` : ''}${formData.egg_age ? ` - ${formData.egg_age.split('|')[0]}` : ''})`}
                           </p>
                         </div>
                       )}
