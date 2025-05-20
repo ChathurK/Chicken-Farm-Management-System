@@ -1,21 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
-import {
-  ArrowLeft,
-  Pencil,
-  Trash,
-  Tag,
-  ShoppingCart,
-  ClockCounterClockwise,
-  Calendar,
-  Warning,
-  CurrencyCircleDollar,
-  Ruler,
-  Package,
-  ArrowsClockwise,
-  Bell,
-} from '@phosphor-icons/react';
+import { ArrowLeft, Pencil, Trash, Tag, ShoppingCart, ClockCounterClockwise, Calendar, Warning, CurrencyCircleDollar, Ruler, Package, ArrowsClockwise, Bell } from '@phosphor-icons/react';
 import { ConfirmationModal } from './InventoryModal';
 import api from '../../../utils/api';
 import ThresholdSettings from './settings/ThresholdSettings';
@@ -152,7 +138,7 @@ const InventoryDetails = () => {
         </div>
 
         {/* Quick Action Buttons */}
-        {!loading && inventory && (
+        {/* {!loading && inventory && (
           <div className="mb-6 grid grid-cols-1 gap-2 sm:grid-cols-3">
             <button
               onClick={() => setShowTransactionModal(true)}
@@ -176,7 +162,7 @@ const InventoryDetails = () => {
               Track Expiration/Damage
             </button>
           </div>
-        )}
+        )} */}
 
         {/* Error message */}
         {error && (

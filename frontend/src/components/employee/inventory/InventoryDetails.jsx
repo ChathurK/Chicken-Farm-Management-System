@@ -80,7 +80,7 @@ const InventoryDetails = () => {
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate(`/employee/inventory`)}
               className="mr-4 text-gray-500 hover:text-gray-700"
             >
               <ArrowLeft size={24} weight="duotone" />
@@ -99,7 +99,7 @@ const InventoryDetails = () => {
         </div>
 
         {/* Quick Action Buttons */}
-        {!loading && inventory && (
+        {/* {!loading && inventory && (
           <div className="mb-6 grid grid-cols-1 gap-2 sm:grid-cols-3">
             <button
               onClick={() => setShowTransactionModal(true)}
@@ -109,7 +109,7 @@ const InventoryDetails = () => {
               Record Transaction
             </button>
           </div>
-        )}
+        )} */}
 
         {/* Error message */}
         {error && (

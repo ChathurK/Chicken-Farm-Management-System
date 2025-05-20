@@ -37,6 +37,7 @@ const InventoryUpdateForm = () => {
         try {
           setLoading(true);
           const data = await InventoryAPI.getById(id);
+          // console.log('Fetched inventory item:', data);
           setFormData({
             item_name: data.item_name || '',
             category: data.category || '',
@@ -63,7 +64,7 @@ const InventoryUpdateForm = () => {
   // Handle form input changes
   const handleChange = (e) => {
     const { name, value, type } = e.target;
-    
+
     // Only allow updates to quantity and status (employee restrictions)
     if (name === 'quantity' || name === 'status') {
       setFormData((prevData) => ({
@@ -80,13 +81,13 @@ const InventoryUpdateForm = () => {
 
     try {
       setLoading(true);
-      
+
       // Only update with allowed fields (quantity and status)
       const updateData = {
         quantity: formData.quantity,
         status: formData.status
       };
-      
+
       await InventoryAPI.update(id, updateData);
       setLoading(false);
       navigate(`/employee/inventory/view/${id}`);
@@ -96,6 +97,13 @@ const InventoryUpdateForm = () => {
       setLoading(false);
     }
   };
+
+  const formattedDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const formatted = new Date(dateString).toLocaleDateString('en-CA');
+    // console.log('Formatted date:', formatted);
+    return formatted;
+  }
 
   return (
     <DashboardLayout>
@@ -198,7 +206,7 @@ const InventoryUpdateForm = () => {
                   readOnly
                 />
               </div>
-              
+
               {/* Cost per Unit (Read-only) */}
               <div className="col-span-1">
                 <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -221,7 +229,7 @@ const InventoryUpdateForm = () => {
                 <input
                   type="date"
                   name="purchase_date"
-                  value={formData.purchase_date}
+                  value={formattedDate(formData.purchase_date)}
                   className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-100 p-2.5 text-gray-700 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-amber-500"
                   readOnly
                 />
@@ -236,7 +244,7 @@ const InventoryUpdateForm = () => {
                   <input
                     type="date"
                     name="expiration_date"
-                    value={formData.expiration_date}
+                    value={formattedDate(formData.expiration_date)}
                     className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-100 p-2.5 text-gray-700 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-amber-500"
                     readOnly
                   />

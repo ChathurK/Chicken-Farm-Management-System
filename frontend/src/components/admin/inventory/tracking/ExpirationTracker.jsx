@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  X,
-  Trash,
-  ClockCounterClockwise,
-  NoteBlank,
-  CalendarX,
-} from '@phosphor-icons/react';
+import { X, Trash, ClockCounterClockwise, NoteBlank, CalendarX } from '@phosphor-icons/react';
 import InventoryAPI from '../../../../utils/InventoryAPI';
 
 /**
@@ -41,8 +35,7 @@ const ExpirationTracker = ({ isOpen, onClose, inventoryItem, onSave }) => {
             ? 'Low'
             : 'Available';
 
-      // In a real implementation, we would update the inventory item
-      // For now, we'll simulate the API call
+      // Simulate the API call
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Update the inventory item with the new quantity and damage notes
@@ -75,7 +68,6 @@ const ExpirationTracker = ({ isOpen, onClose, inventoryItem, onSave }) => {
     try {
       setLoading(true);
 
-      // In a real implementation, we would update the inventory item status
       // await InventoryAPI.updateStatus(inventoryItem.inventory_id, 'Expired');
 
       // Simulate API call
@@ -118,7 +110,7 @@ const ExpirationTracker = ({ isOpen, onClose, inventoryItem, onSave }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50">
       <div className="relative w-full max-w-md rounded-lg bg-white shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b p-4">

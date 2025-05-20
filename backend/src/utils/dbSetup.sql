@@ -103,6 +103,7 @@ CREATE TABLE Inventory (
     expiration_date DATE,
     cost_per_unit DECIMAL(10, 2) DEFAULT 0.00,
     total_cost DECIMAL(12, 2) GENERATED ALWAYS AS (quantity * cost_per_unit) STORED,
+    -- total_cost DECIMAL(12, 2) NOT NULL,
     status ENUM('Available', 'Low', 'Finished', 'Expired') DEFAULT 'Available',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
