@@ -100,18 +100,6 @@ const SignIn = () => {
             {isLoading ? "Signing In..." : "Sign In"}
           </button>
         </form>
-        <p className="text-center text-gray-600 mt-4">
-          Don't have an account?{" "}
-          <Link to="/signup" className="text-blue-500 hover:underline">
-            Sign Up
-          </Link>
-        </p>
-        <div className="mt-4 text-center text-gray-600">
-          <p className="text-sm">Demo Accounts:</p>
-          <p className="text-xs">Admin: admin@chickenfarm.com</p>
-          <p className="text-xs">Employee: employee@chickenfarm.com</p>
-          <p className="text-xs">Password for both: password123</p>
-        </div>
       </div>
     </div>
   );
