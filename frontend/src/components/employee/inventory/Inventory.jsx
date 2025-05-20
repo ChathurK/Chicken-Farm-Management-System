@@ -122,7 +122,7 @@ const Inventory = () => {
     <DashboardLayout>
       <div className="flex h-full flex-col rounded-lg bg-white p-6 shadow">
         <h1 className="mb-6 text-2xl font-bold">Inventory Management</h1>
-        <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+        <Tabs tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
         <div className="mt-6 flex-1">{renderContent()}</div>
 
         {/* Pagination */}

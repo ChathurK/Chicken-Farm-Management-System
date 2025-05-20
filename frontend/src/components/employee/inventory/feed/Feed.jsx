@@ -136,37 +136,60 @@ const Feed = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
     return new Date(dateString).toLocaleDateString('en-CA');
   };
 
-  // Calculate pagination values
+  // Calculate pagination values - keep calculation in useMemo
   const paginationValues = useMemo(() => {
     const currentPage = parentCurrentPage || 1;
     const startIndex = (currentPage - 1) * feedsPerPage;
     const endIndex = startIndex + feedsPerPage;
-    const currentItems = filteredAndSortedFeed.slice(startIndex, endIndex);
-    const totalPages = Math.ceil(filteredAndSortedFeed.length / feedsPerPage);
+    const currentItems = filteredAndSortedFeed.slice(
+      startIndex,
+      endIndex
+    );
+    const totalPages = Math.ceil(
+      filteredAndSortedFeed.length / feedsPerPage
+    );
 
-    // Pass data to parent for pagination control
-    if (onPaginationChange) {
-      onPaginationChange({
+    return {
+      startIndex,
+      endIndex,
+      currentItems,
+      totalPages,
+      currentPage,
+      // Create pagination data object to be used in useEffect
+      paginationData: {
         totalItems: filteredAndSortedFeed.length,
         totalPages,
-        itemsPerPage: feedsPerPage,
-        currentPageFirstItemIndex: filteredAndSortedFeed.length > 0 ? startIndex + 1 : 0,
-        currentPageLastItemIndex: Math.min(endIndex, filteredAndSortedFeed.length),
+        feedsPerPage,
+        currentPageFirstItemIndex:
+          filteredAndSortedFeed.length > 0 ? startIndex + 1 : 0,
+        currentPageLastItemIndex: Math.min(
+          endIndex,
+          filteredAndSortedFeed.length
+        ),
         itemName: 'feed items',
-      });
-    }
+      },
+    };
+  }, [filteredAndSortedFeed, parentCurrentPage, feedsPerPage]);
 
-    return { startIndex, endIndex, currentItems, totalPages, currentPage };
-  }, [filteredAndSortedFeed, parentCurrentPage, feedsPerPage, onPaginationChange]);
+  // Move onPaginationChange to useEffect to prevent infinite loops
+  useEffect(() => {
+    if (onPaginationChange) {
+      onPaginationChange(paginationValues.paginationData);
+    }
+  }, [paginationValues.paginationData, onPaginationChange]);
 
   return (
     <div>
       {/* Top Control Bar */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         {/* Search */}
-        <div className="flex-grow-1 relative w-full md:w-auto">
+        <div className="flex-grow-1 relative w-full">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <MagnifyingGlass size={18} className="text-gray-400" />
+            <MagnifyingGlass
+              size={18}
+              weight="duotone"
+              className="text-gray-400"
+            />
           </div>
           <input
             type="text"
@@ -177,10 +200,10 @@ const Feed = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
           />
           {searchTerm && (
             <button
-              className="absolute inset-y-0 right-0 flex items-center pr-3"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
               onClick={() => setSearchTerm('')}
             >
-              <X size={18} className="text-gray-400" />
+              <X size={18} weight="bold" />
             </button>
           )}
         </div>
@@ -194,7 +217,7 @@ const Feed = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
       )}
 
       {/* Feed Table */}
-      <div className="h-[calc(100vh-462px)] overflow-auto rounded-lg border border-gray-200 shadow-md">
+      <div className="h-[calc(100vh-406px)] overflow-auto rounded-lg border border-gray-200 shadow-md">
         <table className="w-full text-left text-sm text-gray-500">
           <thead className="sticky top-0 bg-gray-50 text-xs uppercase text-gray-700">
             <tr>

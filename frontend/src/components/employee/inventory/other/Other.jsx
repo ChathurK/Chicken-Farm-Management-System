@@ -159,37 +159,60 @@ const Other = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
     return new Date(dateString).toLocaleDateString('en-CA');
   };
 
-  // Calculate pagination values
+  // Calculate pagination values - keep calculation in useMemo
   const paginationValues = useMemo(() => {
     const currentPage = parentCurrentPage || 1;
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const currentItems = filteredAndSortedInventory.slice(startIndex, endIndex);
-    const totalPages = Math.ceil(filteredAndSortedInventory.length / itemsPerPage);
+    const currentItems = filteredAndSortedInventory.slice(
+      startIndex,
+      endIndex
+    );
+    const totalPages = Math.ceil(
+      filteredAndSortedInventory.length / itemsPerPage
+    );
 
-    // Pass data to parent for pagination control
-    if (onPaginationChange) {
-      onPaginationChange({
+    return {
+      startIndex,
+      endIndex,
+      currentItems,
+      totalPages,
+      currentPage,
+      // Create pagination data object to be used in useEffect
+      paginationData: {
         totalItems: filteredAndSortedInventory.length,
         totalPages,
         itemsPerPage,
-        currentPageFirstItemIndex: filteredAndSortedInventory.length > 0 ? startIndex + 1 : 0,
-        currentPageLastItemIndex: Math.min(endIndex, filteredAndSortedInventory.length),
-        itemName: 'items',
-      });
-    }
+        currentPageFirstItemIndex:
+          filteredAndSortedInventory.length > 0 ? startIndex + 1 : 0,
+        currentPageLastItemIndex: Math.min(
+          endIndex,
+          filteredAndSortedInventory.length
+        ),
+        itemName: 'inventory items',
+      },
+    };
+  }, [filteredAndSortedInventory, parentCurrentPage, itemsPerPage]);
 
-    return { startIndex, endIndex, currentItems, totalPages, currentPage };
-  }, [filteredAndSortedInventory, parentCurrentPage, itemsPerPage, onPaginationChange]);
+  // Move onPaginationChange to useEffect to prevent infinite loops
+  useEffect(() => {
+    if (onPaginationChange) {
+      onPaginationChange(paginationValues.paginationData);
+    }
+  }, [paginationValues.paginationData, onPaginationChange]);
 
   return (
     <div>
       {/* Top Control Bar */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         {/* Search */}
-        <div className="flex-grow-1 relative w-full md:w-auto">
+        <div className="flex-grow-1 relative w-full">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <MagnifyingGlass size={18} className="text-gray-400" />
+            <MagnifyingGlass
+              size={18}
+              weight="duotone"
+              className="text-gray-400"
+            />
           </div>
           <input
             type="text"
@@ -200,10 +223,10 @@ const Other = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
           />
           {searchTerm && (
             <button
-              className="absolute inset-y-0 right-0 flex items-center pr-3"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
               onClick={() => setSearchTerm('')}
             >
-              <X size={18} className="text-gray-400" />
+              <X size={18} weight="bold" />
             </button>
           )}
         </div>
@@ -217,7 +240,7 @@ const Other = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
       )}
 
       {/* Inventory Table */}
-      <div className="h-[calc(100vh-462px)] overflow-auto rounded-lg border border-gray-200 shadow-md">
+      <div className="h-[calc(100vh-406px)] overflow-auto rounded-lg border border-gray-200 shadow-md">
         <table className="w-full text-left text-sm text-gray-500">
           <thead className="sticky top-0 bg-gray-50 text-xs uppercase text-gray-700">
             <tr>
@@ -295,7 +318,9 @@ const Other = ({ currentPage: parentCurrentPage, onPaginationChange }) => {
                     {item.item_name}
                   </td>
                   <td className="px-4 py-4">
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getCategoryColor(item.category)}`}>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getCategoryColor(item.category)}`}
+                    >
                       {item.category}
                     </span>
                   </td>
