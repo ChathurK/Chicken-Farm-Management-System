@@ -13,11 +13,11 @@ export default function AdminSidebarContent() {
         text="Dashboard"
         to="/admin/dashboard"
       />
-      <SidebarItem
+      {/* <SidebarItem
         icon={<CalendarDots size={20} weight="duotone" />}
         text="Calendar"
         to="/admin/calendar"
-      />
+      /> */}
       <SidebarItem
         icon={<ShoppingCart size={20} weight="duotone" />}
         text="Orders"

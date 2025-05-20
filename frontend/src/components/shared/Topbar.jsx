@@ -40,7 +40,7 @@ const Topbar = () => {
   }, [showNotifications, showProfileMenu]);
 
   // Demo notifications
-  const notifications = [
+  /* const notifications = [
     { id: 1, message: "New order received", time: "5 min ago" },
     { id: 2, message: "Low inventory alert: Feed", time: "1 hour ago" },
     { id: 3, message: "Daily report generated", time: "3 hours ago" },
@@ -51,7 +51,7 @@ const Topbar = () => {
     { id: 8, message: "New feature released", time: "2 weeks ago" },
     { id: 9, message: "Server maintenance scheduled", time: "3 weeks ago" },
     { id: 10, message: "New message from support", time: "1 month ago" },
-  ];
+  ]; */
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -84,7 +84,7 @@ const Topbar = () => {
         </button> */}
         
         {/* Notifications */}
-        <div className="relative" ref={notificationRef}>
+        {/* <div className="relative" ref={notificationRef}>
           <button 
             onClick={handleNotificationClick} 
             className="p-2 rounded-full hover:bg-gray-200 transition-colors duration-300"
@@ -93,7 +93,7 @@ const Topbar = () => {
             <Bell size={24} weight='duotone' className="text-amber-600" />
           </button>
           
-          {/* Notification dropdown */}
+          Notification dropdown
           {showNotifications && (
             <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-10 py-2 border border-gray-200">
               <h3 className="px-4 py-2 text-sm font-semibold border-b">Notifications</h3>
@@ -116,7 +116,7 @@ const Topbar = () => {
               </div>
             </div>
           )}
-        </div>
+        </div> */}
         
         {/* User Profile */}
         <div className="relative" ref={profileRef}>

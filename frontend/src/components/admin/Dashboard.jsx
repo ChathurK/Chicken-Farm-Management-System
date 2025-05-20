@@ -3,18 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import DashboardLayout from './DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
 import InventoryAlerts from './inventory/InventoryAlerts';
-import {
-  ChartLine,
-  ShoppingCart,
-  Bird,
-  ArchiveBox,
-  CurrencyCircleDollar,
-  UsersThree,
-  UserPlus,
-  CalendarBlank,
-  ArrowCircleUp,
-  ArrowCircleDown,
-} from '@phosphor-icons/react';
+import { ChartLine, ShoppingCart, Bird, ArchiveBox, CurrencyCircleDollar, UsersThree, UserPlus, CalendarBlank, ArrowCircleUp, ArrowCircleDown, Hand } from '@phosphor-icons/react';
 import api from '../../utils/api';
 
 // Recent Activity Component
@@ -109,7 +98,7 @@ const RecentActivity = () => {
             <span
               className={`font-semibold ${transaction.transaction_type === 'Income' ? 'text-green-600' : 'text-red-600'}`}
             >
-              {transaction.transaction_type === 'Income' ? '+' : '-'}$
+              {transaction.transaction_type === 'Income' ? '+' : '-'} LKR {' '}
               {parseFloat(transaction.amount).toFixed(2)}
             </span>
           </div>
@@ -170,25 +159,21 @@ export default function AdminDashboard() {
     <DashboardLayout>
       {/* Welcome Section */}
       <div className="mb-6 rounded-lg bg-white p-6 shadow">
-        <h1 className="mb-4 text-2xl font-bold">Admin Dashboard</h1>
-        <div className="rounded-lg border border-amber-100 bg-amber-50 p-4">
-          <p>
-            <span className="font-semibold">Welcome,</span>{' '}
-            {user?.first_name ? `${user.first_name} ${user.last_name}` : 'User'}
-          </p>
-          <p>
-            <span className="font-semibold">Email:</span> {user?.email}
-          </p>
-          <p>
-            <span className="font-semibold">Role:</span> {user?.role}
-          </p>
+        <div className="flex items-center">
+          <Hand size={32} weight="duotone" className="mr-3 text-amber-500" />
+          <h1 className="text-2xl font-bold">
+            Hello, {user?.first_name ? user.first_name : 'User'}!
+          </h1>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Inventory Stats Card */}
-        <div className="flex items-center rounded-lg border-l-4 border-amber-500 bg-white p-4 shadow">
+        <div 
+          onClick={() => navigate('/admin/inventory')}
+          className="flex cursor-pointer items-center rounded-lg border-l-4 border-amber-500 bg-white p-4 shadow transition-all duration-200 hover:bg-gray-50 hover:shadow-lg"
+        >
           <div className="mr-4 rounded-full bg-amber-100 p-3">
             <ArchiveBox size={24} weight="duotone" className="text-amber-600" />
           </div>
@@ -204,7 +189,10 @@ export default function AdminDashboard() {
           </div>
         </div>
         {/* Orders Stats Card */}
-        <div className="flex items-center rounded-lg border-l-4 border-blue-500 bg-white p-4 shadow">
+        <div 
+          onClick={() => navigate('/admin/orders')}
+          className="flex cursor-pointer items-center rounded-lg border-l-4 border-blue-500 bg-white p-4 shadow transition-all duration-200 hover:bg-gray-50 hover:shadow-lg"
+        >
           <div className="mr-4 rounded-full bg-blue-100 p-3">
             <ShoppingCart
               size={24}
@@ -224,7 +212,10 @@ export default function AdminDashboard() {
           </div>
         </div>
         {/* Buyers Stats Card */}
-        <div className="flex items-center rounded-lg border-l-4 border-green-500 bg-white p-4 shadow">
+        <div 
+          onClick={() => navigate('/admin/buyers')}
+          className="flex cursor-pointer items-center rounded-lg border-l-4 border-green-500 bg-white p-4 shadow transition-all duration-200 hover:bg-gray-50 hover:shadow-lg"
+        >
           <div className="mr-4 rounded-full bg-green-100 p-3">
             <UsersThree size={24} weight="duotone" className="text-green-600" />
           </div>
@@ -240,7 +231,10 @@ export default function AdminDashboard() {
           </div>
         </div>
         {/* Sellers Stats Card */}
-        <div className="flex items-center rounded-lg border-l-4 border-purple-500 bg-white p-4 shadow">
+        <div 
+          onClick={() => navigate('/admin/sellers')}
+          className="flex cursor-pointer items-center rounded-lg border-l-4 border-purple-500 bg-white p-4 shadow transition-all duration-200 hover:bg-gray-50 hover:shadow-lg"
+        >
           <div className="mr-4 rounded-full bg-purple-100 p-3">
             <UserPlus size={24} weight="duotone" className="text-purple-600" />
           </div>
@@ -262,7 +256,7 @@ export default function AdminDashboard() {
         {/* Inventory Alerts Widget */}
         <InventoryAlerts />
         {/* Recent Activity Widget */}
-        <div className="rounded-lg bg-white p-4 shadow">
+        <div className="rounded-lg border border-gray-200 p-4 shadow">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-semibold">Recent Activity</h3>
             <button
