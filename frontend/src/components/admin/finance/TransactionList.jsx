@@ -27,7 +27,7 @@ const TransactionList = () => {
     maxAmount: '',
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState('transaction_date');
+  const [sortBy, setSortBy] = useState('transaction_id');
   const [sortDirection, setSortDirection] = useState('desc');
 
   // Options for dropdowns

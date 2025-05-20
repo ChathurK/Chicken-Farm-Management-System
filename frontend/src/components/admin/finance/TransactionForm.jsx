@@ -768,16 +768,34 @@ const TransactionForm = () => {
         errors.egg_quantity = 'Quantity must be greater than 0';
       } else if (parseInt(formData.egg_quantity) > availableEggQuantity) {
         errors.egg_quantity = `Quantity cannot exceed available quantity (${availableEggQuantity})`;
+      }    } else if (formData.category === 'Inventory Purchase') {
+      // Check either existing inventory or new inventory details
+      if (!formData.inventory_id && 
+          (!formData.inventory_item_name || !formData.inventory_category)) {
+        
+        // If no inventory ID, require new inventory details
+        if (!formData.inventory_category) {
+          errors.inventory_category = 'Category is required';
+        }
+        if (!formData.inventory_item_name) {
+          errors.inventory_item_name = 'Item name is required';
+        }
       }
-    } else if (formData.category === 'Inventory Purchase') {
-      if (!formData.inventory_id) {
-        errors.inventory_id = 'Inventory item is required';
-      }
-      if (
-        !formData.inventory_quantity ||
-        parseInt(formData.inventory_quantity) <= 0
-      ) {
+
+      if (!formData.inventory_quantity || parseInt(formData.inventory_quantity) <= 0) {
         errors.inventory_quantity = 'Quantity must be greater than zero';
+      }
+      
+      if (!formData.inventory_unit) {
+        errors.inventory_unit = 'Unit is required';
+      }
+      
+      if (formData.inventory_item_name && (!formData.inventory_cost_per_unit || parseFloat(formData.inventory_cost_per_unit) <= 0)) {
+        errors.inventory_cost_per_unit = 'Cost per unit must be greater than zero';
+      }
+      
+      if (!formData.inventory_purchase_date) {
+        errors.inventory_purchase_date = 'Purchase date is required';
       }
     }
 
@@ -989,45 +1007,77 @@ const TransactionForm = () => {
     setFormData((prev) => ({ ...prev, egg_record_id: eggRecordId }));
     return eggRecordId;
   };
-
   // Handle inventory purchase transactions
   const handleInventoryPurchase = async () => {
-    if (!formData.inventory_id) {
-      setError('Inventory item is required');
-      setSubmitting(false);
-      throw new Error('Missing inventory item');
-    }
-
     try {
-      // Get the current inventory item
-      const inventoryRes = await api.get(
-        `/api/inventory/${formData.inventory_id}`
-      );
-      const inventoryItem = inventoryRes.data;
+      // Creating a new inventory item
+      if (!formData.inventory_id && formData.inventory_item_name && formData.inventory_category) {
+        // Create a new inventory item
+        const newInventoryItem = {
+          category: formData.inventory_category,
+          item_name: formData.inventory_item_name,
+          quantity: formData.inventory_quantity || 1,
+          unit: formData.inventory_unit || 'units',
+          purchase_date: formData.inventory_purchase_date || formData.transaction_date,
+          expiration_date: formData.inventory_expiration_date || null,
+          cost_per_unit: formData.inventory_cost_per_unit || (formData.amount / (formData.inventory_quantity || 1)),
+          status: formData.inventory_status || 'Available'
+        };
+        
+        // Create the new inventory item
+        const inventoryRes = await api.post('/api/inventory', newInventoryItem);
+        formData.inventory_id = inventoryRes.data.inventory_id;
+        return formData.inventory_id;
+      } 
+      // If using existing inventory item
+      else if (formData.inventory_id) {
+        // Get the current inventory item
+        const inventoryRes = await api.get(
+          `/api/inventory/${formData.inventory_id}`
+        );
+        const inventoryItem = inventoryRes.data;
 
-      if (inventoryItem) {
-        // Update the inventory quantity - for purchases, we add to the quantity
-        const newQuantity = inventoryItem.quantity
-          ? parseInt(inventoryItem.quantity) +
-          parseInt(formData.inventory_quantity || 1)
-          : parseInt(formData.inventory_quantity || 1);
+        if (inventoryItem) {
+          // Update the inventory quantity - for purchases, we add to the quantity
+          const newQuantity = inventoryItem.quantity
+            ? parseInt(inventoryItem.quantity) + parseInt(formData.inventory_quantity || 1)
+            : parseInt(formData.inventory_quantity || 1);
 
-        await api.put(`/api/inventory/${formData.inventory_id}`, {
-          ...inventoryItem,
-          quantity: newQuantity,
-          last_restocked: new Date().toLocaleDateString('en-CA'),
-          notes: inventoryItem.notes
-            ? `${inventoryItem.notes}; Purchased ${formData.inventory_quantity || 1} on ${new Date().toLocaleDateString('en-CA')}`
-            : `Purchased ${formData.inventory_quantity || 1} on ${new Date().toLocaleDateString('en-CA')}`,
-        });
+          await api.put(`/api/inventory/${formData.inventory_id}`, {
+            ...inventoryItem,
+            quantity: newQuantity,
+            last_restocked: new Date().toLocaleDateString('en-CA'),
+            notes: inventoryItem.notes
+              ? `${inventoryItem.notes}; Purchased ${formData.inventory_quantity || 1} on ${new Date().toLocaleDateString('en-CA')}`
+              : `Purchased ${formData.inventory_quantity || 1} on ${new Date().toLocaleDateString('en-CA')}`,
+          });
+        }
+        
+        return formData.inventory_id;
+      } else {
+        // Neither existing item nor sufficient info for a new item
+        setError('Please select an inventory item or fill in all required inventory details');
+        setSubmitting(false);
+        throw new Error('Missing inventory information');
       }
-
-      return formData.inventory_id;
     } catch (err) {
       console.error('Error updating inventory:', err);
       setError('Error updating inventory. Please try again.');
       setSubmitting(false);
       throw err;
+    }
+  };
+
+  // Auto-calculate amount from cost per unit and quantity
+  const autoCalculateAmount = () => {
+    if (formData.inventory_cost_per_unit && formData.inventory_quantity) {
+      const calculatedAmount = parseFloat(formData.inventory_cost_per_unit) * parseInt(formData.inventory_quantity);
+      if (!isNaN(calculatedAmount)) {
+        setFormData(prev => ({
+          ...prev,
+          amount: calculatedAmount.toFixed(2)
+        }));
+      }
     }
   };
 
@@ -1058,6 +1108,7 @@ const TransactionForm = () => {
       } else if (formData.category === 'Inventory Purchase') {
         await handleInventoryPurchase();
       }
+      // No specific handler for "Other" category
 
       // Prepare transaction data
       const transactionData = {
@@ -1269,8 +1320,7 @@ const TransactionForm = () => {
                           }
                           // For Expense, show only purchase categories
                           return (
-                            category.includes('Purchase') ||
-                            category === 'Other'
+                            category.includes('Inventory Purchase') || category === 'Other'
                           );
                         })
                         .map((category) => (
@@ -1909,7 +1959,7 @@ const TransactionForm = () => {
                 {formData.transaction_type === 'Expense' &&
                   formData.category === 'Inventory Purchase' && (
                     <>
-                      <div>
+                      {/* <div>
                         <label
                           htmlFor="inventory_id"
                           className="mb-1 block text-sm font-medium text-gray-700"
@@ -1950,15 +2000,83 @@ const TransactionForm = () => {
                             {formErrors.inventory_id}
                           </p>
                         )}
+                      </div> */}
+
+                      <div className="col-span-full mb-4 mt-2">
+                        <h3 className="text-lg font-medium text-gray-700">
+                          New Inventory Item Details
+                        </h3>
+                        <div className="mt-2 border-t border-gray-200"></div>
                       </div>
 
+                      {/* Item Category */}
+                      <div>
+                        <label
+                          htmlFor="inventory_category"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Category <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <ShoppingBag
+                              size={20}
+                              weight="duotone"
+                              className="text-gray-500"
+                            />
+                          </div>
+                          <select
+                            id="inventory_category"
+                            name="inventory_category"
+                            value={formData.inventory_category || ''}
+                            onChange={handleChange}
+                            className={`block w-full rounded-md border ${formErrors.inventory_category ? 'border-red-300' : 'border-gray-300'} py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none`}
+                          >
+                            <option value="">Select Category</option>
+                            <option value="Feed">Feed</option>
+                            <option value="Medication">Medication</option>
+                            <option value="Supplies">Supplies</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                        {formErrors.inventory_category && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.inventory_category}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Item Name */}
+                      <div>
+                        <label
+                          htmlFor="inventory_item_name"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Item Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          id="inventory_item_name"
+                          name="inventory_item_name"
+                          value={formData.inventory_item_name || ''}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${formErrors.inventory_item_name ? 'border-red-300' : 'border-gray-300'} px-3 py-2 focus:border-amber-500 focus:outline-none`}
+                          placeholder="Enter item name"
+                        />
+                        {formErrors.inventory_item_name && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.inventory_item_name}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Quantity */}
                       <div>
                         <label
                           htmlFor="inventory_quantity"
                           className="mb-1 block text-sm font-medium text-gray-700"
                         >
-                          Quantity to Purchase{' '}
-                          <span className="text-red-500">*</span>
+                          Quantity <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="number"
@@ -1966,7 +2084,7 @@ const TransactionForm = () => {
                           name="inventory_quantity"
                           min="1"
                           step="1"
-                          value={formData.inventory_quantity}
+                          value={formData.inventory_quantity || ''}
                           onChange={handleChange}
                           className={`block w-full rounded-md border ${formErrors.inventory_quantity ? 'border-red-300' : 'border-gray-300'} px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                           placeholder="Enter quantity"
@@ -1974,6 +2092,157 @@ const TransactionForm = () => {
                         {formErrors.inventory_quantity && (
                           <p className="mt-1 text-sm text-red-600">
                             {formErrors.inventory_quantity}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Unit */}
+                      <div>
+                        <label
+                          htmlFor="inventory_unit"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Unit <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          id="inventory_unit"
+                          name="inventory_unit"
+                          value={formData.inventory_unit || ''}
+                          onChange={handleChange}
+                          className={`block w-full rounded-md border ${formErrors.inventory_unit ? 'border-red-300' : 'border-gray-300'} px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
+                          placeholder="e.g., kg, bottles, packs"
+                        />
+                        {formErrors.inventory_unit && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.inventory_unit}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Cost Per Unit */}
+                      <div>
+                        <label
+                          htmlFor="inventory_cost_per_unit"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Cost Per Unit <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <span className="text-lg font-normal text-gray-500">
+                              Rs.
+                            </span>
+                          </div>
+                          <input
+                            type="number"
+                            id="inventory_cost_per_unit"
+                            name="inventory_cost_per_unit"
+                            min="1"
+                            step="0.01"
+                            value={formData.inventory_cost_per_unit || ''}
+                            onChange={handleChange}
+                            onBlur={() => autoCalculateAmount()}
+                            className={`block w-full rounded-md border ${formErrors.inventory_cost_per_unit ? 'border-red-300' : 'border-gray-300'} py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none`}
+                            placeholder="0.00"
+                          />
+                        </div>
+                        {formErrors.inventory_cost_per_unit && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.inventory_cost_per_unit}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Purchase Date */}
+                      {/* <div>
+                        <label
+                          htmlFor="inventory_purchase_date"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Purchase Date <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <CalendarDots
+                              size={20}
+                              weight="duotone"
+                              className="text-gray-500"
+                            />
+                          </div>
+                          <input
+                            type="date"
+                            id="inventory_purchase_date"
+                            name="inventory_purchase_date"
+                            value={formData.inventory_purchase_date || formData.transaction_date || ''}
+                            onChange={handleChange}
+                            max={new Date().toLocaleDateString('en-CA')}
+                            className="block w-full cursor-pointer rounded-md border border-gray-300 py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none"
+                          />
+                        </div>
+                        {formErrors.inventory_purchase_date && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.inventory_purchase_date}
+                          </p>
+                        )}
+                      </div> */}
+
+                      {/* Expiration Date */}
+                      <div>
+                        <label
+                          htmlFor="inventory_expiration_date"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Expiration Date
+                        </label>
+                        <div className="relative">
+                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <CalendarDots
+                              size={20}
+                              weight="duotone"
+                              className="text-gray-500"
+                            />
+                          </div>
+                          <input
+                            type="date"
+                            id="inventory_expiration_date"
+                            name="inventory_expiration_date"
+                            value={formData.inventory_expiration_date || ''}
+                            onChange={handleChange}
+                            min={new Date().toLocaleDateString('en-CA')}
+                            className="block w-full cursor-pointer rounded-md border border-gray-300 py-2 pl-10 pr-4 focus:border-amber-500 focus:outline-none"
+                          />
+                        </div>
+                        {formErrors.inventory_expiration_date && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.inventory_expiration_date}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Status */}
+                      <div>
+                        <label
+                          htmlFor="inventory_status"
+                          className="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Status
+                        </label>
+                        <select
+                          id="inventory_status"
+                          name="inventory_status"
+                          value={formData.inventory_status || 'Available'}
+                          onChange={handleChange}
+                          className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
+                        >
+                          <option value="Available">Available</option>
+                          <option value="Low">Low</option>
+                          <option value="Finished">Finished</option>
+                          <option value="Expired">Expired</option>
+                        </select>
+                        {formErrors.inventory_status && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {formErrors.inventory_status}
                           </p>
                         )}
                       </div>
@@ -2105,18 +2374,20 @@ const TransactionForm = () => {
                           </p>
                         </div>
                       )}
-
+                      
                       {formData.category === 'Inventory Purchase' && (
                         <div className="col-span-2">
                           <p className="text-sm font-medium text-gray-600">
                             Inventory Item:
                           </p>
                           <p className="text-base font-medium">
-                            {inventoryItems.find(
-                              (item) =>
-                                item.inventory_id == formData.inventory_id
-                            )?.item_name || ''}
-                            ({formData.inventory_quantity} units)
+                            {formData.inventory_item_name || 
+                              inventoryItems.find(
+                                (item) => item.inventory_id == formData.inventory_id
+                              )?.item_name || ''}
+                            {formData.inventory_quantity && ` (${formData.inventory_quantity} ${formData.inventory_unit || 'units'})`}
+                            {formData.inventory_category && ` - ${formData.inventory_category}`}
+                            {formData.inventory_cost_per_unit && ` - Rs. ${formData.inventory_cost_per_unit} per ${formData.inventory_unit || 'unit'}`}
                           </p>
                         </div>
                       )}

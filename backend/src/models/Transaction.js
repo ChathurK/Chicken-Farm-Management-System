@@ -175,7 +175,7 @@ class Transaction {
         const sortDir = filters.sortDir || 'desc';
 
         // Only allow sorting by valid columns to prevent SQL injection
-        const validSortColumns = ['transaction_date', 'amount'];
+        const validSortColumns = ['transaction_id', 'transaction_date', 'amount'];
         const sortColumn = validSortColumns.includes(sortBy) ? sortBy : 'transaction_date';
 
         // Validate sort direction

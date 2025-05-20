@@ -306,7 +306,7 @@ const TransactionDetails = () => {
             )}
 
             {/* Related Actions */}
-            <div className="rounded-lg bg-white p-6 shadow">
+            {/* <div className="rounded-lg bg-white p-6 shadow">
               <h2 className="mb-4 text-lg font-semibold">Related Actions</h2>
               <div className="space-y-2">
                 <button 
@@ -328,7 +328,7 @@ const TransactionDetails = () => {
                   </div>
                 </button>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       ) : (
