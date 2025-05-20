@@ -122,6 +122,26 @@ const InventoryAPI = {
     });
     return response.data;
   },
+
+  /**
+   * Generate inventory reports based on filters
+   * @param {Object} filters - Filters for the report (category, lowStock, expiringSoon, startDate, endDate)
+   * @param {string} format - Report format (csv, pdf, excel)
+   * @returns {Promise} - Promise with report data or download information
+   */
+  generateReport: async (filters = {}, format = 'csv') => {
+    try {
+      const response = await api.get('/api/inventory/reports', {
+        params: { ...filters, format },
+        responseType: format === 'csv' || format === 'excel' ? 'blob' : '',
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('Error generating report:', error);
+      throw error;
+    }
+  },
 };
 
 export default InventoryAPI;

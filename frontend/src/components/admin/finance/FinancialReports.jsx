@@ -52,9 +52,9 @@ const LineChart = ({ data, labels, title }) => {
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="month" />
           <YAxis />
-          <Tooltip formatter={(value) => new Intl.NumberFormat('en-US', {
+          <Tooltip formatter={(value) => new Intl.NumberFormat('en-CA', {
             style: 'currency',
-            currency: 'USD',
+            currency: 'LKR',
           }).format(value)} />
           <Legend />
           <Line
@@ -111,9 +111,9 @@ const BarChart = ({ data, labels, title, dataKeys = ['income', 'expense'] }) => 
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey={Array.isArray(data) && typeof data[0] !== 'object' ? "name" : "month"} />
           <YAxis />
-          <Tooltip formatter={(value) => new Intl.NumberFormat('en-US', {
+          <Tooltip formatter={(value) => new Intl.NumberFormat('en-CA', {
             style: 'currency',
-            currency: 'USD',
+            currency: 'LKR',
           }).format(value)} />
           <Legend />
           {dataKeys.includes('income') && (
@@ -239,22 +239,20 @@ const FinancialReports = () => {
   // References for PDF export
   const reportRef = useRef(null);
   
-  useEffect(() => {
-    const fetchFinancialData = async () => {
+  useEffect(() => {    const fetchFinancialData = async () => {
       try {
         setLoading(true);
         
         // Build query parameters
         const params = new URLSearchParams();
-        params.append('report', selectedReport);
-        params.append('timeframe', dateRange);
+        params.append('period', dateRange);
         
         if (dateRange === 'custom') {
           params.append('startDate', customDateRange.startDate);
           params.append('endDate', customDateRange.endDate);
         }
         
-        const response = await api.get(`/api/reports/financial?${params}`);
+        const response = await api.get(`/api/transactions/summary?${params}`);
         
         // Format the data for charts and summary
         const formattedData = formatFinancialData(response.data);
@@ -273,9 +271,9 @@ const FinancialReports = () => {
   
   // Format financial data for display and charts
   const formatFinancialData = (data) => {
-    // This is where we would process backend data
-    // For demonstration purposes, let's create sample data
+    // Process data from the backend or generate sample data if necessary
     
+    // Use Canadian-style month names (en-CA)
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const currentMonth = new Date().getMonth();
     
@@ -284,10 +282,25 @@ const FinancialReports = () => {
       const monthIndex = (currentMonth - 5 + i) % 12;
       const month = months[monthIndex >= 0 ? monthIndex : monthIndex + 12];
       
-      // Generate random but sensible values
-      const income = Math.round(15000 + Math.random() * 10000);
-      const expense = Math.round(10000 + Math.random() * 5000);
-      const profit = income - expense;
+      // If we have real data, we could process it here
+      // For now, we'll generate reasonable data based on the summary totals or random values
+      
+      // Get the base values - either from API or generate them
+      let income, expense, profit;
+      
+      if (data && data.total_income !== undefined) {
+        // If we have real summary data, distribute it across months with some variation
+        // This simulates a distribution of the summary totals across months
+        const variation = 0.5 + (Math.random() * 1);
+        income = Math.round((data.total_income / 6) * variation);
+        expense = Math.round((data.total_expense / 6) * variation);
+        profit = income - expense;
+      } else {
+        // Generate sample data if API doesn't return expected format
+        income = Math.round(15000 + Math.random() * 10000);
+        expense = Math.round(10000 + Math.random() * 5000);
+        profit = income - expense;
+      }
       
       // Add livestock breakdown for income
       const chickenSales = Math.round(income * 0.4);
@@ -343,9 +356,9 @@ const FinancialReports = () => {
     
     return {
       summary: {
-        totalIncome,
-        totalExpense,
-        profit,
+        totalIncome: data?.total_income || totalIncome,
+        totalExpense: data?.total_expense || totalExpense,
+        profit: data?.profit || profit,
         incomeChange,
         expenseChange,
         profitChange
@@ -381,7 +394,7 @@ const FinancialReports = () => {
       pdf.text('Poultry Farm Financial Report', 14, 15);
       pdf.setFontSize(12);
       pdf.text(`Report Period: ${dateRange.charAt(0).toUpperCase() + dateRange.slice(1)}ly`, 14, 22);
-      pdf.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 29);
+      pdf.text(`Generated: ${new Date().toLocaleDateString('en-CA')}`, 14, 29);
       
       pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
       pdf.save('financial-report.pdf');
@@ -412,12 +425,12 @@ const FinancialReports = () => {
   const printReport = () => {
     window.print();
   };
-  
+
   // Format currency
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
+    return new Intl.NumberFormat('en-CA', {
       style: 'currency',
-      currency: 'INR',
+      currency: 'LKR',
       minimumFractionDigits: 2
     }).format(amount);
   };
