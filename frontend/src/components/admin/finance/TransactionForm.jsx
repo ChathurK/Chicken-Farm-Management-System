@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, FloppyDisk, CurrencyDollar, CalendarDots, ChatText, UserCircle, ShoppingBag, Bird, Egg, Plus, Warning, Tag, CircleWavyCheck } from '@phosphor-icons/react';
+import { ArrowLeft, FloppyDisk, CurrencyDollar, CalendarDots, ChatText, UserCircle, ShoppingBag, Bird, Egg, Plus, Warning, Tag } from '@phosphor-icons/react';
 import DashboardLayout from '../DashboardLayout';
 import api from '../../../utils/api';
+import { toast } from 'react-toastify';
+// import 'react-toastify/dist/ReactToastify.css';
 
 import ContactModal from '../../shared/ContactModal';
 
@@ -55,13 +57,6 @@ const TransactionForm = () => {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState({
-    title: '',
-    details: '',
-    category: '',
-    id: null,
-  });
   const [formErrors, setFormErrors] = useState({});
   const [showNewBuyerForm, setShowNewBuyerForm] = useState(false);
   const [showNewSellerForm, setShowNewSellerForm] = useState(false);
@@ -674,6 +669,7 @@ const TransactionForm = () => {
   const handleAddNewBuyer = (newBuyer) => {
     setBuyers((prev) => [...prev, newBuyer]);
     setFormData((prev) => ({ ...prev, buyer_id: newBuyer.buyer_id }));
+    toast.success('New buyer added successfully');
     setShowNewBuyerForm(false);
   };
 
@@ -681,6 +677,7 @@ const TransactionForm = () => {
   const handleAddNewSeller = (newSeller) => {
     setSellers((prev) => [...prev, newSeller]);
     setFormData((prev) => ({ ...prev, seller_id: newSeller.seller_id }));
+    toast.success('New seller added successfully');
     setShowNewSellerForm(false);
   };
 
@@ -1135,40 +1132,42 @@ const TransactionForm = () => {
       // Send transaction data to API
       if (isEditMode) {
         await api.put(`/api/transactions/${id}`, transactionData);
-        setSuccess(true);
-
-        // Set detailed success message
-        setSuccessMessage({
-          title: 'Transaction updated successfully!',
-          details: `${formData.transaction_type} transaction for ${formatCurrency(formData.amount)} has been updated.`,
-          category: formData.category,
+        
+        // Show toast success message
+        toast.success(`Transaction updated successfully! ${formData.transaction_type} transaction for ${formatCurrency(formData.amount)} has been updated.`, {
+          position: "top-right",
+          autoClose: 2000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
         });
-
-        // After a delay, navigate back to transaction list
+        
+        // Navigate back to transaction list
         setTimeout(() => {
           navigate('/admin/finance/transactions');
         }, 2000);
       } else {
         const response = await api.post('/api/transactions', transactionData);
-        setSuccess(true);
-
-        // Set detailed success message
-        setSuccessMessage({
-          title: 'Transaction created successfully!',
-          details: `${formData.transaction_type} transaction for ${formatCurrency(formData.amount)} has been recorded.`,
-          category: formData.category,
-          id: response.data.transaction_id,
+        
+        // Show toast success message
+        toast.success(`Transaction created successfully! ${formData.transaction_type} transaction for ${formatCurrency(formData.amount)} has been recorded.`, {
+          position: "top-right",
+          autoClose: 2000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
         });
-
+        
         // After a delay, navigate back to transaction list
         setTimeout(() => {
           navigate('/admin/finance/transactions');
         }, 2000);
       }
     } catch (err) {
-      setError(
-        err.response?.data?.msg || 'An error occurred. Please try again.'
-      );
+      const errorMessage = err.response?.data?.msg || 'An error occurred. Please try again.';
+      setError(errorMessage);
       setSubmitting(false);
       console.error('Error saving transaction:', err);
     }
@@ -1210,35 +1209,10 @@ const TransactionForm = () => {
           </div>
         ) : (
           <div className="rounded-lg bg-white p-6 shadow">
-            {/* Error and success messages */}
-            {error && (
+              {/* Error and success messages */}
+              {error && (
               <div className="mb-4 rounded-lg bg-red-100 px-4 py-3 text-red-700">
                 <p>{error}</p>
-              </div>
-            )}
-
-            {success && (
-              <div className="mb-4 rounded-lg bg-green-100 px-4 py-3 text-green-700">
-                <div className="flex items-center space-x-2">
-                  <CircleWavyCheck size={24} weight="duotone" />
-                  <p className="font-medium">{successMessage.title}</p>
-                </div>
-                <p className="mt-1">{successMessage.details}</p>
-                {successMessage.id && (
-                  <button
-                    onClick={() =>
-                      navigate(
-                        `/admin/finance/transactions/${successMessage.id}`
-                      )
-                    }
-                    className="mt-2 text-sm font-medium text-amber-600 hover:text-amber-800"
-                  >
-                    View Transaction Details →
-                  </button>
-                )}
-                <p className="mt-2 text-sm">
-                  You will be redirected back to the transactions list...
-                </p>
               </div>
             )}
 
@@ -2285,11 +2259,10 @@ const TransactionForm = () => {
                 </div>
               </div>
 
-              {/* Transaction Preview Card (shown before submission) */}
+                {/* Transaction Preview Card (shown before submission) */}
               {formData.amount &&
                 formData.transaction_type &&
-                formData.category &&
-                !success && (
+                formData.category && (
                   <div className="mb-6 mt-6 rounded-lg bg-amber-50 p-4 shadow-sm">
                     <h3 className="mb-2 text-lg font-medium text-amber-800">
                       Transaction Preview

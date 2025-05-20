@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from
 import ScreenSizeIndicator from './components/ScreenSizeIndicator';
 import routes from './routes';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // AuthCheck component to handle role-based redirects after login
 const AuthCheck = ({ children }) => {
@@ -61,6 +63,7 @@ const App = () => {
               );
             })}
           </Routes>
+          <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={true} closeOnClick pauseOnFocusLoss draggable pauseOnHover />
           {/* <ScreenSizeIndicator /> */}
         </AuthCheck>
       </AuthProvider>
