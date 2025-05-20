@@ -121,6 +121,9 @@ async function seedDatabase() {
     console.log("Seeding Transactions...");
     await db.execute(`
       INSERT INTO Transactions (transaction_date, transaction_type, category, buyer_id, seller_id, amount, notes, inventory_id, chicken_record_id, egg_record_id, chick_record_id) VALUES 
+      ('2025-01-15', 'Expense', 'Inventory Purchase', NULL, 2, 15000.00, 'Purchase of Antibiotics', 6, NULL, NULL, NULL),
+      ('2025-01-25', 'Expense', 'Inventory Purchase', NULL, 2, 15750.00, 'Purchase of Poultry Vitamins', 2, NULL, NULL, NULL),
+      ('2025-02-05', 'Expense', 'Inventory Purchase', NULL, 3, 28000.00, 'Purchase of Bedding Material', 5, NULL, NULL, NULL),
       ('2025-02-15', 'Income', 'Egg Sale', 1, NULL, 1950.00, 'Sale of eggs to Cargills Food City', NULL, NULL, 1, NULL),
       ('2025-02-15', 'Income', 'Egg Sale', 1, NULL, 1200.00, 'Additional egg sale to Cargills', NULL, NULL, 2, NULL),
       ('2025-02-27', 'Income', 'Egg Sale', 2, NULL, 2600.00, 'Sale of eggs to Keells Super', NULL, NULL, 1, NULL),
@@ -128,11 +131,8 @@ async function seedDatabase() {
       ('2025-03-18', 'Income', 'Chicken Sale', 3, NULL, 22500.00, 'Sale of broilers to Arpico', NULL, 3, NULL, NULL),
       ('2025-04-02', 'Income', 'Egg Sale', 4, NULL, 21250.00, 'Sale of eggs to New Farmers Market', NULL, NULL, 3, NULL),
       ('2025-04-15', 'Income', 'Chick Sale', 5, NULL, 17775.00, 'Sale of chicks to Laugfs Supermarket', NULL, NULL, NULL, 2),
-      ('2025-01-25', 'Expense', 'Inventory Purchase', NULL, 2, 15750.00, 'Purchase of Poultry Vitamins', 2, NULL, NULL, NULL),
       ('2025-04-19', 'Income', 'Egg Sale', 4, NULL, 3250.00, 'Sale of eggs to New Farmers Market', NULL, NULL, 3, NULL),
-      ('2025-05-14', 'Income', 'Chick Sale', 5, NULL, 7375.00, 'Sale of chicks to Laugfs Supermarket', NULL, NULL, NULL, 2),
-      ('2025-02-05', 'Expense', 'Inventory Purchase', NULL, 3, 28000.00, 'Purchase of Bedding Material', 5, NULL, NULL, NULL),
-      ('2025-01-15', 'Expense', 'Inventory Purchase', NULL, 2, 15000.00, 'Purchase of Antibiotics', 6, NULL, NULL, NULL)
+      ('2025-05-14', 'Income', 'Chick Sale', 5, NULL, 7375.00, 'Sale of chicks to Laugfs Supermarket', NULL, NULL, NULL, 2)
     `);
 
     console.log("Database seeding completed successfully.");

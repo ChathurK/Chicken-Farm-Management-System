@@ -792,7 +792,11 @@ const TransactionForm = () => {
       }
       
       if (!formData.inventory_purchase_date) {
-        errors.inventory_purchase_date = 'Purchase date is required';
+        setFormData((prev) => ({
+          ...prev,
+          inventory_purchase_date: formData.transaction_date,
+        }));
+        // errors.inventory_purchase_date = 'Purchase date is required';
       }
     }
 
@@ -1007,6 +1011,9 @@ const TransactionForm = () => {
   // Handle inventory purchase transactions
   const handleInventoryPurchase = async () => {
     try {
+      // Set default purchase date to transaction date if not provided
+      const purchaseDate = formData.inventory_purchase_date || formData.transaction_date;
+
       // Creating a new inventory item
       if (!formData.inventory_id && formData.inventory_item_name && formData.inventory_category) {
         // Create a new inventory item
@@ -1015,7 +1022,7 @@ const TransactionForm = () => {
           item_name: formData.inventory_item_name,
           quantity: formData.inventory_quantity || 1,
           unit: formData.inventory_unit || 'units',
-          purchase_date: formData.inventory_purchase_date || formData.transaction_date,
+          purchase_date: purchaseDate,
           expiration_date: formData.inventory_expiration_date || null,
           cost_per_unit: formData.inventory_cost_per_unit || (formData.amount / (formData.inventory_quantity || 1)),
           status: formData.inventory_status || 'Available'
@@ -1081,6 +1088,8 @@ const TransactionForm = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Form submission started');
+    console.log('Form data:', formData);
 
     if (!validateForm()) {
       // Scroll to first error field
@@ -2060,6 +2069,7 @@ const TransactionForm = () => {
                           step="1"
                           value={formData.inventory_quantity || ''}
                           onChange={handleChange}
+                          onBlur={() => autoCalculateAmount()}
                           className={`block w-full rounded-md border ${formErrors.inventory_quantity ? 'border-red-300' : 'border-gray-300'} px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
                           placeholder="Enter quantity"
                         />
@@ -2129,7 +2139,7 @@ const TransactionForm = () => {
                       </div>
 
                       {/* Purchase Date */}
-                      {/* <div>
+                      <div>
                         <label
                           htmlFor="inventory_purchase_date"
                           className="mb-1 block text-sm font-medium text-gray-700"
@@ -2159,7 +2169,7 @@ const TransactionForm = () => {
                             {formErrors.inventory_purchase_date}
                           </p>
                         )}
-                      </div> */}
+                      </div>
 
                       {/* Expiration Date */}
                       <div>
