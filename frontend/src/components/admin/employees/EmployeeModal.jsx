@@ -218,6 +218,9 @@ const EmployeeModal = ({
     if (!formData.hire_date) newErrors.hire_date = 'Hire date is required';
     if (!formData.contact_number)
       newErrors.contact_number = 'Contact number is required';
+    else if (!/^\d{10}$/.test(formData.contact_number)) {
+      newErrors.contact_number = 'Contact number must be 10 digits';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -385,6 +388,7 @@ const EmployeeModal = ({
                 name="hire_date"
                 type="date"
                 value={formData.hire_date}
+                min={new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                 onChange={handleChange}
                 error={errors.hire_date}
                 required
@@ -396,9 +400,16 @@ const EmployeeModal = ({
                 label="Contact Number"
                 name="contact_number"
                 value={formData.contact_number}
-                onChange={handleChange}
-                error={errors.contact_number}
+                onChange={e => {
+                  // Only allow digits, limit to 10 characters
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  handleChange({ target: { name: 'contact_number', value } });
+                }}
                 required
+                maxLength={10}
+                pattern="\d{10}"
+                placeholder="Enter 10 digit number"
+                error={errors.contact_number}
               />
             </div>
 

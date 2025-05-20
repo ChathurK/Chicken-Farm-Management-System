@@ -82,7 +82,7 @@ class Transaction {
             LEFT JOIN Chicken_Records cr ON t.chicken_record_id = cr.chicken_record_id
             LEFT JOIN Chick_Records chr ON t.chick_record_id = chr.chick_record_id
             LEFT JOIN Egg_Records er ON t.egg_record_id = er.egg_record_id
-            ORDER BY t.transaction_date DESC
+            ORDER BY t.transaction_id DESC
         `;
 
         const [rows] = await db.execute(query);

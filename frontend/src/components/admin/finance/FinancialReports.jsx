@@ -3,21 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CalendarBlank, FilePdf, FileXls, Printer, ArrowDown, ArrowUp, DotsThree, ChartLine, ChartPie, ChartBar, Download, Bird, Egg, ShoppingBag, CurrencyDollar, CaretDown, CaretUp, CircleWavyWarning } from '@phosphor-icons/react';
 import DashboardLayout from '../DashboardLayout';
 import api from '../../../utils/api';
-import { 
-  LineChart as RechartsLineChart, 
-  Line, 
-  BarChart as RechartsBarChart, 
-  Bar, 
-  PieChart as RechartsPieChart, 
-  Pie,
-  Cell,
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer 
-} from 'recharts';
+import { LineChart as RechartsLineChart, Line, BarChart as RechartsBarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -506,10 +492,10 @@ const FinancialReports = () => {
               className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
             >
               <option value="summary">Summary Report</option>
-              <option value="income">Income Breakdown</option>
+              {/* <option value="income">Income Breakdown</option>
               <option value="expense">Expense Breakdown</option>
               <option value="profit">Profit Analysis</option>
-              <option value="livestock">Livestock Sales</option>
+              <option value="livestock">Livestock Sales</option> */}
             </select>
           </div>
           

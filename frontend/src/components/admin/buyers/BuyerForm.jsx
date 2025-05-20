@@ -223,13 +223,20 @@ const BuyerForm = () => {
                 type="text"
                 name="contact_number"
                 value={formData.contact_number}
-                onChange={handleChange}
+                onChange={(e) => {
+                  // Only allow digits, limit to 10 characters
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  handleChange({ target: { name: 'contact_number', value } });
+                }}
+                required
+                maxLength={10}
+                pattern="\d{10}"
+                placeholder="Enter 10 digit number"
                 className={`border bg-gray-50 ${
                   formErrors.contact_number
                     ? 'border-red-500'
                     : 'border-gray-300'
                 } block w-full rounded-lg p-2.5 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500`}
-                placeholder="Enter contact number"
               />
               {formErrors.contact_number && (
                 <p className="mt-1 text-sm text-red-500">

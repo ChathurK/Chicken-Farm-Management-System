@@ -161,7 +161,7 @@ const OrderDetails = () => {
         <div className="mb-6 flex flex-wrap items-center justify-between">
           <div className="mb-2 flex items-center sm:mb-0">
             <button
-              onClick={() => navigate('/admin/orders')}
+              onClick={() => navigate(-1)}
               className="mr-4 text-gray-600 hover:text-amber-500"
             >
               <ArrowLeft size={24} weight="duotone" />
