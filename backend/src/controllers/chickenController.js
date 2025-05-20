@@ -96,8 +96,8 @@ exports.updateChicken = async (req, res) => {
     if (breed) updateData.breed = breed;
     if (quantity !== undefined) updateData.quantity = quantity;
     if (age_weeks !== undefined) updateData.age_weeks = age_weeks;
-    if (notes) updateData.notes = notes;
-    
+    if (notes !== undefined) updateData.notes = notes;
+
     // Handle acquisition_date specifically
     if (acquisition_date !== undefined) {
       // If it's a valid date string, use it

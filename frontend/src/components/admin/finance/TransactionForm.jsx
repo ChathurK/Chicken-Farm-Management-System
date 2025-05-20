@@ -927,7 +927,7 @@ const TransactionForm = () => {
 
     const chickData = {
       parent_breed: existingChick.parent_breed,
-      hatched_date: existingChick.hatched_date || today,
+      hatched_date: new Date(existingChick.hatched_date).toLocaleDateString('en-CA'),
       quantity: newQuantity,
       notes: existingChick.notes
         ? `${existingChick.notes}; Sold ${formData.chick_quantity} on ${today}`
