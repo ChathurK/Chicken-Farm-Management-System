@@ -4,9 +4,11 @@ import { FileCsv, Printer, Table, CalendarCheck, ArrowLeft, Export, ChartLine } 
 import InventoryAPI from '../../../../utils/InventoryAPI';
 import InventoryModal from '../InventoryModal';
 // Import libraries for report generation
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+// This adds the autotable plugin to the jsPDF prototype
+import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import DashboardLayout from '../../DashboardLayout';
 
 // Helper function to convert inventory data to CSV format
 const convertToCSV = (inventoryData) => {
@@ -65,8 +67,12 @@ const downloadFile = (content, fileName, mimeType) => {
 
 // Helper function to generate PDF report
 const generatePdfReport = (inventoryData, reportTitle) => {
-  // Initialize jsPDF
-  const doc = new jsPDF();
+  // Initialize jsPDF in landscape mode for better table display
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: 'a4'
+  });
   
   // Add title
   doc.setFontSize(18);
@@ -74,29 +80,65 @@ const generatePdfReport = (inventoryData, reportTitle) => {
   doc.setFontSize(11);
   doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
   
-  // Create table with inventory data
-  const tableColumn = Object.keys(inventoryData[0]);
-  const tableRows = inventoryData.map(item => {
-    return Object.values(item).map(value => 
-      value === null || value === undefined ? '' : String(value)
-    );
+  // Define the columns we want to include and their display names
+  const columns = [
+    { header: 'ID', dataKey: 'inventory_id' },
+    { header: 'Category', dataKey: 'category' },
+    { header: 'Item Name', dataKey: 'item_name' },
+    { header: 'Quantity', dataKey: 'quantity' },
+    { header: 'Unit', dataKey: 'unit' },
+    { header: 'Purchase Date', dataKey: 'purchase_date' },
+    { header: 'Expiration Date', dataKey: 'expiration_date' },
+    { header: 'Cost/Unit', dataKey: 'cost_per_unit' },
+    { header: 'Status', dataKey: 'status' }
+  ];
+  
+  // Format the data for the table
+  const tableData = inventoryData.map(item => {
+    const row = {};
+    columns.forEach(col => {
+      const value = item[col.dataKey];
+      // Format numbers with 2 decimal places if they're costs
+      if (col.dataKey === 'cost_per_unit' && typeof value === 'number') {
+        row[col.dataKey] = '$' + value.toFixed(2);
+      } else {
+        row[col.dataKey] = value === null || value === undefined ? '' : String(value);
+      }
+    });
+    return row;
   });
   
-  // Generate the table
-  doc.autoTable({
-    head: [tableColumn.map(col => 
-      col.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-    )],
-    body: tableRows,
+  // Extract column headers and keys for autoTable
+  const headers = columns.map(col => col.header);
+  const dataKeys = columns.map(col => col.dataKey);
+  
+  // Generate the table using autoTable
+  autoTable(doc, {
+    head: [headers],
+    body: tableData.map(row => dataKeys.map(key => row[key])),
     startY: 40,
+    margin: { horizontal: 10 },
     styles: {
       fontSize: 9,
       cellPadding: 3,
       overflow: 'linebreak'
     },
+    columnStyles: {
+      0: { cellWidth: 15 }, // ID column
+      1: { cellWidth: 25 }, // Category
+      2: { cellWidth: 40 }, // Item Name
+      3: { cellWidth: 20 }, // Quantity
+      4: { cellWidth: 20 }, // Unit
+      5: { cellWidth: 30 }, // Purchase Date
+      6: { cellWidth: 30 }, // Expiration Date
+      7: { cellWidth: 25 }, // Cost/Unit
+      8: { cellWidth: 25 }  // Status
+    },
     headStyles: {
       fillColor: [221, 153, 38], // Amber color for the header
-      textColor: [255, 255, 255]
+      textColor: [255, 255, 255],
+      fontStyle: 'bold',
+      halign: 'center'
     },
     alternateRowStyles: {
       fillColor: [245, 245, 245]
@@ -111,22 +153,54 @@ const generateExcelReport = (inventoryData, reportTitle) => {
   // Create a new workbook
   const workbook = XLSX.utils.book_new();
   
-  // Convert inventory data to worksheet
-  const worksheet = XLSX.utils.json_to_sheet(inventoryData);
+  // Define the columns we want to include and their display names (same as PDF report)
+  const columns = [
+    { header: 'ID', dataKey: 'inventory_id' },
+    { header: 'Category', dataKey: 'category' },
+    { header: 'Item Name', dataKey: 'item_name' },
+    { header: 'Quantity', dataKey: 'quantity' },
+    { header: 'Unit', dataKey: 'unit' },
+    { header: 'Purchase Date', dataKey: 'purchase_date' },
+    { header: 'Expiration Date', dataKey: 'expiration_date' },
+    { header: 'Cost/Unit ($)', dataKey: 'cost_per_unit' },
+    { header: 'Status', dataKey: 'status' }
+  ];
+  
+  // Format the data for better readability
+  const formattedData = inventoryData.map(item => {
+    const formattedItem = {};
+    columns.forEach(col => {
+      const value = item[col.dataKey];
+      // Use the user-friendly header as the key
+      const userFriendlyHeader = col.header;
+      
+      // Format cost with dollar sign and 2 decimal places
+      if (col.dataKey === 'cost_per_unit' && typeof value === 'number') {
+        formattedItem[userFriendlyHeader] = value.toFixed(2);
+      } else {
+        formattedItem[userFriendlyHeader] = value === null || value === undefined ? '' : value;
+      }
+    });
+    return formattedItem;
+  });
+  
+  // Convert formatted data to worksheet
+  const worksheet = XLSX.utils.json_to_sheet(formattedData);
   
   // Add worksheet to workbook
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');
   
-  // Format header row (make it bold)
+  // Format header row (make it bold with amber background)
   const headerStyle = {
     font: { bold: true, color: { rgb: 'FFFFFF' } },
-    fill: { fgColor: { rgb: 'DD9926' } } // Amber color
+    fill: { fgColor: { rgb: 'DD9926' } }, // Amber color matching PDF
+    alignment: { horizontal: 'center' }
   };
   
   // Get column headers
-  const columnHeaders = Object.keys(inventoryData[0]);
+  const columnHeaders = Object.keys(formattedData[0]);
   
-  // Apply header styling (not fully supported in basic version but included for future enhancement)
+  // Apply header styling
   const headerRange = XLSX.utils.decode_range(worksheet['!ref']);
   for (let C = headerRange.s.c; C <= headerRange.e.c; ++C) {
     const address = XLSX.utils.encode_cell({ r: 0, c: C });
@@ -134,10 +208,17 @@ const generateExcelReport = (inventoryData, reportTitle) => {
     worksheet[address].s = headerStyle;
   }
   
-  // Auto-size columns
-  const columnWidths = columnHeaders.map(header => ({
-    wch: Math.max(header.length, 10) // Minimum width of 10
-  }));
+  // Define column widths based on content
+  const columnWidths = columnHeaders.map(header => {
+    const baseWidth = header.length;
+    // Assign different widths based on column type
+    if (header === 'ID') return { wch: 8 };
+    if (header === 'Item Name') return { wch: 30 };
+    if (header === 'Category' || header === 'Status') return { wch: 15 };
+    if (header.includes('Date')) return { wch: 18 };
+    return { wch: Math.max(baseWidth, 12) };
+  });
+  
   worksheet['!cols'] = columnWidths;
   
   // Return the workbook
@@ -336,7 +417,8 @@ const InventoryReports = () => {
         downloadFile(csvContent, `${filename}.csv`, 'text/csv;charset=utf-8');
         
         setSuccessMessage(`CSV Report "${reportTitle}" was generated and downloaded successfully!`);
-      }      else if (reportFormat === 'excel') {
+      }
+      else if (reportFormat === 'excel') {
         // Generate Excel file using SheetJS
         const workbook = generateExcelReport(inventoryData, reportTitle);
         
@@ -423,240 +505,244 @@ const InventoryReports = () => {
   ];
 
   return (
-    <div className="rounded-lg bg-white p-6 shadow">
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center">
-          <button
-            onClick={() => navigate(-1)}
-            className="mr-4 text-gray-500 hover:text-gray-700"
-          >
-            <ArrowLeft size={24} weight="duotone" />
-          </button>
-          <h1 className="text-2xl font-bold">Inventory Reports</h1>
-        </div>
-      </div>
-
-      {/* Success message */}
-      {successMessage && (
-        <div className="mb-4 rounded border border-green-400 bg-green-100 px-4 py-3 text-green-700">
-          <p>{successMessage}</p>
-        </div>
-      )}
-
-      {/* Error message */}
-      {error && (
-        <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
-          <p>{error}</p>
-        </div>
-      )}
-
-      {/* Report options */}
-      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="col-span-full">
-          <h2 className="mb-3 text-lg font-semibold">
-            Generate Inventory Reports
-          </h2>
-          <p className="mb-4 text-gray-600">
-            Generate and download reports for your inventory. Choose from the
-            options below.
-          </p>
-        </div>
-
-        {reportTypes.map((type) => (
-          <div
-            key={type.id}
-            onClick={() => {
-              setReportType(type.id);
-              setShowReportModal(true);
-              setError(null); // Clear any previous errors
-            }}
-            className="flex cursor-pointer items-center rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
-          >
-            <div className="mr-4">{type.icon}</div>
-            <div>
-              <h3 className="font-medium">{type.label}</h3>
-              <p className="text-sm text-gray-500">
-                {type.id === 'all' &&
-                  'Complete inventory list with all details'}
-                {type.id === 'category' &&
-                  'Inventory items filtered by category'}
-                {type.id === 'lowStock' && 'Items with low stock levels'}
-                {type.id === 'expiring' && 'Items that will expire soon'}
-                {type.id === 'date' &&
-                  'Items filtered by purchase or expiration date'}
-              </p>
-            </div>
+    <DashboardLayout>
+      <div className="rounded-lg bg-white p-6 shadow">
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center">
+            <button
+              onClick={() => navigate(-1)}
+              className="mr-4 text-gray-500 hover:text-gray-700"
+            >
+              <ArrowLeft size={24} weight="duotone" />
+            </button>
+            <h1 className="text-2xl font-bold">Inventory Reports</h1>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Quick action buttons */}
-      <div className="flex flex-wrap justify-end gap-3">
-        <button
-          onClick={() => {
-            setReportType('all');
-            setReportFormat('pdf');
-            setShowReportModal(true);
-            setError(null);
-          }}
-          className="flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+        {/* Success message */}
+        {successMessage && (
+          <div className="mb-4 rounded border border-green-400 bg-green-100 px-4 py-3 text-green-700">
+            <p>{successMessage}</p>
+          </div>
+        )}
+
+        {/* Error message */}
+        {error && (
+          <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+            <p>{error}</p>
+          </div>
+        )}
+
+        {/* Report options */}
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="col-span-full">
+            <h2 className="mb-3 text-lg font-semibold">
+              Generate Inventory Reports
+            </h2>
+            <p className="mb-4 text-gray-600">
+              Generate and download inventory reports. Choose from the
+              options below.
+            </p>
+          </div>
+
+          {reportTypes.map((type) => (
+            <div
+              key={type.id}
+              onClick={() => {
+                setReportType(type.id);
+                setShowReportModal(true);
+                setError(null);
+              }}
+              className="flex cursor-pointer items-center rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
+            >
+              <div className="mr-4">{type.icon}</div>
+              <div>
+                <h3 className="font-medium">{type.label}</h3>
+                <p className="text-sm text-gray-500">
+                  {type.id === 'all' &&
+                    'Complete inventory list with all details'}
+                  {type.id === 'category' &&
+                    'Inventory items filtered by category'}
+                  {type.id === 'lowStock' && 'Items with low stock levels'}
+                  {type.id === 'expiring' && 'Items that will expire soon'}
+                  {type.id === 'date' &&
+                    'Items filtered by purchase or expiration date'}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Quick action buttons */}
+        <div className="flex flex-wrap justify-end gap-3">
+          <button
+            onClick={() => {
+              setReportType('all');
+              setReportFormat('pdf');
+              setShowReportModal(true);
+              setError(null);
+            }}
+            className="flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+          >
+            <Printer size={20} weight="duotone" />
+            Print Inventory
+          </button>
+          <button
+            onClick={() => {
+              setReportType('all');
+              setReportFormat('csv');
+              setError(null);
+              generateReport();
+            }}
+            className="flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-white hover:bg-green-600"
+          >
+            <Export size={20} weight="duotone" />
+            Export to CSV
+          </button>
+        </div>
+
+        {/* Report Configuration Modal */}
+        <InventoryModal
+          isOpen={showReportModal}
+          title={`Generate ${
+            reportType === 'all'
+              ? 'Complete Inventory'
+              : reportType === 'category'
+                ? 'Category-Based'
+                : reportType === 'lowStock'
+                  ? 'Low Stock'
+                  : reportType === 'expiring'
+                    ? 'Expiring Items'
+                    : 'Date Range'
+          } Report`}
+          onClose={() => setShowReportModal(false)}
         >
-          <Printer size={20} weight="duotone" />
-          Print Inventory
-        </button>
-        <button
-          onClick={() => {
-            setReportType('all');
-            setReportFormat('csv');
-            setError(null);
-            generateReport();
-          }}
-          className="flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-white hover:bg-green-600"
-        >
-          <Export size={20} weight="duotone" />
-          Export to CSV
-        </button>
-      </div>
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              Configure your report options below.
+            </p>
 
-      {/* Report Configuration Modal */}
-      <InventoryModal
-        isOpen={showReportModal}
-        title={`Generate ${
-          reportType === 'all'
-            ? 'Complete Inventory'
-            : reportType === 'category'
-              ? 'Category-Based'
-              : reportType === 'lowStock'
-                ? 'Low Stock'
-                : reportType === 'expiring'
-                  ? 'Expiring Items'
-                  : 'Date Range'
-        } Report`}
-        onClose={() => setShowReportModal(false)}
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600">Configure your report options below.</p>
+            {/* Category selector for category-based report */}
+            {reportType === 'category' && (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Select Category
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 p-2.5 text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
+                >
+                  <option value="">Select a category</option>
+                  <option value="Feed">Feed</option>
+                  <option value="Medication">Medication</option>
+                  <option value="Supplies">Supplies</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            )}
 
-          {/* Category selector for category-based report */}
-          {reportType === 'category' && (
+            {/* Date range selector for date-based report */}
+            {reportType === 'date' && (
+              <div className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={dateRange.startDate}
+                    onChange={(e) =>
+                      setDateRange({ ...dateRange, startDate: e.target.value })
+                    }
+                    className="w-full rounded-lg border border-gray-300 p-2.5 text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={dateRange.endDate}
+                    onChange={(e) =>
+                      setDateRange({ ...dateRange, endDate: e.target.value })
+                    }
+                    className="w-full rounded-lg border border-gray-300 p-2.5 text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Format options */}
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
-                Select Category
+                Report Format
               </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 p-2.5 text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
+              <div className="flex gap-3">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="format"
+                    value="csv"
+                    checked={reportFormat === 'csv'}
+                    onChange={(e) => setReportFormat(e.target.value)}
+                    className="h-4 w-4 text-amber-600 focus:ring-amber-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">CSV</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="format"
+                    value="pdf"
+                    checked={reportFormat === 'pdf'}
+                    onChange={(e) => setReportFormat(e.target.value)}
+                    className="h-4 w-4 text-amber-600 focus:ring-amber-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">PDF</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="format"
+                    value="excel"
+                    checked={reportFormat === 'excel'}
+                    onChange={(e) => setReportFormat(e.target.value)}
+                    className="h-4 w-4 text-amber-600 focus:ring-amber-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Excel</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowReportModal(false)}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-100"
               >
-                <option value="">Select a category</option>
-                <option value="Feed">Feed</option>
-                <option value="Medication">Medication</option>
-                <option value="Supplies">Supplies</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-          )}
-
-          {/* Date range selector for date-based report */}
-          {reportType === 'date' && (
-            <div className="space-y-3">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Start Date
-                </label>
-                <input
-                  type="date"
-                  value={dateRange.startDate}
-                  onChange={(e) =>
-                    setDateRange({ ...dateRange, startDate: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-gray-300 p-2.5 text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  End Date
-                </label>
-                <input
-                  type="date"
-                  value={dateRange.endDate}
-                  onChange={(e) =>
-                    setDateRange({ ...dateRange, endDate: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-gray-300 p-2.5 text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Format options */}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Report Format
-            </label>
-            <div className="flex gap-3">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="format"
-                  value="csv"
-                  checked={reportFormat === 'csv'}
-                  onChange={(e) => setReportFormat(e.target.value)}
-                  className="h-4 w-4 text-amber-600 focus:ring-amber-500"
-                />
-                <span className="ml-2 text-sm text-gray-700">CSV</span>
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="format"
-                  value="pdf"
-                  checked={reportFormat === 'pdf'}
-                  onChange={(e) => setReportFormat(e.target.value)}
-                  className="h-4 w-4 text-amber-600 focus:ring-amber-500"
-                />
-                <span className="ml-2 text-sm text-gray-700">PDF</span>
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="format"
-                  value="excel"
-                  checked={reportFormat === 'excel'}
-                  onChange={(e) => setReportFormat(e.target.value)}
-                  className="h-4 w-4 text-amber-600 focus:ring-amber-500"
-                />
-                <span className="ml-2 text-sm text-gray-700">Excel</span>
-              </label>
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={generateReport}
+                disabled={
+                  loading ||
+                  (reportType === 'category' && !category) ||
+                  (reportType === 'date' &&
+                    (!dateRange.startDate || !dateRange.endDate))
+                }
+                className="flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600 disabled:opacity-70"
+              >
+                {loading ? 'Generating...' : 'Generate Report'}
+              </button>
             </div>
           </div>
-
-          <div className="flex justify-end gap-2 pt-4">
-            <button
-              type="button"
-              onClick={() => setShowReportModal(false)}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-100"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={generateReport}
-              disabled={
-                loading ||
-                (reportType === 'category' && !category) ||
-                (reportType === 'date' &&
-                  (!dateRange.startDate || !dateRange.endDate))
-              }
-              className="flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600 disabled:opacity-70"
-            >
-              {loading ? 'Generating...' : 'Generate Report'}
-            </button>
-          </div>
-        </div>
-      </InventoryModal>
-    </div>
+        </InventoryModal>
+      </div>
+    </DashboardLayout>
   );
 };
 

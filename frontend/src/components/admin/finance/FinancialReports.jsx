@@ -492,10 +492,7 @@ const FinancialReports = () => {
               className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-amber-500 focus:outline-none focus:ring-amber-500"
             >
               <option value="summary">Summary Report</option>
-              {/* <option value="income">Income Breakdown</option>
-              <option value="expense">Expense Breakdown</option>
-              <option value="profit">Profit Analysis</option>
-              <option value="livestock">Livestock Sales</option> */}
+              <option value="income">Income Breakdown</option>
             </select>
           </div>
           
@@ -928,28 +925,7 @@ const FinancialReports = () => {
               </div>
             </div>
           )}
-          
-          {/* Other report types would be implemented similarly */}
-          {selectedReport === 'expense' && (
-            <div className="rounded-lg bg-white p-4 shadow">
-              <h2 className="mb-4 text-lg font-semibold">Expense Analysis</h2>
-              <p className="text-gray-500">Detailed expense breakdown charts and analysis would be displayed here.</p>
-            </div>
-          )}
-          
-          {selectedReport === 'profit' && (
-            <div className="rounded-lg bg-white p-4 shadow">
-              <h2 className="mb-4 text-lg font-semibold">Profit Analysis</h2>
-              <p className="text-gray-500">Profit trend analysis and breakdown would be displayed here.</p>
-            </div>
-          )}
-          
-          {selectedReport === 'livestock' && (
-            <div className="rounded-lg bg-white p-4 shadow">
-              <h2 className="mb-4 text-lg font-semibold">Livestock Sales Analysis</h2>
-              <p className="text-gray-500">Detailed analysis of livestock sales metrics would be displayed here.</p>
-            </div>
-          )}
+  
         </div>
       )}
     </DashboardLayout>
