@@ -3,8 +3,6 @@
 ```
 CHICKEN-FARM-MANAGEMENT-SYSTEM-II/
 │
-├── .gitignore
-│
 ├── backend/
 │   ├── src/
 │   │   ├── config/
@@ -15,8 +13,8 @@ CHICKEN-FARM-MANAGEMENT-SYSTEM-II/
 │   │   │   ├── chickController.js
 │   │   │   ├── chickenController.js
 │   │   │   ├── eggController.js
+│   │   │   ├── employeeController.js
 │   │   │   ├── inventoryController.js
-│   │   │   ├── livestockController.js
 │   │   │   ├── orderController.js
 │   │   │   ├── sellerController.js
 │   │   │   ├── transactionController.js
@@ -28,8 +26,8 @@ CHICKEN-FARM-MANAGEMENT-SYSTEM-II/
 │   │   │   ├── Chick.js
 │   │   │   ├── Chicken.js
 │   │   │   ├── Egg.js
+│   │   │   ├── Employee.js
 │   │   │   ├── Inventory.js
-│   │   │   ├── Livestock.js
 │   │   │   ├── Order.js
 │   │   │   ├── Seller.js
 │   │   │   ├── Transaction.js
@@ -40,8 +38,8 @@ CHICKEN-FARM-MANAGEMENT-SYSTEM-II/
 │   │   │   ├── chickens.js
 │   │   │   ├── chicks.js
 │   │   │   ├── eggs.js
+│   │   │   ├── employees.js
 │   │   │   ├── inventory.js
-│   │   │   ├── livestock.js
 │   │   │   ├── orders.js
 │   │   │   ├── sellers.js
 │   │   │   ├── transactions.js
@@ -72,30 +70,105 @@ CHICKEN-FARM-MANAGEMENT-SYSTEM-II/
 │   │   │   ├── admin/
 │   │   │   │   ├── AdminSidebarContent.jsx
 │   │   │   │   ├── Dashboard.jsx
-│   │   │   │   └── DashboardLayout.jsx
+│   │   │   │   ├── DashboardLayout.jsx
+│   │   │   │   ├── buyers/
+│   │   │   │   │   ├── BuyerDetails.jsx
+│   │   │   │   │   ├── BuyerForm.jsx
+│   │   │   │   │   ├── BuyerModal.jsx
+│   │   │   │   │   ├── BuyerOrderHistory.jsx
+│   │   │   │   │   └── Buyers.jsx
+│   │   │   │   ├── calendar/
+│   │   │   │   │   └── Calendar.jsx
+│   │   │   │   ├── employees/
+│   │   │   │   │   ├── EmployeeModal.jsx
+│   │   │   │   │   └── Employees.jsx
+│   │   │   │   ├── finance/
+│   │   │   │   │   ├── FinancialReports.jsx
+│   │   │   │   │   ├── index.js
+│   │   │   │   │   ├── TransactionDetails.jsx
+│   │   │   │   │   ├── TransactionForm.jsx
+│   │   │   │   │   └── TransactionList.jsx
+│   │   │   │   ├── inventory/
+│   │   │   │   │   ├── feed/Feed.jsx
+│   │   │   │   │   ├── medications/Medications.jsx
+│   │   │   │   │   ├── other/Other.jsx
+│   │   │   │   │   ├── reports/InventoryReports.jsx
+│   │   │   │   │   ├── settings/ThresholdSettings.jsx
+│   │   │   │   │   ├── tracking/
+│   │   │   │   │   ├── Inventory.jsx
+│   │   │   │   │   ├── InventoryAlerts.jsx
+│   │   │   │   │   ├── InventoryDetails.jsx
+│   │   │   │   │   ├── InventoryForm.jsx
+│   │   │   │   │   └── InventoryModal.jsx
+│   │   │   │   ├── livestock/
+│   │   │   │   │   ├── chickens/ChickenModal.jsx
+│   │   │   │   │   ├── chickens/Chickens.jsx
+│   │   │   │   │   ├── chicks/ChickModal.jsx
+│   │   │   │   │   ├── chicks/Chicks.jsx
+│   │   │   │   │   ├── eggs/EggModal.jsx
+│   │   │   │   │   ├── eggs/Eggs.jsx
+│   │   │   │   │   └── Livestock.jsx
+│   │   │   │   ├── orders/
+│   │   │   │   │   ├── OrderDetails.jsx
+│   │   │   │   │   ├── OrderForm.jsx
+│   │   │   │   │   ├── OrderItemForm.jsx
+│   │   │   │   │   └── Orders.jsx
+│   │   │   │   └── sellers/
+│   │   │   │       ├── AdminSidebarContent.jsx
+│   │   │   │       ├── Dashboard.jsx
+│   │   │   │       └── DashboardLayout.jsx
 │   │   │   ├── employee/
 │   │   │   │   ├── Dashboard.jsx
 │   │   │   │   ├── DashboardLayout.jsx
-│   │   │   │   └── EmployeeSidebarContent.jsx
-│   │   │   ├── shared/
-│   │   │   │   ├── Sidebar.jsx
-│   │   │   │   ├── SidebarItem.jsx
-│   │   │   │   └── Topbar.jsx
-│   │   │   └── landing/
-│   │   │       ├── About.jsx
-│   │   │       ├── ContactUs.jsx
-│   │   │       ├── Footer.jsx
-│   │   │       ├── Header.jsx
-│   │   │       ├── LandingPage.jsx
-│   │   │       ├── Navbar.jsx
-│   │   │       └── Services.jsx
+│   │   │   │   ├── EmployeeSidebarContent.jsx
+│   │   │   │   ├── inventory/
+│   │   │   │   │   ├── feed/Feed.jsx
+│   │   │   │   │   ├── medications/Medications.jsx
+│   │   │   │   │   ├── other/Other.jsx
+│   │   │   │   │   ├── tracking/TransactionTracker.jsx
+│   │   │   │   │   ├── Inventory.jsx
+│   │   │   │   │   ├── InventoryDetails.jsx
+│   │   │   │   │   └── InventoryUpdateForm.jsx
+│   │   │   │   ├── livestock/
+│   │   │   │   │   ├── chickens/Chickens.jsx
+│   │   │   │   │   ├── chicks/Chicks.jsx
+│   │   │   │   │   ├── eggs/Eggs.jsx
+│   │   │   │   │   └── Livestock.jsx
+│   │   │   │   └── orders/
+│   │   │   │       ├── OrderDetails.jsx
+│   │   │   │       └── Orders.jsx
+│   │   │   ├── landing/
+│   │   │   │   ├── About.jsx
+│   │   │   │   ├── ContactUs.jsx
+│   │   │   │   ├── Footer.jsx
+│   │   │   │   ├── Header.jsx
+│   │   │   │   ├── LandingPage.jsx
+│   │   │   │   ├── Navbar.jsx
+│   │   │   │   └── Services.jsx
+│   │   │   ├── profile/
+│   │   │   │   ├── PasswordForm.jsx
+│   │   │   │   ├── Profile.jsx
+│   │   │   │   └── ProfileForm.jsx
+│   │   │   └── shared/
+│   │   │       ├── ContactModal.jsx
+│   │   │       ├── InventoryModal.jsx
+│   │   │       ├── Pagination.jsx
+│   │   │       ├── Sidebar.jsx
+│   │   │       ├── SidebarItem.jsx
+│   │   │       ├── Tabs.jsx
+│   │   │       └── Topbar.jsx
 │   │   ├── context/
 │   │   │   └── AuthContext.jsx
+│   │   ├── utils/
+│   │   │   ├── api.js
+│   │   │   └── InventoryAPI.js
 │   │   ├── App.jsx
 │   │   ├── index.css
 │   │   ├── main.jsx
 │   │   └── routes.jsx
 │   ├── .gitignore
+│   ├── .prettierignore
+│   ├── .prettierrc.cjs
 │   ├── eslint.config.js
 │   ├── index.html
 │   ├── package.json
@@ -104,8 +177,7 @@ CHICKEN-FARM-MANAGEMENT-SYSTEM-II/
 │   └── vite.config.js
 │
 └── projectInfo/
-    ├── colors.md
-    ├── database.sql
+    ├── .gitignore
     ├── poultryFarmRequirementCatalogue.md
     ├── projectInfo.md
     └── projectStructure.md
