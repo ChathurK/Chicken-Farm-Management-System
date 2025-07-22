@@ -6,6 +6,7 @@
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "db": "node src/config/database.js",
     "seed": "node src/utils/seedData.js"
   },
   "keywords": [],
